@@ -93,6 +93,9 @@ async function editor(course) {
   view().innerHTML =
     '<p><button type="button" class="link-btn" id="ed-back">← 과정 목록</button></p>' +
     '<form class="form-card wide" id="ed" novalidate><h2>' + (course ? '온라인 과정 수정' : '새 온라인 과정') + '</h2>' +
+      '<div class="notice-box left import-box"><b>과정 파일 불러오기</b>' +
+        '<p class="form-help">미리 만들어 둔 과정 파일(.json)을 고르면 아래 칸이 모두 채워집니다. 내용을 확인한 뒤 [저장]을 눌러야 반영됩니다.</p>' +
+        '<input type="file" id="ed-import" accept=".json,application/json"></div>' +
       '<label>과정명<input name="title" value="' + esc(c.title) + '" placeholder="예: 착의생존수영지도자 사전 온라인 과정"></label>' +
       '<label>소개<textarea name="description" rows="3">' + esc(c.description) + '</textarea></label>' +
       '<div class="form-row"><label>수강료(원)<input type="number" name="fee" min="0" step="1000" value="' + esc(c.fee) + '"></label>' +
@@ -115,6 +118,23 @@ async function editor(course) {
   document.getElementById('add-video').addEventListener('click', () => { collect(); chapters.push({ id: rid('c'), title: '', type: 'video', video: '', minutes: '', body: '' }); drawLists(); });
   document.getElementById('add-text').addEventListener('click', () => { collect(); chapters.push({ id: rid('c'), title: '', type: 'text', minutes: '', body: '' }); drawLists(); });
   document.getElementById('add-q').addEventListener('click', () => { collect(); questions.push({ id: rid('q'), question: '', options: ['', '', '', ''], answer: 0, explanation: '' }); drawLists(); });
+
+  // 과정 파일(.json) 불러오기: 입력칸을 채우기만 하고, 저장은 관리자가 확인 후 직접
+  document.getElementById('ed-import').addEventListener('change', async ev => {
+    const file = ev.target.files[0];
+    if (!file) return;
+    let d;
+    try { d = JSON.parse(await file.text()); } catch (err) { toast('과정 파일을 읽지 못했습니다. 파일 형식을 확인해 주세요.'); return; }
+    if (!Array.isArray(d.chapters) || !Array.isArray(d.questions)) { toast('챕터(chapters)와 문항(questions)이 있는 과정 파일이 아닙니다.'); return; }
+    if ((chapters.length || questions.length) && !confirm('지금 입력된 챕터와 문항을 파일 내용으로 바꿀까요?')) { ev.target.value = ''; return; }
+    const f = document.getElementById('ed');
+    ['title', 'description', 'fee', 'accessDays', 'validityMonths', 'passScore', 'questionCount', 'retryMinutes'].forEach(k => { if (d[k] !== undefined) f[k].value = d[k]; });
+    if (d.open !== undefined) f.open.checked = !!d.open;
+    chapters = d.chapters.map(ch => ({ id: rid('c'), title: ch.title || '', type: ch.type === 'video' ? 'video' : 'text', video: ch.video || '', minutes: ch.minutes || '', body: ch.body || '' }));
+    questions = d.questions.map(q => ({ id: rid('q'), question: q.question || '', options: [0, 1, 2, 3].map(k => (q.options || [])[k] || ''), answer: Number(q.answer) || 0, explanation: q.explanation || '' }));
+    drawLists();
+    toast('챕터 ' + chapters.length + '개, 문항 ' + questions.length + '개를 불러왔습니다. 확인 후 [저장]을 눌러 주세요.');
+  });
 
   document.getElementById('ed').addEventListener('submit', async e => {
     e.preventDefault(); collect();

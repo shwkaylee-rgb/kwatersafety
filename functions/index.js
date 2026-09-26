@@ -67,14 +67,17 @@ exports.startExam = onCall(async req => {
   if (!bank.length) throw new HttpsError('failed-precondition', '평가 문항이 아직 준비되지 않았습니다.');
   const count = Math.min(Number(course.questionCount) || bank.length, bank.length);
   const picked = shuffle(bank).slice(0, count);
+  // 보기 순서도 응시마다 섞음. order[k] = 화면의 k번째 보기가 원래 몇 번째 보기인지
+  const orders = picked.map(q => shuffle(q.options.map((_, k) => k)));
 
   const ref = await db.collection('examAttempts').add({
-    uid, courseId, questionIds: picked.map(q => q.id), status: 'started',
-    startedAt: FieldValue.serverTimestamp()
+    uid, courseId, questionIds: picked.map(q => q.id),
+    optionOrders: Object.fromEntries(picked.map((q, i) => [q.id, orders[i]])),
+    status: 'started', startedAt: FieldValue.serverTimestamp()
   });
   return {
     attemptId: ref.id, passScore: course.passScore, total: picked.length,
-    questions: picked.map(q => ({ id: q.id, question: q.question, options: q.options }))   // 정답·해설 제외
+    questions: picked.map((q, i) => ({ id: q.id, question: q.question, options: orders[i].map(k => q.options[k]) }))   // 정답·해설 제외
   };
 });
 
@@ -97,7 +100,10 @@ exports.submitExam = onCall(async req => {
 
   const results = attempt.questionIds.map(id => {
     const q = byId[id] || {};
-    const chosen = Number.isInteger(answers[id]) ? answers[id] : -1;
+    // 화면에서 고른 번호를 원래 보기 번호로 되돌려 채점
+    const order = (attempt.optionOrders || {})[id];
+    const shown = Number.isInteger(answers[id]) ? answers[id] : -1;
+    const chosen = shown < 0 ? -1 : order ? order[shown] : shown;
     const correct = chosen === q.answer;
     return { id, correct, explanation: correct ? '' : (q.explanation || '') };
   });
