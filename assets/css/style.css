@@ -507,9 +507,9 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
 .learn-nav { position: sticky; top: calc(var(--header-h) + 16px); display: grid; gap: 16px; }
 .learn-nav ol { list-style: none; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
 .learn-nav li + li { border-top: 1px solid var(--line); }
-.learn-nav button { width: 100%; display: flex; gap: 12px; align-items: flex-start; text-align: left; background: #fff; border: 0; padding: 14px 16px; font: inherit; cursor: pointer; }
-.learn-nav button:hover { background: var(--bg-soft); }
-.learn-nav button.is-current { background: #eaf2fe; }
+.learn-nav ol button { width: 100%; display: flex; gap: 12px; align-items: flex-start; text-align: left; background: #fff; border: 0; padding: 14px 16px; font: inherit; cursor: pointer; }
+.learn-nav ol button:hover { background: var(--bg-soft); }
+.learn-nav ol button.is-current { background: #eaf2fe; }
 .ch-check { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--bg-soft); color: #888; }
 .is-done .ch-check { background: #1a7f43; color: #fff; }
 .ch-title { font-size: 15px; font-weight: 600; line-height: 1.5; }
