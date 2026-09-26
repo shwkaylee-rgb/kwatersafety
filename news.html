@@ -13,11 +13,12 @@
 <body>
 <main>
   <section class="page container">
-    <div id="board"></div>
+    <div id="board" data-board="news"></div>
   </section>
 </main>
 <script src="assets/js/common.js"></script>
 <script src="assets/js/posts.js"></script>
-<script>renderBoardList(document.getElementById('board'),'news');</script>
+<script type="module" src="assets/js/app.js"></script>
+<script type="module" src="assets/js/pages/board.js"></script>
 </body>
 </html>

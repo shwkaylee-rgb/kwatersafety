@@ -1,0 +1,69 @@
+rules_version = '2';
+// Firestore 보안 규칙
+// Firebase 콘솔 > Firestore Database > 규칙 탭에 이 파일 내용을 그대로 붙여넣고 [게시]를 누르세요.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    // 관리자: admins 컬렉션에 자기 UID 문서가 있는 사람 (콘솔에서만 추가 가능)
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+
+    match /admins/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+    }
+
+    // 회원 정보: 본인과 관리자만 조회, 본인만 수정
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['name', 'phone', 'email', 'agreePrivacy', 'createdAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 30;
+      allow delete: if false;
+
+      // 장바구니: 본인만
+      match /cart/{itemId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // 게시판: 누구나 읽기, 관리자만 쓰기
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      // 댓글: 누구나 읽기, 로그인 회원 작성, 본인·관리자 삭제
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if signedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.keys().hasOnly(['uid', 'name', 'text', 'createdAt'])
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000;
+        allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+        allow update: if false;
+      }
+    }
+
+    // 교육·자격 과정: 누구나 읽기, 관리자만 쓰기
+    match /programs/{programId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 신청서: 본인과 관리자만 조회. 본인은 제출과 '접수완료' 상태에서 취소만 가능
+    match /applications/{appId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == '접수완료'
+        && !('adminMemo' in request.resource.data);
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid
+            && resource.data.status == '접수완료'
+            && request.resource.data.status == '취소'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
+      allow delete: if isAdmin();
+    }
+  }
+}

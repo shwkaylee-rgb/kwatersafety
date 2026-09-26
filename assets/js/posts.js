@@ -1,4 +1,5 @@
-/* 게시판 데이터
+/* 기존 게시판 데이터 (Firebase 연결 전에 보여줄 글)
+   Firebase 연결 후에는 관리자 페이지 > 게시판 > [기존 게시글 가져오기]로 옮기고, 새 글은 사이트에서 직접 쓰세요.
    새 글은 해당 게시판 배열의 맨 앞에 추가하세요. id는 게시판 안에서 겹치지 않게.
    body는 HTML을 쓸 수 있습니다(줄바꿈은 <br>). */
 var BOARDS = {
@@ -25,58 +26,3 @@ var BOARDS = {
   schedule: { title: '교육일정 공지', posts: [] },
   press: { title: '대외 보도자료', posts: [] }
 };
-
-function escapeHTML(s) {
-  return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
-}
-function stripTags(s) { return s.replace(/<br\s*\/?>/g, ' ').replace(/<[^>]+>/g, ''); }
-function postURL(board, id) { return 'post.html?board=' + board + '&id=' + id; }
-
-/* 게시판 목록 (표 형태) */
-function renderBoardList(el, board) {
-  var b = BOARDS[board];
-  if (!b.posts.length) { el.innerHTML = '<p class="board-empty">등록된 게시물이 없습니다.</p>'; return; }
-  var total = b.posts.length;
-  el.innerHTML =
-    '<p class="board-count">전체 <b>' + total + '</b>건</p>' +
-    '<table class="board-table"><thead><tr><th class="col-no">번호</th><th>제목</th><th class="col-author">작성자</th><th class="col-date">작성일</th></tr></thead><tbody>' +
-    b.posts.map(function (p, i) {
-      return '<tr><td class="col-no">' + (total - i) + '</td>' +
-        '<td class="col-title"><a href="' + postURL(board, p.id) + '">' + escapeHTML(p.title) + '</a></td>' +
-        '<td class="col-author">' + escapeHTML(p.author) + '</td><td class="col-date">' + p.date + '</td></tr>';
-    }).join('') + '</tbody></table>';
-}
-
-/* 메인페이지 최신글 */
-function renderLatest(el, board, count, withSummary) {
-  var posts = BOARDS[board].posts.slice(0, count || 4);
-  if (!posts.length) { el.innerHTML = '<li class="board-empty">등록된 게시물이 없습니다.</li>'; return; }
-  el.innerHTML = posts.map(function (p) {
-    return '<li><a href="' + postURL(board, p.id) + '">' +
-      '<span class="latest-title">' + escapeHTML(p.title) + '</span>' +
-      (withSummary ? '<span class="latest-summary">' + escapeHTML(stripTags(p.body)) + '</span>' : '') +
-      '<span class="latest-date">' + p.date + '</span></a></li>';
-  }).join('');
-}
-
-/* 게시글 보기 */
-function renderPost(el) {
-  var q = new URLSearchParams(location.search);
-  var board = q.get('board'), id = Number(q.get('id'));
-  var b = BOARDS[board];
-  var idx = b ? b.posts.findIndex(function (p) { return p.id === id; }) : -1;
-  if (idx < 0) { el.innerHTML = '<p class="board-empty">게시물을 찾을 수 없습니다.</p>'; return; }
-  var p = b.posts[idx], newer = b.posts[idx - 1], older = b.posts[idx + 1];
-  el.innerHTML =
-    '<article class="post-view">' +
-      '<header class="post-head"><h2>' + escapeHTML(p.title) + '</h2>' +
-      '<p class="post-meta">' + escapeHTML(p.author) + ' <i>|</i> ' + p.date + '</p></header>' +
-      '<div class="post-body">' + p.body + '</div>' +
-    '</article>' +
-    '<ul class="post-nav">' +
-      (newer ? '<li><span>다음글</span><a href="' + postURL(board, newer.id) + '">' + escapeHTML(newer.title) + '</a></li>' : '') +
-      (older ? '<li><span>이전글</span><a href="' + postURL(board, older.id) + '">' + escapeHTML(older.title) + '</a></li>' : '') +
-    '</ul>' +
-    '<p class="center"><a class="btn btn-outline" href="' + board + '.html">목록으로</a></p>';
-  document.title = p.title + ' | ' + b.title;
-}

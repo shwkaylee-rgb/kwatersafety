@@ -56,7 +56,7 @@ i { font-style: normal; color: #bbb; margin: 0 6px; }
 
 .gnb > ul { display: flex; height: var(--header-h); }
 .gnb-item { position: relative; display: flex; align-items: center; }
-.gnb-item > a { padding: 0 24px; font-size: 17px; font-weight: 600; line-height: var(--header-h); transition: color .2s; }
+.gnb-item > a { padding: 0 20px; font-size: 17px; font-weight: 600; line-height: var(--header-h); transition: color .2s; }
 .is-overlay:not(.is-scrolled) .gnb-item > a { color: #fff; }
 .gnb-item:hover > a, .gnb-item.is-active > a { color: var(--primary) !important; }
 .gnb-sub {
@@ -236,6 +236,133 @@ i { font-style: normal; color: #bbb; margin: 0 6px; }
 .post-nav span { color: #999; width: 60px; flex: none; }
 .post-nav a:hover { color: var(--primary); }
 
+/* ---------- 헤더 로그인·장바구니 ---------- */
+.util { display: flex; align-items: center; gap: 14px; font-size: 13px; color: #666; margin-left: 10px; }
+.util a:hover { color: var(--primary); }
+.util [hidden], .mobile-util [hidden] { display: none; }
+.is-overlay:not(.is-scrolled) .util { color: rgba(255,255,255,.85); }
+.util-cart b {
+  display: inline-block; min-width: 18px; padding: 0 5px; border-radius: 9px; background: var(--primary); color: #fff;
+  font-size: 11px; line-height: 18px; text-align: center; margin-left: 2px;
+}
+.mobile-util { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--bg-soft); }
+.mobile-util a { padding: 6px 12px; border: 1px solid var(--line); border-radius: 18px; background: #fff; font-size: 14px; }
+
+/* ---------- 폼 ---------- */
+.form-card { max-width: 440px; margin: 0 auto; display: grid; gap: 16px; }
+.form-card.wide { max-width: 820px; }
+.form-card h2 { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 6px; }
+.form-card label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
+.form-card label small { font-weight: 400; color: #999; }
+.form-card input:not([type=checkbox]), .form-card select, .form-card textarea,
+.admin-app-foot input, .admin-app-foot select, .comment-form textarea {
+  width: 100%; padding: 12px 14px; border: 1px solid #d5d9de; border-radius: 10px;
+  font: inherit; font-weight: 400; background: #fff; color: var(--text);
+}
+.form-card input:focus, .form-card select:focus, .form-card textarea:focus, .comment-form textarea:focus {
+  outline: 2px solid var(--primary); outline-offset: -1px; border-color: transparent;
+}
+.form-card input:disabled { background: var(--bg-soft); color: #888; }
+.form-card textarea { resize: vertical; line-height: 1.7; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-card label.check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.check input { width: 18px; height: 18px; accent-color: var(--primary); }
+.form-help { font-size: 14px; color: var(--text-sub); }
+.form-links { text-align: center; font-size: 14px; color: var(--text-sub); }
+.form-links a { color: var(--primary); font-weight: 600; }
+.agree { background: var(--bg-soft); border-radius: 10px; padding: 16px; font-size: 14px; color: #555; display: grid; gap: 10px; }
+.divider { display: flex; align-items: center; gap: 12px; color: #999; font-size: 13px; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.uid { font-size: 12px; color: #999; text-align: center; word-break: break-all; }
+code { font-family: Consolas, monospace; background: var(--bg-soft); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+
+button.btn { font-family: inherit; border: 0; }
+.btn-block { display: block; width: 100%; text-align: center; }
+.btn-sm { padding: 7px 16px; font-size: 14px; }
+.btn:disabled { opacity: .5; cursor: default; }
+button.btn-outline { border: 1px solid #ccc; background: #fff; }
+.btn-google { background: #fff; border: 1px solid #d5d9de !important; color: var(--text); display: flex; justify-content: center; align-items: center; gap: 8px; }
+.btn-google:hover { background: var(--bg-soft); }
+.g-icon { font-weight: 800; color: #4285f4; }
+.btn-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.board-actions { text-align: right; margin-top: 20px; }
+.link-btn { background: none; border: 0; font: inherit; color: var(--text-sub); cursor: pointer; text-decoration: underline; padding: 0; }
+.link-btn:hover { color: var(--primary); }
+.nowrap { white-space: nowrap; }
+
+.notice-box { max-width: 640px; margin: 0 auto 24px; padding: 40px 30px; text-align: center; background: var(--bg-soft); border-radius: 16px; line-height: 1.9; }
+.notice-box.left { text-align: left; max-width: none; padding: 28px 30px; }
+.notice-box h3 { font-size: 18px; margin-bottom: 8px; }
+.notice-box p + p { margin-top: 10px; }
+.notice-box small { color: var(--text-sub); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 40px; transform: translate(-50%, 20px); z-index: 300; max-width: calc(100% - 32px);
+  background: rgba(20,24,30,.92); color: #fff; padding: 13px 24px; border-radius: 30px; font-size: 15px;
+  opacity: 0; pointer-events: none; transition: .25s;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- 댓글 ---------- */
+.comments { padding: 36px 0 10px; border-bottom: 1px solid var(--line); }
+.comments h3 { font-size: 18px; margin-bottom: 14px; }
+.comments h3 b { color: var(--primary); }
+.comment-list li { padding: 16px 0; border-top: 1px solid var(--line); }
+.comment-meta { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.comment-meta span { color: #999; }
+.comment-meta .link-btn { margin-left: auto; font-size: 13px; }
+.comment-list p { margin-top: 6px; }
+.comment-form { display: flex; gap: 10px; margin: 16px 0 26px; }
+.comment-form textarea { min-height: 70px; resize: vertical; }
+.comment-form .btn { flex: none; }
+.comment-login { padding: 20px; margin: 16px 0 26px; background: var(--bg-soft); border-radius: 10px; text-align: center; color: var(--text-sub); }
+.comment-login a { color: var(--primary); font-weight: 700; }
+
+/* ---------- 교육·자격 신청, 장바구니 ---------- */
+.program-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 24px; }
+.program-card { border: 1px solid var(--line); border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 12px; }
+.program-card h3 { font-size: 20px; font-weight: 800; line-height: 1.4; }
+.program-card dl { display: grid; grid-template-columns: 80px 1fr; gap: 4px 10px; font-size: 15px; }
+.program-card dt { color: #999; }
+.program-card .fee { font-weight: 700; color: var(--primary); }
+.program-card .desc { font-size: 15px; color: #555; flex: 1; }
+.program-card .btn { margin-top: auto; }
+.badge { align-self: flex-start; font-size: 13px; font-weight: 700; color: var(--primary); background: #eaf2fe; padding: 3px 10px; border-radius: 12px; }
+.cart-total { text-align: right; font-size: 18px; margin: 20px 0 50px; }
+.cart-total b { color: var(--primary); font-size: 24px; margin-left: 8px; }
+
+/* ---------- 마이페이지·신청 내역 ---------- */
+.mypage-grid { display: grid; grid-template-columns: 380px 1fr; gap: 50px; align-items: start; }
+.mypage-grid .form-card { margin: 0; border: 1px solid var(--line); border-radius: 16px; padding: 30px; }
+.my-apps h2 { font-size: 22px; font-weight: 800; margin-bottom: 16px; }
+.app-card { border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; margin-bottom: 14px; }
+.app-card header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.app-card header small { color: #999; }
+.app-card ul li { display: flex; gap: 8px; padding: 4px 0; font-size: 15px; }
+.app-card ul li span { margin-left: auto; white-space: nowrap; }
+.app-card ul li small { color: #999; }
+.app-card footer { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); flex-wrap: wrap; }
+.admin-memo, .memo { margin-top: 10px; font-size: 14px; background: var(--bg-soft); padding: 10px 12px; border-radius: 8px; }
+.applicant { font-size: 15px; margin-bottom: 8px; }
+.applicant a { color: var(--primary); }
+.status { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+.status-접수완료 { background: #fff4e0; color: #b86e00; }
+.status-승인 { background: #e5f6ec; color: #1a7f43; }
+.status-반려 { background: #fdeaea; color: #c62828; }
+.status-취소 { background: #eef0f2; color: #777; }
+
+/* ---------- 관리자 ---------- */
+.admin-tabs { display: flex; gap: 6px; border-bottom: 1px solid var(--line); margin-bottom: 30px; overflow-x: auto; }
+.admin-tabs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 14px 20px; font: inherit; font-weight: 600; color: var(--text-sub); cursor: pointer; white-space: nowrap; margin-bottom: -1px; }
+.admin-tabs button.is-active { color: var(--primary); border-color: var(--primary); }
+.admin-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); background: #fff; border-radius: 18px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+.chip.is-active { background: var(--text); color: #fff; border-color: var(--text); }
+.admin-app-foot select { width: auto; padding: 7px 10px; }
+.admin-app-foot input { flex: 1; min-width: 200px; padding: 7px 12px; }
+#tab .board-table + .form-card { margin-top: 50px; }
+
 /* ---------- 푸터 ---------- */
 .site-footer { background: #1b1f24; color: #a4abb3; padding: 60px 0 50px; font-size: 14px; }
 .footer-top { display: flex; justify-content: space-between; gap: 40px; padding-bottom: 36px; border-bottom: 1px solid #333a42; }
@@ -250,8 +377,13 @@ i { font-style: normal; color: #bbb; margin: 0 6px; }
 .copyright { margin-top: 10px; color: #6c747d; }
 
 /* ---------- 반응형 ---------- */
+@media (max-width: 1320px) {
+  .header-inner { padding: 0 20px; }
+  .gnb-item > a { padding: 0 13px; font-size: 16px; }
+  .util { gap: 10px; }
+}
 @media (max-width: 1100px) {
-  .gnb { display: none; }
+  .gnb, .util { display: none; }
   .menu-toggle { display: block; }
   .footer-top { flex-direction: column; }
   .footer-sitemap { flex-wrap: wrap; gap: 24px 36px; }
@@ -265,6 +397,9 @@ i { font-style: normal; color: #bbb; margin: 0 6px; }
   .about-intro, .certify { grid-template-columns: 1fr; gap: 30px; text-align: center; }
   .about-intro img, .certify img { margin: 0 auto; max-width: 260px; }
   .partner-grid .row { grid-template-columns: 1fr; }
+  .form-row, .mypage-grid { grid-template-columns: 1fr; }
+  .comment-form { flex-direction: column; }
+  .cart-table th:nth-child(1), .cart-table td:nth-child(1) { display: none; }
   .mission { background-attachment: scroll; padding: 100px 0; }
   .hero-eyebrow { font-size: 17px; }
   .hero p.hero-desc, .mission p { font-size: 15px; }

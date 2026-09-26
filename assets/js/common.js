@@ -16,7 +16,8 @@ var MENU = [
   { title: '자격제도', href: 'cert-instructor.html', children: [
     { title: '착의생존수영지도사', href: 'cert-instructor.html' },
     { title: '수상인명구조사', href: 'cert-lifeguard.html' },
-    { title: '응급처치 이수교육', href: 'cert-firstaid.html' }
+    { title: '응급처치 이수교육', href: 'cert-firstaid.html' },
+    { title: '교육·자격 신청', href: 'programs.html' }
   ]},
   { title: '공지사항', href: 'notice.html', children: [
     { title: '협회 공지사항', href: 'notice.html' },
@@ -57,6 +58,14 @@ var SITE = {
   }
   var cur = findCurrent();
 
+  // 로그인·회원가입·장바구니 링크 (로그인 상태에 따라 app.js가 내용을 바꿉니다)
+  var UTIL = '<a href="login.html" data-auth="out">로그인</a>' +
+    '<a href="signup.html" data-auth="out">회원가입</a>' +
+    '<a href="mypage.html" data-auth="in" hidden>마이페이지</a>' +
+    '<a href="admin.html" data-auth="admin" hidden>관리자</a>' +
+    '<a href="#" data-auth="in" data-logout hidden>로그아웃</a>' +
+    '<a href="cart.html" class="util-cart">장바구니 <b data-cart-count>0</b></a>';
+
   function navHTML() {
     return MENU.map(function (m) {
       var active = cur && cur.top === m ? ' is-active' : '';
@@ -77,6 +86,7 @@ var SITE = {
         '<img class="logo-color" src="assets/img/logo-color.png" alt="' + SITE.name + '">' +
       '</a>' +
       '<nav class="gnb" aria-label="주 메뉴"><ul>' + navHTML() + '</ul></nav>' +
+      '<div class="util">' + UTIL + '</div>' +
       '<button class="menu-toggle" type="button" aria-label="메뉴 열기" aria-expanded="false"><span></span><span></span><span></span></button>' +
     '</div>';
   body.insertBefore(header, body.firstChild);
@@ -87,6 +97,7 @@ var SITE = {
   mnav.innerHTML =
     '<div class="mobile-nav-head"><img src="assets/img/logo-mobile.png" alt="' + SITE.name + '">' +
     '<button class="mobile-close" type="button" aria-label="메뉴 닫기">&times;</button></div>' +
+    '<div class="mobile-util">' + UTIL + '</div>' +
     '<ul>' + MENU.map(function (m) {
       var sub = m.children ? '<ul>' + m.children.map(function (c) {
         return '<li><a href="' + c.href + '">' + c.title + '</a></li>';
@@ -108,6 +119,9 @@ var SITE = {
 
   // 서브페이지: 상단 배너 + 탭 메뉴
   var main = document.querySelector('main');
+  // 메뉴에 없는 페이지(로그인, 장바구니 등)는 data-page-title로 배너 제목을 지정
+  var pageTitle = body.getAttribute('data-page-title');
+  if (!cur && pageTitle) cur = { top: { title: pageTitle }, sub: null };
   if (!isHome && cur && main) {
     var title = cur.sub ? cur.sub.title : cur.top.title;
     var banner = document.createElement('section');
