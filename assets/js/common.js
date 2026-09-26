@@ -159,6 +159,7 @@ var SITE = {
         }).join('') + '</ul>' +
       '</div>' +
       '<div class="footer-info">' +
+        '<p class="footer-links"><a href="privacy.html"><b>개인정보처리방침</b></a></p>' +
         '<p>' + SITE.name + ' <i>|</i> 전화 : <a href="tel:' + SITE.tel + '">' + SITE.tel + '</a> <i>|</i> 팩스 : ' + SITE.fax +
         ' <i>|</i> 이메일 : <a href="mailto:' + SITE.email + '">' + SITE.email + '</a></p>' +
         '<p>주소 : ' + SITE.address + ' <i>|</i> 등록번호 : ' + SITE.regNo + '</p>' +

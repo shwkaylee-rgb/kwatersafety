@@ -363,6 +363,43 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
 .admin-app-foot input { flex: 1; min-width: 200px; padding: 7px 12px; }
 #tab .board-table + .form-card { margin-top: 50px; }
 
+/* ---------- 신청서 구분·탈퇴 ---------- */
+.choice { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px 24px; }
+.choice legend { font-weight: 600; font-size: 15px; margin-bottom: 8px; padding: 0; }
+.choice input { width: 18px; height: 18px; accent-color: var(--primary); }
+.form-sub { font-size: 16px; font-weight: 700; padding-top: 10px; border-top: 1px solid var(--line); }
+.guardian { display: grid; gap: 16px; }
+.guardian[hidden] { display: none; }
+.guardian-line { color: var(--primary); font-size: 14px; }
+.btn-danger { background: #c62828; color: #fff; }
+.btn-danger:hover { background: #a61f1f; }
+.withdraw { border: 1px solid #f1c6c6; background: #fdf5f5; border-radius: 12px; padding: 18px; display: grid; gap: 12px; font-size: 14px; }
+.withdraw h3 { font-size: 16px; color: #c62828; }
+.withdraw ul { list-style: disc; padding-left: 18px; color: #555; display: grid; gap: 4px; }
+.withdraw a { color: var(--primary); }
+
+/* ---------- 개인정보처리방침 ---------- */
+.policy { max-width: 860px; margin: 0 auto; font-size: 16px; color: #333; }
+.policy-lead { font-size: 17px; line-height: 1.9; }
+.policy-date { margin: 14px 0 30px; color: var(--text-sub); font-size: 15px; }
+.policy-toc { background: var(--bg-soft); border-radius: 14px; padding: 24px 28px; margin-bottom: 50px; }
+.policy-toc ol { list-style: decimal; padding-left: 22px; columns: 2; column-gap: 40px; font-size: 15px; }
+.policy-toc li { break-inside: avoid; padding: 2px 0; }
+.policy-toc a:hover { color: var(--primary); }
+.policy h2 { font-size: 20px; font-weight: 800; margin: 50px 0 14px; padding-top: 10px; scroll-margin-top: calc(var(--header-h) + 16px); color: var(--navy); }
+.policy p + p, .policy p + ol, .policy ol + p, .policy p + ul, .policy .table-wrap + p { margin-top: 12px; }
+.policy ol, .policy ul { padding-left: 22px; display: grid; gap: 8px; }
+.policy article ol, .policy > ol { list-style: decimal; }
+.policy > ul { list-style: disc; }
+.policy a { color: var(--primary); }
+.table-wrap { overflow-x: auto; margin-top: 12px; }
+.policy-table { width: 100%; border-collapse: collapse; font-size: 15px; border-top: 2px solid var(--text); }
+.policy-table th, .policy-table td { border-bottom: 1px solid var(--line); padding: 12px 14px; text-align: left; vertical-align: top; }
+.policy-table th { background: var(--bg-soft); font-weight: 600; white-space: nowrap; }
+.policy-table td[rowspan] { border-left: 1px solid var(--line); }
+.footer-links { margin-bottom: 6px; }
+.footer-links a { color: #fff; }
+
 /* ---------- 푸터 ---------- */
 .site-footer { background: #1b1f24; color: #a4abb3; padding: 60px 0 50px; font-size: 14px; }
 .footer-top { display: flex; justify-content: space-between; gap: 40px; padding-bottom: 36px; border-bottom: 1px solid #333a42; }
@@ -398,6 +435,7 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
   .about-intro img, .certify img { margin: 0 auto; max-width: 260px; }
   .partner-grid .row { grid-template-columns: 1fr; }
   .form-row, .mypage-grid { grid-template-columns: 1fr; }
+  .policy-toc ol { columns: 1; }
   .comment-form { flex-direction: column; }
   .cart-table th:nth-child(1), .cart-table td:nth-child(1) { display: none; }
   .mission { background-attachment: scroll; padding: 100px 0; }

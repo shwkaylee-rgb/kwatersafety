@@ -57,6 +57,7 @@ export function errMsg(e) {
     'auth/too-many-requests': '시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.',
     'auth/popup-closed-by-user': '로그인 창이 닫혔습니다.',
     'auth/unauthorized-domain': '이 주소는 Firebase에 승인된 도메인이 아닙니다. (Authentication > 설정 > 승인된 도메인)',
+    'auth/requires-recent-login': '보안을 위해 다시 로그인한 뒤 시도해 주세요.',
     'permission-denied': '권한이 없습니다.'
   };
   return map[code] || ('오류가 발생했습니다. ' + (e && e.message ? '(' + e.message + ')' : ''));
@@ -78,6 +79,7 @@ if (enabled) {
   fa.onAuthStateChanged(auth, async user => {
     state.user = user; state.profile = null; state.isAdmin = false;
     if (user) {
+      let loaded = false;
       try {
         const [p, a] = await Promise.all([
           fs.getDoc(fs.doc(db, 'users', user.uid)),
@@ -85,13 +87,14 @@ if (enabled) {
         ]);
         state.profile = p.exists() ? p.data() : null;
         state.isAdmin = a.exists();
-        // 구글 로그인 첫 방문이면 프로필을 만들어 둠 (이메일 가입은 signup.js가 직접 저장)
-        const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
-        if (!state.profile && isGoogle) {
-          state.profile = { name: user.displayName || user.email.split('@')[0], phone: '', email: user.email, agreePrivacy: true, createdAt: fs.serverTimestamp() };
-          await fs.setDoc(fs.doc(db, 'users', user.uid), state.profile);
-        }
+        loaded = true;
       } catch (e) { console.error(e); }
+      // 로그인 페이지에서 구글로 처음 들어온 경우 등, 동의·회원정보가 없으면 가입 마무리 화면으로
+      const page = location.pathname.split('/').pop();
+      if (loaded && !state.profile && page !== 'signup.html' && page !== 'privacy.html') {
+        location.replace('signup.html');
+        return;
+      }
     }
     updateHeader();
     listeners.forEach(cb => cb(state));

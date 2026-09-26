@@ -43,12 +43,14 @@ async function tabApps() {
       '<div class="admin-toolbar"><div class="chips">' + ['전체'].concat(STATUSES).map(s =>
         '<button type="button" class="chip' + (s === filter ? ' is-active' : '') + '" data-filter="' + s + '">' + s + ' ' +
         (s === '전체' ? apps.length : apps.filter(a => a.status === s).length) + '</button>').join('') + '</div>' +
-      '<button type="button" class="btn btn-outline btn-sm" id="csv">엑셀(CSV) 내려받기</button></div>' +
+      '<div class="btn-row"><button type="button" class="btn btn-outline btn-sm" id="csv">엑셀(CSV) 내려받기</button>' +
+      '<button type="button" class="btn btn-outline btn-sm" id="purge">보관기간(3년) 지난 신청서 삭제</button></div></div>' +
       (list.length ? list.map(a =>
         '<article class="app-card admin">' +
           '<header><span class="status status-' + esc(a.status) + '">' + esc(a.status) + '</span><small>' + fmtDate(a.createdAt, true) + '</small></header>' +
           '<p class="applicant"><b>' + esc(a.applicant.name) + '</b> · ' + esc(a.applicant.birth) + ' · ' +
             '<a href="tel:' + esc(a.applicant.phone) + '">' + esc(a.applicant.phone) + '</a> · ' + esc(a.applicant.email) + '</p>' +
+          (a.applicant.guardianName ? '<p class="applicant guardian-line">보호자 신청: ' + esc(a.applicant.guardianName) + ' (' + esc(a.applicant.relation) + ')</p>' : '') +
           '<ul>' + a.items.map(i => '<li>[' + esc(i.category) + '] ' + esc(i.title) + (i.date ? ' <small>' + esc(i.date) + '</small>' : '') + '<span>' + won(i.fee) + '</span></li>').join('') + '</ul>' +
           (a.memo ? '<p class="memo">신청자 메모: ' + esc(a.memo) + '</p>' : '') +
           '<footer class="admin-app-foot"><b>합계 ' + won(a.total) + '</b>' +
@@ -70,14 +72,30 @@ async function tabApps() {
       } catch (e) { toast(errMsg(e)); }
     }));
     document.getElementById('csv').addEventListener('click', () => downloadCSV(list));
+    document.getElementById('purge').addEventListener('click', async () => {
+      const limit = new Date(); limit.setFullYear(limit.getFullYear() - 3);
+      const old = apps.filter(a => a.createdAt?.toDate && a.createdAt.toDate() < limit);
+      if (!old.length) { toast('보관기간이 지난 신청서가 없습니다.'); return; }
+      if (!confirm('신청일로부터 3년이 지난 신청서 ' + old.length + '건을 영구 삭제할까요? 되돌릴 수 없습니다.')) return;
+      try {
+        for (let i = 0; i < old.length; i += 400) {
+          const batch = fs.writeBatch(db);
+          old.slice(i, i + 400).forEach(a => batch.delete(fs.doc(db, 'applications', a.id)));
+          await batch.commit();
+        }
+        apps = apps.filter(a => !old.includes(a));
+        toast(old.length + '건을 삭제했습니다.'); draw();
+      } catch (e) { toast(errMsg(e)); }
+    });
   }
   draw();
 }
 
 function downloadCSV(apps) {
-  const rows = [['신청일시', '상태', '이름', '생년월일', '휴대폰', '이메일', '구분', '과정명', '일정', '비용', '신청자 메모', '협회 안내']];
+  const rows = [['신청일시', '상태', '참가자 이름', '생년월일', '보호자', '관계', '휴대폰', '이메일', '구분', '과정명', '일정', '비용', '신청자 메모', '협회 안내']];
   apps.forEach(a => a.items.forEach(i => rows.push([
-    fmtDate(a.createdAt, true), a.status, a.applicant.name, a.applicant.birth, a.applicant.phone, a.applicant.email,
+    fmtDate(a.createdAt, true), a.status, a.applicant.name, a.applicant.birth, a.applicant.guardianName || '', a.applicant.relation || '',
+    a.applicant.phone, a.applicant.email,
     i.category, i.title, i.date, i.fee, a.memo || '', a.adminMemo || ''
   ])));
   const csv = '﻿' + rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
