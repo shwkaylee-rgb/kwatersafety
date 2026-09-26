@@ -622,3 +622,4 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
   .map-links img { width: 110px; }
   .footer-sitemap { display: none; }
 }
+.exam-error { color: #c62828; background: #fdeaea; border-radius: 10px; padding: 12px 14px; font-size: 15px; }

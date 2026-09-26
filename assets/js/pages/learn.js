@@ -149,7 +149,7 @@ async function markDone(ch) {
 async function startExam() {
   stopTracking();
   const main = document.getElementById('main');
-  main.innerHTML = '<p class="board-empty">문항을 준비하는 중…</p>';
+  main.innerHTML = '<p class="board-empty">문항을 준비하는 중입니다… 처음에는 몇 초 걸릴 수 있어요.</p>';
   let exam;
   try { exam = await callFn('startExam', { courseId }); }
   catch (e) { main.innerHTML = '<div class="notice-box">' + esc(errMsg(e)) + '</div>'; return; }
@@ -166,10 +166,22 @@ async function startExam() {
     exam.questions.forEach(q => { const x = f.querySelector('[name="' + q.id + '"]:checked'); if (x) answers[q.id] = +x.value; });
     const empty = exam.questions.length - Object.keys(answers).length;
     if (empty && !confirm('답하지 않은 문항이 ' + empty + '개 있습니다. 그래도 제출할까요?')) return;
-    f.querySelector('[type=submit]').disabled = true;
+    // 채점 중임을 분명히 보여 줌 (서버가 처음 깨어날 때 몇 초 걸릴 수 있음)
+    const btn = f.querySelector('[type=submit]');
+    btn.disabled = true; btn.textContent = '채점하는 중입니다… 잠시만 기다려 주세요';
+    f.querySelectorAll('input').forEach(x => { x.disabled = true; });
     let r;
     try { r = await callFn('submitExam', { attemptId: exam.attemptId, answers }); }
-    catch (err) { toast(errMsg(err)); f.querySelector('[type=submit]').disabled = false; return; }
+    catch (err) {
+      btn.disabled = false; btn.textContent = '제출하고 채점하기';
+      f.querySelectorAll('input').forEach(x => { x.disabled = false; });
+      const msg = errMsg(err);
+      toast(msg);
+      let box = document.getElementById('exam-error');
+      if (!box) { box = document.createElement('p'); box.id = 'exam-error'; box.className = 'exam-error'; btn.after(box); }
+      box.textContent = '채점하지 못했습니다: ' + msg + ' 잠시 뒤 다시 눌러 주세요. 계속되면 평가를 새로 시작해 주세요.';
+      return;
+    }
     const wrong = r.results.filter(x => !x.correct);
     main.innerHTML = '<div class="exam-result ' + (r.passed ? 'ok' : 'no') + '">' +
       '<p class="score">' + r.score + '<small>점</small></p>' +
