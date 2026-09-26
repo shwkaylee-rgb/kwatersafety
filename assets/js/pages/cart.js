@@ -1,5 +1,6 @@
 import { enabled, db, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, won } from '../app.js';
 import { TIER_NAMES, discountRate } from '../membership.js';
+import { enrollmentId, completionValid } from '../course.js';
 
 const el = document.getElementById('cart');
 
@@ -55,6 +56,16 @@ async function init() {
           '<label>이메일<input type="email" name="email" required value="' + esc(state.user.email || '') + '"></label>' +
         '</div>' +
         '<label>소속 / 메모 <small>(선택)</small><textarea name="memo" rows="3" maxlength="500"></textarea></label>' +
+        (total > 0 ? '<h3 class="form-sub">교육비 증빙</h3>' +
+          '<fieldset class="choice"><legend class="sr-only">증빙 종류</legend>' +
+            '<label class="check"><input type="radio" name="receipt" value="cash" checked> 현금영수증 (개인)</label>' +
+            '<label class="check"><input type="radio" name="receipt" value="invoice"> 계산서 (사업자)</label>' +
+            '<label class="check"><input type="radio" name="receipt" value="none"> 필요 없음</label>' +
+          '</fieldset>' +
+          '<label id="cash-box">현금영수증 받을 휴대폰 번호<input type="tel" name="cashPhone" value="' + esc(p.phone || '') + '"></label>' +
+          '<div id="invoice-box" class="guardian" hidden><div class="form-row">' +
+            '<label>사업자등록번호<input name="bizNo" placeholder="000-00-00000" maxlength="12"></label><label>상호<input name="bizName" maxlength="60"></label></div>' +
+            '<div class="form-row"><label>대표자 이름<input name="bizOwner" maxlength="30"></label><label>계산서 받을 이메일<input type="email" name="bizEmail"></label></div></div>' : '') +
         '<div class="agree">' +
           '<p><strong>개인정보 수집·이용 동의</strong><br>수집 항목: 참가자 이름·생년월일, 연락처(휴대폰, 이메일), 보호자 신청 시 보호자 이름·관계<br>' +
           '이용 목적: 교육·자격 신청 접수, 본인 확인, 일정 안내, 이수·자격 확인<br>보유 기간: 신청일로부터 3년 ' +
@@ -82,12 +93,28 @@ async function init() {
       if (g && f.name.value === (p.name || '')) f.name.value = '';
     }
     f.querySelectorAll('[name=type]').forEach(r => r.addEventListener('change', syncType));
+    const rVal = () => { const x = f.querySelector('[name=receipt]:checked'); return x ? x.value : 'none'; };
+    f.querySelectorAll('[name=receipt]').forEach(r => r.addEventListener('change', () => {
+      document.getElementById('cash-box').hidden = rVal() !== 'cash';
+      document.getElementById('invoice-box').hidden = rVal() !== 'invoice';
+    }));
 
     f.addEventListener('submit', async e => {
       e.preventDefault();
       const age = ageOn(f.birth.value);
       if (!isGuardian() && age < 14) { toast('만 14세 미만은 "보호자가 자녀 대신 신청"으로 신청해 주세요.'); return; }
       if (isGuardian() && age >= 14) { toast('만 14세 이상은 본인 신청으로 해 주세요.'); return; }
+      const rc = rVal();
+      if (rc === 'cash' && !f.cashPhone.value.trim()) { toast('현금영수증 받을 휴대폰 번호를 입력해 주세요.'); return; }
+      if (rc === 'invoice' && ['bizNo', 'bizName', 'bizOwner', 'bizEmail'].some(n => !f[n].value.trim())) { toast('계산서 발급 정보를 모두 입력해 주세요.'); return; }
+      // 사전요건: 온라인 학습 수료 확인
+      for (const i of items.filter(x => x.requiresCourse)) {
+        const s = await fs.getDoc(fs.doc(db, 'enrollments', enrollmentId(state.user.uid, i.requiresCourse)));
+        if (!(s.exists() && completionValid(s.data()))) { toast('「' + i.title + '」은 온라인 학습 「' + (i.requiresCourseTitle || '') + '」을 먼저 수료해야 신청할 수 있습니다.'); return; }
+      }
+      const receipt = rc === 'cash' ? { type: 'cash', phone: f.cashPhone.value.trim() }
+        : rc === 'invoice' ? { type: 'invoice', bizNo: f.bizNo.value.trim(), bizName: f.bizName.value.trim(), bizOwner: f.bizOwner.value.trim(), email: f.bizEmail.value.trim() }
+        : { type: 'none' };
       const btn = f.querySelector('[type=submit]'); btn.disabled = true;
       const applicant = { name: f.name.value.trim(), birth: f.birth.value, phone: f.phone.value.trim(), email: f.email.value.trim() };
       if (isGuardian()) Object.assign(applicant, { guardianName: f.guardianName.value.trim(), relation: f.relation.value.trim(), guardianConsent: true });
@@ -97,7 +124,9 @@ async function init() {
           uid: state.user.uid,
           applicant, agreePrivacy: true,
           memo: f.memo.value.trim(),
-          items: items.map(i => ({ programId: i.programId, title: i.title, category: i.category, date: i.date || '', fee: Number(i.fee) || 0 })),
+          items: items.map(i => ({ programId: i.programId, title: i.title, category: i.category, date: i.date || '', fee: Number(i.fee) || 0,
+            type: i.type || '', courseId: i.courseId || '', requiresCourse: i.requiresCourse || '', requiresCourseTitle: i.requiresCourseTitle || '' })),
+          receipt, receiptStatus: receipt.type === 'none' ? 'none' : '대기',
           subtotal, discount, discountRate: rate, memberTier: rate ? ms.tier : '', memberNo: rate ? ms.memberNo : '',
           total, status: '접수완료', createdAt: fs.serverTimestamp()
         });

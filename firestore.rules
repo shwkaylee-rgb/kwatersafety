@@ -51,6 +51,50 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ---------- 온라인 학습 ----------
+    // 수강 중(수료 포함)이고 수강 기간 안인지
+    function enrolledNow(courseId) {
+      let path = /databases/$(database)/documents/enrollments/$(request.auth.uid + '_' + courseId);
+      return signedIn() && exists(path)
+        && get(path).data.status in ['active', 'passed']
+        && request.time < get(path).data.endAt;
+    }
+
+    // 과정 정보: 누구나 읽기, 관리자만 쓰기
+    match /courses/{courseId} {
+      allow read: if true;
+      allow write: if isAdmin();
+      // 챕터 본문(영상·글): 수강 중인 회원과 관리자만
+      match /chapters/{chapterId} {
+        allow read: if isAdmin() || enrolledNow(courseId);
+        allow write: if isAdmin();
+      }
+    }
+
+    // 평가 문제·정답: 관리자만 (회원은 서버 함수로만 응시)
+    match /courseExams/{courseId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 수강 정보: 관리자가 승인 시 생성. 본인은 수강 기간 안에 진도만 기록 가능. 합격 기록은 서버 함수만
+    match /enrollments/{enrollmentId} {
+      // 문서 ID가 '내 UID_과정ID'이면 아직 수강 기록이 없어도 조회 가능 (없음을 확인하려고)
+      allow get: if isAdmin() || (signedIn() && enrollmentId.matches(request.auth.uid + '_.+'));
+      allow list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid
+            && resource.data.status == 'active'
+            && request.time < resource.data.endAt
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['progress', 'lastStudiedAt']));
+    }
+
+    // 응시 기록: 본인·관리자 읽기, 쓰기는 서버 함수만
+    match /examAttempts/{attemptId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if false;
+    }
+
     // 멤버십(회원 자격): 본인과 관리자만 조회, 관리자만 수정 (입금 확인 후 활성화)
     match /memberships/{uid} {
       allow read: if isOwner(uid) || isAdmin();
@@ -89,7 +133,9 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.status == '접수완료'
-        && !('adminMemo' in request.resource.data);
+        && !('adminMemo' in request.resource.data)
+        && !('receiptNo' in request.resource.data)
+        && (!('receiptStatus' in request.resource.data) || request.resource.data.receiptStatus in ['none', '대기']);
       allow update: if isAdmin()
         || (signedIn() && resource.data.uid == request.auth.uid
             && resource.data.status == '접수완료'

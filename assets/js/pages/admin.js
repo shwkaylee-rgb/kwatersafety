@@ -1,6 +1,8 @@
 import { enabled, db, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, BOARD_TITLES } from '../app.js';
 import { tabMembership } from './admin-membership.js';
-import { TIER_NAMES, memberStatus, STATUS_NAMES } from '../membership.js';
+import { TIER_NAMES, memberStatus, STATUS_NAMES, todayYmd } from '../membership.js';
+import { tabOnline } from './admin-online.js';
+import { enrollmentId, newAccessPeriod, completionValid } from '../course.js';
 
 const el = document.getElementById('admin');
 const STATUSES = ['접수완료', '승인', '반려', '취소'];
@@ -18,10 +20,11 @@ async function init() {
       '<button type="button" data-tab="apps" class="is-active">신청 관리</button>' +
       '<button type="button" data-tab="membership">멤버십</button>' +
       '<button type="button" data-tab="programs">교육·자격 과정</button>' +
+      '<button type="button" data-tab="online">온라인 학습</button>' +
       '<button type="button" data-tab="members">회원 목록</button>' +
       '<button type="button" data-tab="posts">게시판</button>' +
     '</div><div id="tab"></div>';
-  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, members: tabMembers, posts: tabPosts };
+  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), members: tabMembers, posts: tabPosts };
   el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
     el.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-active', x === b));
     tabs[b.getAttribute('data-tab')]();
@@ -33,11 +36,17 @@ const tab = () => document.getElementById('tab');
 /* ---------- 신청 관리 ---------- */
 async function tabApps() {
   tab().innerHTML = '<p class="board-empty">불러오는 중…</p>';
-  let apps;
+  let apps, enrs;
   try {
-    const snap = await fs.getDocs(fs.collection(db, 'applications'));
-    apps = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+    const [snap, eSnap] = await Promise.all([fs.getDocs(fs.collection(db, 'applications')), fs.getDocs(fs.collection(db, 'enrollments'))]);
+    // 일부 항목이 빠진 신청서가 있어도 목록 전체가 멈추지 않게 기본값을 채움
+    apps = snap.docs.map(d => ({ id: d.id, items: [], ...d.data() })).map(x => ({ ...x, applicant: x.applicant || {} })).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+    enrs = Object.fromEntries(eSnap.docs.map(d => [d.id, d.data()]));
   } catch (e) { tab().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; return; }
+  // 사전요건(온라인 학습 수료) 확인 표시
+  const prereq = (a, i) => !i.requiresCourse ? '' : completionValid(enrs[enrollmentId(a.uid, i.requiresCourse)])
+    ? ' <span class="mstatus mstatus-ok">사전요건 수료 ✓</span>' : ' <span class="mstatus mstatus-no">사전요건 미수료</span>';
+  const receiptLine = a => !a.receipt || a.receipt.type === 'none' ? '' : '<p class="form-help">증빙: ' + (a.receipt.type === 'cash' ? '현금영수증 · ' + esc(a.receipt.phone) : '계산서 · ' + esc(a.receipt.bizName) + ' (' + esc(a.receipt.bizNo) + ')') + ' · ' + esc(a.receiptStatus || '') + '</p>';
 
   let filter = '전체';
   function draw() {
@@ -54,7 +63,8 @@ async function tabApps() {
           '<p class="applicant"><b>' + esc(a.applicant.name) + '</b> · ' + esc(a.applicant.birth) + ' · ' +
             '<a href="tel:' + esc(a.applicant.phone) + '">' + esc(a.applicant.phone) + '</a> · ' + esc(a.applicant.email) + '</p>' +
           (a.applicant.guardianName ? '<p class="applicant guardian-line">보호자 신청: ' + esc(a.applicant.guardianName) + ' (' + esc(a.applicant.relation) + ')</p>' : '') +
-          '<ul>' + a.items.map(i => '<li>[' + esc(i.category) + '] ' + esc(i.title) + (i.date ? ' <small>' + esc(i.date) + '</small>' : '') + '<span>' + won(i.fee) + '</span></li>').join('') + '</ul>' +
+          '<ul>' + a.items.map(i => '<li>[' + esc(i.category) + '] ' + esc(i.title) + (i.date ? ' <small>' + esc(i.date) + '</small>' : '') + prereq(a, i) + '<span>' + won(i.fee) + '</span></li>').join('') + '</ul>' +
+          receiptLine(a) +
           (a.memo ? '<p class="memo">신청자 메모: ' + esc(a.memo) + '</p>' : '') +
           (a.discount ? '<p class="form-help">교육비 ' + won(a.subtotal) + ' · ' + TIER_NAMES[a.memberTier] + ' 할인 ' + Math.round(a.discountRate * 100) + '% (' + esc(a.memberNo) + ') −' + a.discount.toLocaleString('ko-KR') + '원</p>' : '') +
           '<footer class="admin-app-foot"><b>합계 ' + won(a.total) + '</b>' +
@@ -70,10 +80,11 @@ async function tabApps() {
       const status = tab().querySelector('[data-status="' + id + '"]').value;
       const adminMemo = tab().querySelector('[data-memo="' + id + '"]').value.trim();
       try {
-        await fs.updateDoc(fs.doc(db, 'applications', id), { status, adminMemo });
-        Object.assign(apps.find(a => a.id === id), { status, adminMemo });
-        toast('저장했습니다.'); draw();
-      } catch (e) { toast(errMsg(e)); }
+        const a = apps.find(x => x.id === id);
+        const changes = await saveApplication(a, status, adminMemo);
+        Object.assign(a, changes);
+        toast(changes.opened ? '저장했습니다. 온라인 과정 ' + changes.opened + '개의 수강을 열었습니다.' : '저장했습니다.'); draw();
+      } catch (e) { toast(e.message && !e.code ? e.message : errMsg(e)); }
     }));
     document.getElementById('csv').addEventListener('click', () => downloadCSV(list));
     document.getElementById('purge').addEventListener('click', async () => {
@@ -95,6 +106,43 @@ async function tabApps() {
   draw();
 }
 
+// 신청 상태 저장. 승인 시 온라인 과정 수강을 열고, 승인 취소 시 닫음. 증빙 상태도 맞춤
+async function saveApplication(a, status, adminMemo) {
+  const today = todayYmd(), batch = fs.writeBatch(db);
+  const upd = { status, adminMemo };
+  const online = a.items.filter(i => i.type === 'online' && i.courseId);
+  let opened = 0;
+  if (status === '승인' && a.status !== '승인') {
+    upd.approvedOn = today;
+    for (const i of online) {
+      const cSnap = await fs.getDoc(fs.doc(db, 'courses', i.courseId));
+      if (!cSnap.exists()) throw new Error('"' + i.title + '" 온라인 과정을 찾을 수 없습니다.');
+      const eRef = fs.doc(db, 'enrollments', enrollmentId(a.uid, i.courseId));
+      const old = await fs.getDoc(eRef);
+      if (old.exists() && completionValid(old.data())) continue;   // 이미 수료해서 인정 기간 안이면 그대로 둠
+      const p = newAccessPeriod(cSnap.data(), today);
+      batch.set(eRef, {
+        uid: a.uid, courseId: i.courseId, courseTitle: cSnap.data().title, name: a.applicant.name, email: a.applicant.email,
+        status: 'active', startDate: p.startDate, endDate: p.endDate, endAt: p.endAt, progress: {}, applicationId: a.id, createdAt: fs.serverTimestamp()
+      });
+      opened++;
+    }
+  }
+  if (a.status === '승인' && (status === '취소' || status === '반려')) {
+    for (const i of online) {
+      const eRef = fs.doc(db, 'enrollments', enrollmentId(a.uid, i.courseId));
+      const old = await fs.getDoc(eRef);
+      if (old.exists() && old.data().applicationId === a.id && old.data().status === 'active') batch.update(eRef, { status: 'cancelled' });
+    }
+  }
+  if ((status === '취소' || status === '반려') && a.receiptStatus) {
+    upd.receiptStatus = a.receiptStatus === '발급' ? '취소필요' : a.receiptStatus === '대기' ? 'none' : a.receiptStatus;
+  }
+  batch.update(fs.doc(db, 'applications', a.id), upd);
+  await batch.commit();
+  return { ...upd, opened };
+}
+
 function downloadCSV(apps) {
   const rows = [['신청일시', '상태', '참가자 이름', '생년월일', '보호자', '관계', '휴대폰', '이메일', '구분', '과정명', '일정', '비용', '신청자 메모', '협회 안내']];
   apps.forEach(a => a.items.forEach(i => rows.push([
@@ -112,10 +160,12 @@ function downloadCSV(apps) {
 /* ---------- 교육·자격 과정 ---------- */
 async function tabPrograms() {
   tab().innerHTML = '<p class="board-empty">불러오는 중…</p>';
-  let programs;
+  let programs, courses;
   try {
-    const snap = await fs.getDocs(fs.collection(db, 'programs'));
-    programs = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+    const [snap, cSnap] = await Promise.all([fs.getDocs(fs.collection(db, 'programs')), fs.getDocs(fs.collection(db, 'courses'))]);
+    // 온라인 과정은 [온라인 학습] 탭에서 관리하므로 여기서는 대면 과정만
+    programs = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.type !== 'online').sort((a, b) => (a.order || 0) - (b.order || 0));
+    courses = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (e) { tab().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; return; }
 
   function form(p) {
@@ -130,6 +180,8 @@ async function tabPrograms() {
       '<div class="form-row"><label>비용(원, 무료는 0)<input type="number" name="fee" min="0" step="1000" value="' + esc(p.fee) + '"></label>' +
       '<label>정렬 순서 <small>(작을수록 앞)</small><input type="number" name="order" value="' + esc(p.order || 0) + '"></label></div>' +
       '<label>설명<textarea name="description" rows="5">' + esc(p.description) + '</textarea></label>' +
+      '<label>사전요건 온라인 과정 <small>(선택하면 이 과정을 수료한 회원만 신청 가능)</small><select name="requiresCourse"><option value="">없음</option>' +
+        courses.map(c => '<option value="' + c.id + '"' + (c.id === p.requiresCourse ? ' selected' : '') + '>' + esc(c.title) + '</option>').join('') + '</select></label>' +
       '<label class="check"><input type="checkbox" name="open"' + (p.open ? ' checked' : '') + '> 모집 중 (체크 해제하면 신청 페이지에서 숨김)</label>' +
       '<div class="btn-row">' + (p.id ? '<button type="button" class="btn btn-outline" id="pf-cancel">취소</button>' : '') +
       '<button class="btn btn-primary" type="submit">' + (p.id ? '수정 완료' : '등록') + '</button></div></form>';
@@ -140,7 +192,7 @@ async function tabPrograms() {
       '<table class="board-table"><thead><tr><th>구분</th><th>과정명</th><th class="col-date">일정</th><th>비용</th><th>상태</th><th></th></tr></thead><tbody>' +
       (programs.length ? programs.map(p => '<tr><td>' + esc(p.category) + '</td><td class="col-title">' + esc(p.title) + '</td><td class="col-date">' + esc(p.date) + '</td>' +
         '<td>' + won(p.fee) + '</td><td>' + (p.open ? '<span class="status status-승인">모집 중</span>' : '<span class="status status-취소">마감</span>') + '</td>' +
-        '<td class="nowrap"><button type="button" class="link-btn" data-edit="' + p.id + '">수정</button> <button type="button" class="link-btn" data-remove="' + p.id + '">삭제</button></td></tr>').join('')
+        (p.requiresCourse ? '<td class="nowrap"><small class="guardian-line">온라인 선수</small><br>' : '<td class="nowrap">') + '<button type="button" class="link-btn" data-edit="' + p.id + '">수정</button> <button type="button" class="link-btn" data-remove="' + p.id + '">삭제</button></td></tr>').join('')
         : '<tr><td colspan="6">등록된 과정이 없습니다.</td></tr>') +
       '</tbody></table>' + form(editing);
 
@@ -162,7 +214,9 @@ async function tabPrograms() {
       const data = {
         category: f.category.value, title: f.title.value.trim(), date: f.date.value.trim(), place: f.place.value.trim(),
         capacity: f.capacity.value ? Number(f.capacity.value) : '', deadline: f.deadline.value.trim(),
-        fee: Number(f.fee.value) || 0, order: Number(f.order.value) || 0, description: f.description.value, open: f.open.checked
+        fee: Number(f.fee.value) || 0, order: Number(f.order.value) || 0, description: f.description.value, open: f.open.checked,
+        requiresCourse: f.requiresCourse.value,
+        requiresCourseTitle: f.requiresCourse.value ? courses.find(c => c.id === f.requiresCourse.value).title : ''
       };
       try {
         const id = f.getAttribute('data-id');

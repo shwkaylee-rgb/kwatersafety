@@ -150,11 +150,18 @@ async function refund(a) {
 /* ---------- 증빙 발급 ---------- */
 async function viewReceipts() {
   let apps;
-  try { apps = await loadApps(); } catch (e) { target().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; return; }
-  // 발급은 입금 확인(활성화) 후, 취소 발급은 환불 후
-  const todo = apps.filter(a => (a.status === '활성화' && a.receiptStatus === '대기') || a.receiptStatus === '취소필요');
+  try {
+    // 멤버십 회비 + 교육비(교육·자격·온라인 신청)를 한 목록으로
+    const [ms, cSnap] = await Promise.all([loadApps(), fs.getDocs(fs.collection(db, 'applications'))]);
+    const course = cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(a => a.receipt)
+      .map(a => ({ ...a, src: 'applications', fee: a.total, processedOn: a.approvedOn || '', paid: a.status === '승인' }));
+    apps = ms.map(a => ({ ...a, src: 'membershipApplications', paid: a.status === '활성화' })).concat(course);
+  } catch (e) { target().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; return; }
+  const kindText = a => a.src === 'applications' ? '교육비' : '회비';
+  // 발급은 입금 확인(활성화·승인) 후, 취소 발급은 환불·취소 후
+  const todo = apps.filter(a => (a.paid && a.receiptStatus === '대기') || a.receiptStatus === '취소필요');
   const done = apps.filter(a => a.receiptStatus === '발급' || a.receiptStatus === '취소').slice(0, 30);
-  const row = a => '<tr><td>' + esc(a.processedOn || '') + '</td><td>' + esc(a.applicant.name) + '</td><td>' + won(a.fee) + '</td>' +
+  const row = a => '<tr><td>' + esc(a.processedOn || '') + '</td><td>' + esc(a.applicant.name) + '<br><small>' + kindText(a) + '</small></td><td>' + won(a.fee) + '</td>' +
     '<td class="col-title">' + receiptText(a.receipt) + '</td><td>' + RECEIPT_NAMES[a.receiptStatus] + (a.receiptNo ? '<br><small>' + esc(a.receiptNo) + '</small>' : '') + '</td>';
   target().innerHTML =
     '<p class="form-help">홈택스에서 발급한 뒤 승인번호를 적고 [발급 완료]를 누르세요. 협회는 면세 사업자이므로 사업자에게는 <b>계산서</b>를 발급합니다.</p>' +
@@ -174,15 +181,15 @@ async function viewReceipts() {
     if (!no) { toast('승인번호를 입력해 주세요.'); return; }
     const cancel = a.receiptStatus === '취소필요';
     try {
-      await fs.updateDoc(fs.doc(db, 'membershipApplications', a.id), cancel
+      await fs.updateDoc(fs.doc(db, a.src, a.id), cancel
         ? { receiptStatus: '취소', receiptCancelNo: no, receiptCancelledOn: todayYmd() }
         : { receiptStatus: '발급', receiptNo: no, receiptIssuedOn: todayYmd() });
       toast(cancel ? '취소 발급을 기록했습니다.' : '발급 완료로 기록했습니다.'); viewReceipts();
     } catch (e) { toast(errMsg(e)); }
   }));
   document.getElementById('rcsv').addEventListener('click', () => csv('증빙목록',
-    [['확인일', '이름', '금액', '구분', '휴대폰(현금영수증)', '사업자번호', '상호', '대표자', '이메일', '상태', '승인번호']].concat(
-      apps.filter(a => a.receipt && a.receipt.type !== 'none').map(a => [a.processedOn || '', a.applicant.name, a.fee,
+    [['확인일', '종류', '이름', '금액', '구분', '휴대폰(현금영수증)', '사업자번호', '상호', '대표자', '이메일', '상태', '승인번호']].concat(
+      apps.filter(a => a.receipt && a.receipt.type !== 'none').map(a => [a.processedOn || '', kindText(a), a.applicant.name, a.fee,
         a.receipt.type === 'cash' ? '현금영수증' : '계산서', a.receipt.phone || '', a.receipt.bizNo || '', a.receipt.bizName || '',
         a.receipt.bizOwner || '', a.receipt.email || '', RECEIPT_NAMES[a.receiptStatus] || '', a.receiptNo || '']))));
 }

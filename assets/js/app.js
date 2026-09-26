@@ -6,21 +6,34 @@ const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
 export const enabled = !!firebaseConfig.apiKey;
 
 export let auth = null, db = null, fa = {}, fs = {};
+let fbApp = null, fnClient = null;
+const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
 if (enabled) {
   const [appMod, authMod, fsMod] = await Promise.all([
     import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')
   ]);
   // 내 컴퓨터(localhost)에서 열면 실제 Firebase 대신 테스트용 에뮬레이터에 연결 (`npm run emulators`)
-  const local = ['localhost', '127.0.0.1'].includes(location.hostname);
-  const app = appMod.initializeApp(local ? { ...firebaseConfig, projectId: 'demo-kwasa' } : firebaseConfig);
+  const app = fbApp = appMod.initializeApp(isLocal ? { ...firebaseConfig, projectId: 'demo-kwasa' } : firebaseConfig);
   auth = authMod.getAuth(app);
   db = fsMod.getFirestore(app);
-  if (local) {
+  if (isLocal) {
     authMod.connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
     fsMod.connectFirestoreEmulator(db, '127.0.0.1', 8080);
     console.info('[테스트 모드] Firebase 에뮬레이터에 연결했습니다.');
   }
   fa = authMod; fs = fsMod;
+}
+
+// 서버 함수 호출 (온라인 학습 평가 등). 필요할 때만 불러옴
+export async function callFn(name, data) {
+  if (!fnClient) {
+    const m = await import(SDK + 'firebase-functions.js');
+    const f = m.getFunctions(fbApp, 'asia-northeast3');
+    if (isLocal) m.connectFunctionsEmulator(f, '127.0.0.1', 5001);
+    fnClient = { m, f };
+  }
+  const res = await fnClient.m.httpsCallable(fnClient.f, name)(data);
+  return res.data;
 }
 
 /* ---------- 유틸 ---------- */
@@ -54,6 +67,8 @@ export function toast(msg) {
 // Firebase 오류 메시지를 한국어로
 export function errMsg(e) {
   const code = (e && e.code) || '';
+  // 서버 함수가 보낸 오류는 이미 한국어 안내문이므로 그대로 보여줌
+  if (code.startsWith('functions/') && e.message && code !== 'functions/internal') return e.message;
   const map = {
     'auth/invalid-email': '이메일 형식이 올바르지 않습니다.',
     'auth/email-already-in-use': '이미 가입된 이메일입니다.',
@@ -182,7 +197,10 @@ export async function addToCart(program) {
   if (!(await requireLogin())) return;
   await fs.setDoc(fs.doc(db, 'users', state.user.uid, 'cart', program.id), {
     programId: program.id, title: program.title, category: program.category,
-    date: program.date || '', fee: Number(program.fee) || 0, addedAt: fs.serverTimestamp()
+    date: program.date || '', fee: Number(program.fee) || 0,
+    type: program.type || '', courseId: program.courseId || '',
+    requiresCourse: program.requiresCourse || '', requiresCourseTitle: program.requiresCourseTitle || '',
+    addedAt: fs.serverTimestamp()
   });
   toast('장바구니에 담았습니다.');
 }

@@ -1,6 +1,7 @@
 import { enabled, auth, db, fa, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, qs, logout } from '../app.js';
 import { TIER_NAMES, KIND_NAMES, memberStatus, availableKinds, daysLeft, MEMBERSHIP as M } from '../membership.js';
 import { benefitsTable, statusBadge, appStatusBadge } from '../membership-ui.js';
+import { enrollmentStatus, completionValid, progressPercent, ENR_STATUS_NAMES } from '../course.js';
 
 const el = document.getElementById('mypage');
 
@@ -35,6 +36,7 @@ async function init() {
       '</form>' +
       '<div class="my-col">' +
         '<section class="my-apps"><h2>멤버십</h2><div id="ms"><p class="board-empty">불러오는 중…</p></div></section>' +
+        '<section class="my-apps"><h2>온라인 학습</h2><div id="ol"><p class="board-empty">불러오는 중…</p></div></section>' +
         '<section class="my-apps"><h2>교육·자격 신청 내역</h2><div id="apps"><p class="board-empty">불러오는 중…</p></div></section>' +
       '</div>' +
     '</div>';
@@ -55,7 +57,31 @@ async function init() {
   document.getElementById('logout').addEventListener('click', logout);
   initWithdraw(u);
   loadMembership();
+  loadOnline();
   loadApps();
+}
+
+// 온라인 학습 (STA의 Begin / Continue 표 방식)
+async function loadOnline() {
+  const box = document.getElementById('ol');
+  try {
+    const snap = await fs.getDocs(fs.query(fs.collection(db, 'enrollments'), fs.where('uid', '==', state.user.uid)));
+    const enrs = snap.docs.map(d => d.data());
+    if (!enrs.length) { box.innerHTML = '<p class="board-empty">수강 중인 온라인 과정이 없습니다. <a href="online.html">온라인 학습 보기</a></p>'; return; }
+    const courses = {};
+    await Promise.all(enrs.map(async e => { const c = await fs.getDoc(fs.doc(db, 'courses', e.courseId)); courses[e.courseId] = c.exists() ? c.data() : null; }));
+    box.innerHTML = '<div class="table-scroll"><table class="board-table"><thead><tr><th>과정명</th><th>상태</th><th>진도</th><th class="col-date">기간</th><th></th></tr></thead><tbody>' +
+      enrs.map(e => {
+        const st = enrollmentStatus(e), c = courses[e.courseId], q = encodeURIComponent(e.courseId);
+        const when = st === 'passed' ? '수료 ' + esc(e.passedOn) + (e.validUntil ? '<br><small>인정 ' + esc(e.validUntil) + '까지' + (completionValid(e) ? '' : ' (만료)') + '</small>' : '')
+          : esc(e.endDate) + '까지';
+        const act = st === 'passed' ? '<a class="link-btn" href="course-certificate.html?course=' + q + '">수료증</a>'
+          : st === 'active' ? '<a class="btn btn-primary btn-sm" href="learn.html?course=' + q + '">' + (progressPercent(c, e) ? '이어서 학습' : '학습 시작') + '</a>'
+          : '<a class="link-btn" href="online.html#' + q + '">다시 신청</a>';
+        return '<tr><td class="col-title">' + esc((c && c.title) || e.courseTitle) + '</td><td>' + ENR_STATUS_NAMES[st] + (st === 'passed' ? '<br><small>' + e.score + '점</small>' : '') + '</td>' +
+          '<td>' + progressPercent(c, e) + '%</td><td class="col-date">' + when + '</td><td class="nowrap">' + act + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">온라인 학습 정보를 불러오지 못했습니다.</p>'; }
 }
 
 async function loadMembership() {

@@ -1,0 +1,13 @@
+{
+  "name": "kwasa-functions",
+  "private": true,
+  "description": "온라인 학습 평가 채점 등 서버 함수",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.6.0"
+  }
+}
