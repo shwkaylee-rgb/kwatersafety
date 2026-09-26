@@ -2,6 +2,7 @@ import { enabled, db, fs, state, requireLogin, disabledNotice, toast, errMsg, es
 import { tabMembership } from './admin-membership.js';
 import { TIER_NAMES, memberStatus, STATUS_NAMES, todayYmd } from '../membership.js';
 import { tabOnline } from './admin-online.js';
+import { tabEdu } from './admin-edu.js';
 import { enrollmentId, newAccessPeriod, completionValid } from '../course.js';
 
 const el = document.getElementById('admin');
@@ -20,11 +21,12 @@ async function init() {
       '<button type="button" data-tab="apps" class="is-active">신청 관리</button>' +
       '<button type="button" data-tab="membership">멤버십</button>' +
       '<button type="button" data-tab="programs">교육·자격 과정</button>' +
+      '<button type="button" data-tab="edu">교육 이수</button>' +
       '<button type="button" data-tab="online">온라인 학습</button>' +
       '<button type="button" data-tab="members">회원 목록</button>' +
       '<button type="button" data-tab="posts">게시판</button>' +
     '</div><div id="tab"></div>';
-  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), members: tabMembers, posts: tabPosts };
+  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), members: tabMembers, posts: tabPosts };
   el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
     el.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-active', x === b));
     tabs[b.getAttribute('data-tab')]();

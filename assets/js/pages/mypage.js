@@ -36,6 +36,7 @@ async function init() {
       '</form>' +
       '<div class="my-col">' +
         '<section class="my-apps"><h2>멤버십</h2><div id="ms"><p class="board-empty">불러오는 중…</p></div></section>' +
+        '<section class="my-apps"><h2>내 교육</h2><div id="edu"><p class="board-empty">불러오는 중…</p></div></section>' +
         '<section class="my-apps"><h2>온라인 학습</h2><div id="ol"><p class="board-empty">불러오는 중…</p></div></section>' +
         '<section class="my-apps"><h2>교육·자격 신청 내역</h2><div id="apps"><p class="board-empty">불러오는 중…</p></div></section>' +
       '</div>' +
@@ -58,7 +59,37 @@ async function init() {
   initWithdraw(u);
   loadMembership();
   loadOnline();
+  loadEdu();
   loadApps();
+}
+
+// 내 교육: 대면 교육·자격 과정별 진행 상태와 이수 결과
+async function loadEdu() {
+  const box = document.getElementById('edu');
+  try {
+    const [aSnap, cSnap] = await Promise.all([
+      fs.getDocs(fs.query(fs.collection(db, 'applications'), fs.where('uid', '==', state.user.uid))),
+      fs.getDocs(fs.query(fs.collection(db, 'completions'), fs.where('uid', '==', state.user.uid)))
+    ]);
+    const comps = Object.fromEntries(cSnap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
+    const rows = [];
+    aSnap.docs.forEach(d => {
+      const a = d.data();
+      if (a.status !== '승인' && a.status !== '접수완료') return;
+      (a.items || []).filter(i => i.type !== 'online').forEach(i => rows.push({ a, i, c: comps[d.id + '_' + i.programId], created: a.createdAt?.toMillis?.() || 0 }));
+    });
+    if (!rows.length) { box.innerHTML = '<p class="board-empty">신청한 교육이 없습니다. <a href="programs.html">교육·자격 과정 보기</a></p>'; return; }
+    rows.sort((x, y) => y.created - x.created);
+    const status = r => r.c && r.c.result === '이수' ? '<span class="mstatus mstatus-ok">이수</span>' + (r.c.score != null ? '<br><small>' + r.c.score + '점</small>' : '')
+      : r.c && r.c.result === '미이수' ? '<span class="mstatus mstatus-no">미이수</span>'
+      : r.a.status === '승인' ? '<span class="mstatus mstatus-wait">수강 예정</span>' : '<span class="mstatus mstatus-off">신청 접수</span>';
+    box.innerHTML = '<div class="table-scroll"><table class="board-table"><thead><tr><th>과정명</th><th class="col-date">일정</th><th>상태</th><th></th></tr></thead><tbody>' +
+      rows.map(r => '<tr><td class="col-title">' + esc(r.i.title) + (r.a.applicant && r.a.applicant.guardianName ? '<br><small>참가자 ' + esc(r.a.applicant.name) + '</small>' : '') +
+        (r.c && r.c.comment ? '<br><small class="muted">' + esc(r.c.comment) + '</small>' : '') + '</td>' +
+        '<td class="col-date">' + esc(r.i.date || '') + '</td><td>' + status(r) + '</td>' +
+        '<td class="nowrap">' + (r.c && r.c.result === '이수' ? '<a class="link-btn" href="edu-certificate.html?id=' + encodeURIComponent(r.c.id) + '">이수증</a>' : '') + '</td></tr>').join('') +
+      '</tbody></table></div>';
+  } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">교육 정보를 불러오지 못했습니다.</p>'; }
 }
 
 // 온라인 학습 (STA의 Begin / Continue 표 방식)

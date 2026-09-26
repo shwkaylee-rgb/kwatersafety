@@ -623,3 +623,7 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
   .footer-sitemap { display: none; }
 }
 .exam-error { color: #c62828; background: #fdeaea; border-radius: 10px; padding: 12px 14px; font-size: 15px; }
+.inline-field { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.inline-field input { padding: 6px 10px; border: 1px solid #d5d9de; border-radius: 8px; font: inherit; font-weight: 400; }
+.mini-input.wide { width: 200px; }
+.edu-table select { padding: 6px 8px; border: 1px solid #d5d9de; border-radius: 8px; font: inherit; }

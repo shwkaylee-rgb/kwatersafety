@@ -107,6 +107,15 @@ await req('PATCH', enr, 'owner', { uid: c.uid, courseId: 'cx', status: 'active',
 await expect('수강 기간이 끝난 뒤 챕터 읽기', 'deny', req('GET', 'courses/cx/chapters/ch1', c.token));
 await expect('수강 기간이 끝난 뒤 진도 기록', 'deny', req('PATCH', enr, c.token, { progress: { ch1: true } }, ['progress']));
 
+console.log('\n[교육 이수 결과]');
+const compId = `completions/${RUN}comp1`;
+await expect('수강생이 스스로 "이수" 기록', 'deny', req('PATCH', compId, c.token, { uid: c.uid, result: '이수', certNo: 'KWSA-ED-2026-9999' }));
+await expect('관리자가 이수 기록', 'allow', req('PATCH', compId, admin.token, { uid: c.uid, result: '이수', score: 90, certNo: 'KWSA-ED-2026-0001' }));
+await expect('본인 이수 기록 읽기', 'allow', req('GET', compId, c.token));
+await expect('남의 이수 기록 읽기', 'deny', req('GET', compId, b.token));
+await expect('수강생이 점수 고치기', 'deny', req('PATCH', compId, c.token, { score: 100 }, ['score']));
+await expect('일반 회원이 이수번호 일련번호 바꾸기', 'deny', req('PATCH', 'counters/eduCert', c.token, { year: '2026', seq: 0 }));
+
 console.log('\n[교육 신청서 증빙]');
 const courseApp = (extra = {}) => ({ uid: c.uid, status: '접수완료', items: [], total: 0, ...extra });
 await expect('증빙 "발급 대기"로 교육 신청', 'allow', req('PATCH', `applications/${RUN}ap1`, c.token, courseApp({ receiptStatus: '대기' })));

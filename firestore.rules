@@ -51,6 +51,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ---------- 대면 교육 이수 결과 ----------
+    // 관리자가 이수·미이수, 점수, 이수번호를 기록. 회원은 자기 결과만 조회
+    match /completions/{completionId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
     // ---------- 온라인 학습 ----------
     // 수강 중(수료 포함)이고 수강 기간 안인지
     function enrolledNow(courseId) {
