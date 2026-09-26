@@ -1,0 +1,12 @@
+{
+  "name": "kwasa-homepage",
+  "private": true,
+  "description": "사단법인 대한수상안전협회 홈페이지 (개발·테스트 도구 전용. 사이트 자체는 빌드 없이 동작)",
+  "scripts": {
+    "build": "node tools/build.js",
+    "emulators": "firebase emulators:start --project demo-kwasa"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.35.1"
+  }
+}

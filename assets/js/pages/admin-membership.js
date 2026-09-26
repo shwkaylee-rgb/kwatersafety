@@ -39,6 +39,13 @@ async function viewApps() {
   try { apps = await loadApps(); } catch (e) { target().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; return; }
   let filter = '접수';
   function draw() {
+    // 환불은 회원별 가장 최근에 활성화된 신청만 가능 (오래된 신청부터 되돌리면 이후 변경이 꼬임)
+    const latest = {};
+    apps.filter(a => a.status === '활성화').forEach(a => {
+      const t = a.processedAt?.toMillis?.() || 0;
+      if (!latest[a.uid] || t > latest[a.uid].t) latest[a.uid] = { id: a.id, t };
+    });
+    apps.forEach(a => { a._canRefund = a.status === '활성화' && latest[a.uid] && latest[a.uid].id === a.id; });
     const list = filter === '전체' ? apps : apps.filter(a => a.status === filter);
     target().innerHTML =
       '<div class="admin-toolbar"><div class="chips">' + ['접수', '활성화', '반려', '취소', '환불', '전체'].map(s =>
@@ -85,7 +92,9 @@ function appCard(a) {
       '<input id="memo-' + a.id + '" placeholder="반려 사유 (신청자에게 보임)">' +
       '<button type="button" class="btn btn-outline btn-sm" data-act="reject" data-id="' + a.id + '">반려</button>' +
       '<button type="button" class="btn btn-primary btn-sm" data-act="activate" data-id="' + a.id + '">입금 확인·활성화</button></footer>' : '') +
-    (a.status === '활성화' ? '<footer class="admin-app-foot"><span></span><button type="button" class="btn btn-outline btn-sm" data-act="refund" data-id="' + a.id + '">환불 처리</button></footer>' : '') +
+    (a.status === '활성화' ? '<footer class="admin-app-foot">' + (a._canRefund
+      ? '<span></span><button type="button" class="btn btn-outline btn-sm" data-act="refund" data-id="' + a.id + '">환불 처리</button>'
+      : '<span class="form-help">이후에 처리된 신청이 있어 환불할 수 없습니다. 최신 신청부터 환불해 주세요.</span>') + '</footer>' : '') +
     '</article>';
 }
 

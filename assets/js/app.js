@@ -10,9 +10,16 @@ if (enabled) {
   const [appMod, authMod, fsMod] = await Promise.all([
     import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')
   ]);
-  const app = appMod.initializeApp(firebaseConfig);
+  // 내 컴퓨터(localhost)에서 열면 실제 Firebase 대신 테스트용 에뮬레이터에 연결 (`npm run emulators`)
+  const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+  const app = appMod.initializeApp(local ? { ...firebaseConfig, projectId: 'demo-kwasa' } : firebaseConfig);
   auth = authMod.getAuth(app);
   db = fsMod.getFirestore(app);
+  if (local) {
+    authMod.connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+    fsMod.connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    console.info('[테스트 모드] Firebase 에뮬레이터에 연결했습니다.');
+  }
   fa = authMod; fs = fsMod;
 }
 

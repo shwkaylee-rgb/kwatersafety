@@ -84,7 +84,7 @@ async function loadMembership() {
       '<dl class="ms-info"><dt>회원번호</dt><dd>' + esc(m.memberNo) + '</dd>' +
       '<dt>기간</dt><dd>' + esc(m.startDate) + ' ~ ' + esc(m.endDate) + '</dd></dl>' +
       '<p class="ms-remain">' + remain + '</p>' +
-      '<p class="btn-row left">' + (s !== 'expired' ? '<a class="btn btn-outline btn-sm" href="membership-card.html">회원증 보기</a>' : '') +
+      '<p class="btn-row left">' + (s === 'active' || s === 'grace' ? '<a class="btn btn-outline btn-sm" href="membership-card.html">회원증 보기</a>' : '') +
       (!pending && kinds.length ? '<a class="btn btn-primary btn-sm" href="membership-apply.html">' +
         kinds.map(k => KIND_NAMES[k]).join(' · ') + ' 신청</a>' : '') + '</p>' +
       '</div>' +
