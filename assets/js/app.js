@@ -144,10 +144,15 @@ function fromDoc(d) {
 }
 const sortKey = p => (p.date || '') + (p.createdAt && p.createdAt.toMillis ? String(p.createdAt.toMillis()).padStart(15, '0') : '');
 
-// 게시판 글 목록 (최신순). Firebase 설정 전에는 posts.js 내용을 사용
+// 게시판 글 목록 (최신순). Firebase 설정 전, 또는 기존 글을 아직 가져오지 않아
+// Firebase 게시판이 통째로 비어 있을 때는 posts.js 내용을 보여줍니다.
 export async function listPosts(board) {
   if (!enabled) return staticPosts(board);
   const snap = await fs.getDocs(fs.query(fs.collection(db, 'posts'), fs.where('board', '==', board)));
+  if (snap.empty) {
+    const any = await fs.getDocs(fs.query(fs.collection(db, 'posts'), fs.limit(1)));
+    if (any.empty) return staticPosts(board);
+  }
   return snap.docs.map(fromDoc).sort((a, b) => sortKey(b).localeCompare(sortKey(a)));
 }
 export async function getPost(board, id) {
