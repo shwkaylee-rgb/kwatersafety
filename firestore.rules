@@ -51,6 +51,38 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // 멤버십(회원 자격): 본인과 관리자만 조회, 관리자만 수정 (입금 확인 후 활성화)
+    match /memberships/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // 회원번호 일련번호: 관리자만
+    match /counters/{counterId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 멤버십 신청서: 본인 제출, '접수' 상태에서 본인 취소만 가능. 심사·활성화·증빙 발급은 관리자
+    match /membershipApplications/{appId} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == '접수'
+        && request.resource.data.kind in ['join', 'renew', 'upgrade']
+        && request.resource.data.tier in ['general', 'full']
+        && request.resource.data.fee is int && request.resource.data.fee >= 0
+        && request.resource.data.receiptStatus in ['none', '대기']
+        && !('adminMemo' in request.resource.data)
+        && !('receiptNo' in request.resource.data)
+        && !('memberNo' in request.resource.data);
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid
+            && resource.data.status == '접수'
+            && request.resource.data.status == '취소'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']));
+      allow delete: if isAdmin();
+    }
+
     // 신청서: 본인과 관리자만 조회. 본인은 제출과 '접수완료' 상태에서 취소만 가능
     match /applications/{appId} {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);

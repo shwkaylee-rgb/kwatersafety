@@ -1,4 +1,5 @@
 import { enabled, db, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, won } from '../app.js';
+import { TIER_NAMES, discountRate } from '../membership.js';
 
 const el = document.getElementById('cart');
 
@@ -18,14 +19,19 @@ async function init() {
       el.innerHTML = '<p class="board-empty">장바구니가 비어 있습니다.</p><p class="center"><a class="btn btn-primary" href="programs.html">교육·자격 과정 보기</a></p>';
       return;
     }
-    const total = items.reduce((s, i) => s + (Number(i.fee) || 0), 0);
+    const subtotal = items.reduce((s, i) => s + (Number(i.fee) || 0), 0);
+    // 멤버십 회원 할인 (10원 단위 버림)
+    const ms = state.membership, rate = discountRate(ms);
+    const discount = Math.floor(subtotal * rate / 10) * 10, total = subtotal - discount;
     const p = state.profile || {};
     el.innerHTML =
       '<table class="board-table cart-table"><thead><tr><th>구분</th><th>과정명</th><th class="col-date">일정</th><th>비용</th><th></th></tr></thead><tbody>' +
       items.map(i => '<tr><td>' + esc(i.category) + '</td><td class="col-title">' + esc(i.title) + '</td><td class="col-date">' + esc(i.date) + '</td>' +
         '<td>' + won(i.fee) + '</td><td><button type="button" class="link-btn" data-remove="' + i.id + '">삭제</button></td></tr>').join('') +
       '</tbody></table>' +
+      (discount ? '<p class="cart-sub">교육비 ' + won(subtotal) + ' · ' + TIER_NAMES[ms.tier] + ' 할인 ' + Math.round(rate * 100) + '% −' + discount.toLocaleString('ko-KR') + '원</p>' : '') +
       '<p class="cart-total">합계 <b>' + won(total) + '</b></p>' +
+      (!discount && subtotal ? '<p class="cart-sub"><a href="membership.html">멤버십 회원</a>은 교육비를 10~20% 할인받습니다.</p>' : '') +
       '<form class="form-card wide" id="f"><h2>신청서</h2>' +
         '<fieldset class="choice"><legend>신청 구분</legend>' +
           '<label class="check"><input type="radio" name="type" value="self" checked> 본인 신청</label>' +
@@ -92,6 +98,7 @@ async function init() {
           applicant, agreePrivacy: true,
           memo: f.memo.value.trim(),
           items: items.map(i => ({ programId: i.programId, title: i.title, category: i.category, date: i.date || '', fee: Number(i.fee) || 0 })),
+          subtotal, discount, discountRate: rate, memberTier: rate ? ms.tier : '', memberNo: rate ? ms.memberNo : '',
           total, status: '접수완료', createdAt: fs.serverTimestamp()
         });
         items.forEach(i => batch.delete(fs.doc(cartCol, i.id)));

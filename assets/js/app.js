@@ -69,7 +69,7 @@ export function disabledNotice(el) {
 }
 
 /* ---------- 로그인 상태 ---------- */
-export const state = { user: null, profile: null, isAdmin: false };
+export const state = { user: null, profile: null, isAdmin: false, membership: null };
 const listeners = [];
 let resolveReady;
 export const ready = new Promise(r => { resolveReady = r; });
@@ -77,8 +77,13 @@ export function onAuth(cb) { listeners.push(cb); }
 
 if (enabled) {
   fa.onAuthStateChanged(auth, async user => {
-    state.user = user; state.profile = null; state.isAdmin = false;
+    state.user = user; state.profile = null; state.isAdmin = false; state.membership = null;
     if (user) {
+      // 멤버십은 따로 읽어서, 실패해도 로그인 처리에는 영향이 없게 함
+      try {
+        const ms = await fs.getDoc(fs.doc(db, 'memberships', user.uid));
+        state.membership = ms.exists() ? ms.data() : null;
+      } catch (e) { console.warn('멤버십 정보를 읽지 못했습니다.', e); }
       let loaded = false;
       try {
         const [p, a] = await Promise.all([

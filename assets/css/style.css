@@ -400,6 +400,87 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
 .footer-links { margin-bottom: 6px; }
 .footer-links a { color: #fff; }
 
+/* ---------- 멤버십 ---------- */
+:root { --tier-assoc: #6b7c90; --tier-general: #2b86c5; --tier-full: #1f3f8f; }
+.tier-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-bottom: 30px; }
+.tier-card { --c: var(--tier-assoc); background: #fff; border: 1px solid var(--line); border-top: 5px solid var(--c); border-radius: 12px; padding: 26px 24px; display: grid; gap: 10px; align-content: start; }
+.tier-card.general { --c: var(--tier-general); }
+.tier-card.full { --c: var(--tier-full); }
+.tier-tag { font-size: 13px; font-weight: 700; color: var(--c); }
+.tier-card h3 { font-size: 22px; font-weight: 800; }
+.tier-fee { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tier-fee small { font-size: 14px; font-weight: 500; color: var(--text-sub); }
+.tier-card ul { list-style: disc; padding-left: 18px; font-size: 15px; display: grid; gap: 2px; }
+.tier-card p { font-size: 15px; color: #555; }
+.tier-card a { color: var(--primary); }
+.tier-note { font-size: 13px !important; color: var(--c) !important; font-weight: 600; }
+.cta-status { margin-bottom: 12px; color: var(--text-sub); }
+.section-gap { margin-top: 70px; }
+.howto { list-style: none; counter-reset: h; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 26px; }
+.howto li { counter-increment: h; background: var(--bg-soft); border-radius: 12px; padding: 20px; display: grid; gap: 4px; }
+.howto li::before { content: counter(h); width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: #fff; font-weight: 700; font-size: 14px; display: grid; place-items: center; margin-bottom: 6px; }
+.howto b { font-size: 16px; }
+.howto span { font-size: 14px; color: var(--text-sub); }
+.rule-list { list-style: disc; padding-left: 20px; display: grid; gap: 6px; color: #444; font-size: 15px; }
+.rule-list a { color: var(--primary); }
+.table-scroll { overflow-x: auto; }
+.benefit-table { min-width: 640px; }
+.benefit-table th[scope=row] { text-align: left; white-space: nowrap; background: none; font-weight: 600; }
+.benefit-table td { text-align: left; color: var(--text); font-size: 15px; }
+.benefit-table .is-mine { background: #eaf2fe; }
+.muted { color: #aaa; }
+
+.my-col { display: grid; gap: 40px; align-content: start; }
+.ms-card { --c: var(--tier-general); border: 1px solid var(--line); border-left: 5px solid var(--c); border-radius: 14px; padding: 22px 24px; display: grid; gap: 10px; margin-bottom: 14px; }
+.ms-card.tier-full { --c: var(--tier-full); }
+.ms-card.empty { --c: var(--line); }
+.ms-card header { display: flex; align-items: center; gap: 10px; }
+.ms-tier { font-size: 20px; font-weight: 800; color: var(--c); }
+.ms-info { display: grid; grid-template-columns: 70px 1fr; gap: 2px 10px; font-size: 15px; }
+.ms-info dt { color: #999; }
+.ms-info dd { font-variant-numeric: tabular-nums; }
+.ms-remain { font-size: 14px; color: var(--text-sub); }
+.ms-benefits { margin-bottom: 14px; }
+.ms-benefits summary { cursor: pointer; color: var(--primary); font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+.btn-row.left { justify-content: flex-start; }
+.mstatus { font-size: 13px; font-weight: 700; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+.mstatus-active, .mstatus-ok { background: #e5f6ec; color: #1a7f43; }
+.mstatus-grace, .mstatus-wait { background: #fff4e0; color: #b86e00; }
+.mstatus-expired, .mstatus-off, .mstatus-none { background: #eef0f2; color: #777; }
+.mstatus-suspended, .mstatus-no { background: #fdeaea; color: #c62828; }
+.pay-line { font-size: 15px; }
+.pay-total { font-size: 18px; text-align: right; }
+.pay-total b { color: var(--primary); font-size: 22px; margin-left: 6px; }
+.cart-sub { text-align: right; font-size: 14px; color: var(--text-sub); margin: 20px 0 -12px; }
+.cart-total + .cart-sub { margin: -40px 0 50px; }
+.cart-sub a { color: var(--primary); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sub-chips { margin-bottom: 24px; }
+.list-title { font-size: 17px; margin: 26px 0 10px; }
+.mini-input { width: 130px; padding: 6px 10px; border: 1px solid #d5d9de; border-radius: 8px; font: inherit; font-size: 14px; margin-right: 6px; }
+
+/* 회원증 */
+.member-card { --c: var(--tier-general); max-width: 440px; aspect-ratio: 1.586; margin: 0 auto 30px; border-radius: 18px; padding: 26px 28px; color: #fff;
+  background: linear-gradient(135deg, var(--c), #0d2a4a); display: flex; flex-direction: column; gap: 6px; box-shadow: 0 16px 40px rgba(13,42,74,.25);
+  -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.member-card.tier-full { --c: var(--tier-full); }
+.mc-head { display: flex; justify-content: space-between; align-items: center; }
+.mc-head img { height: 30px; width: auto; }
+.mc-tier { font-weight: 800; font-size: 15px; border: 1px solid rgba(255,255,255,.6); border-radius: 14px; padding: 2px 12px; }
+.mc-label { font-size: 11px; letter-spacing: .2em; opacity: .7; margin-top: auto; }
+.mc-name { font-size: 24px; font-weight: 800; }
+.member-card dl { display: grid; grid-template-columns: 64px 1fr; gap: 0 10px; font-size: 13px; }
+.member-card dt { opacity: .7; }
+.member-card dd { font-variant-numeric: tabular-nums; }
+.mc-warn { font-size: 13px; font-weight: 700; color: #ffd27a; }
+.mc-foot { font-size: 11px; opacity: .6; }
+
+@media print {
+  .site-header, .site-footer, .sub-banner, .sub-tabs, .mobile-nav, .toast, .no-print { display: none !important; }
+  .page { padding: 0 !important; }
+  body { background: #fff; }
+}
+
 /* ---------- 푸터 ---------- */
 .site-footer { background: #1b1f24; color: #a4abb3; padding: 60px 0 50px; font-size: 14px; }
 .footer-top { display: flex; justify-content: space-between; gap: 40px; padding-bottom: 36px; border-bottom: 1px solid #333a42; }
@@ -436,6 +517,8 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
   .partner-grid .row { grid-template-columns: 1fr; }
   .form-row, .mypage-grid { grid-template-columns: 1fr; }
   .policy-toc ol { columns: 1; }
+  .tier-grid, .howto { grid-template-columns: 1fr; }
+  .member-card { padding: 20px; }
   .comment-form { flex-direction: column; }
   .cart-table th:nth-child(1), .cart-table td:nth-child(1) { display: none; }
   .mission { background-attachment: scroll; padding: 100px 0; }

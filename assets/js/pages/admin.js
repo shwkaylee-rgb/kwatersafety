@@ -1,4 +1,6 @@
 import { enabled, db, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, BOARD_TITLES } from '../app.js';
+import { tabMembership } from './admin-membership.js';
+import { TIER_NAMES, memberStatus, STATUS_NAMES } from '../membership.js';
 
 const el = document.getElementById('admin');
 const STATUSES = ['접수완료', '승인', '반려', '취소'];
@@ -7,18 +9,19 @@ async function init() {
   if (!enabled) return disabledNotice(el);
   if (!(await requireLogin())) return;
   if (!state.isAdmin) {
-    el.innerHTML = '<div class="notice-box">관리자 권한이 없습니다.<br><small>회원 번호(UID): <code>' + esc(state.user.uid) + '</code><br>' +
+    el.innerHTML = '<div class="notice-box">관리자 권한이 없습니다.<br><small>계정 ID(UID): <code>' + esc(state.user.uid) + '</code><br>' +
       'Firebase 콘솔 &gt; Firestore 에서 <b>admins</b> 컬렉션에 위 UID로 문서를 만들면 관리자가 됩니다.</small></div>';
     return;
   }
   el.innerHTML =
     '<div class="admin-tabs" role="tablist">' +
       '<button type="button" data-tab="apps" class="is-active">신청 관리</button>' +
+      '<button type="button" data-tab="membership">멤버십</button>' +
       '<button type="button" data-tab="programs">교육·자격 과정</button>' +
       '<button type="button" data-tab="members">회원 목록</button>' +
       '<button type="button" data-tab="posts">게시판</button>' +
     '</div><div id="tab"></div>';
-  const tabs = { apps: tabApps, programs: tabPrograms, members: tabMembers, posts: tabPosts };
+  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, members: tabMembers, posts: tabPosts };
   el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
     el.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-active', x === b));
     tabs[b.getAttribute('data-tab')]();
@@ -53,6 +56,7 @@ async function tabApps() {
           (a.applicant.guardianName ? '<p class="applicant guardian-line">보호자 신청: ' + esc(a.applicant.guardianName) + ' (' + esc(a.applicant.relation) + ')</p>' : '') +
           '<ul>' + a.items.map(i => '<li>[' + esc(i.category) + '] ' + esc(i.title) + (i.date ? ' <small>' + esc(i.date) + '</small>' : '') + '<span>' + won(i.fee) + '</span></li>').join('') + '</ul>' +
           (a.memo ? '<p class="memo">신청자 메모: ' + esc(a.memo) + '</p>' : '') +
+          (a.discount ? '<p class="form-help">교육비 ' + won(a.subtotal) + ' · ' + TIER_NAMES[a.memberTier] + ' 할인 ' + Math.round(a.discountRate * 100) + '% (' + esc(a.memberNo) + ') −' + a.discount.toLocaleString('ko-KR') + '원</p>' : '') +
           '<footer class="admin-app-foot"><b>합계 ' + won(a.total) + '</b>' +
             '<select data-status="' + a.id + '">' + STATUSES.map(s => '<option' + (s === a.status ? ' selected' : '') + '>' + s + '</option>').join('') + '</select>' +
             '<input data-memo="' + a.id + '" placeholder="신청자에게 보일 안내 (예: 입금 계좌)" value="' + esc(a.adminMemo || '') + '">' +
@@ -175,12 +179,14 @@ async function tabPrograms() {
 async function tabMembers() {
   tab().innerHTML = '<p class="board-empty">불러오는 중…</p>';
   try {
-    const snap = await fs.getDocs(fs.collection(db, 'users'));
+    const [snap, msSnap] = await Promise.all([fs.getDocs(fs.collection(db, 'users')), fs.getDocs(fs.collection(db, 'memberships'))]);
+    const ms = Object.fromEntries(msSnap.docs.map(d => [d.id, d.data()]));
     const users = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-    tab().innerHTML = '<p class="board-count">전체 회원 <b>' + users.length + '</b>명</p>' +
-      '<table class="board-table"><thead><tr><th>이름</th><th>이메일</th><th>휴대폰</th><th class="col-date">가입일</th></tr></thead><tbody>' +
-      users.map(u => '<tr><td>' + esc(u.name) + '</td><td class="col-title">' + esc(u.email) + '</td><td>' + esc(u.phone) + '</td><td class="col-date">' + fmtDate(u.createdAt) + '</td></tr>').join('') +
-      '</tbody></table>';
+    const tierText = m => m ? TIER_NAMES[m.tier] + ' <small>(' + STATUS_NAMES[memberStatus(m)] + ')</small>' : '<span class="muted">–</span>';
+    tab().innerHTML = '<p class="board-count">전체 회원 <b>' + users.length + '</b>명 <small>(멤버십 관리는 [멤버십] 탭)</small></p>' +
+      '<div class="table-scroll"><table class="board-table"><thead><tr><th>이름</th><th>이메일</th><th>휴대폰</th><th>멤버십</th><th class="col-date">가입일</th></tr></thead><tbody>' +
+      users.map(u => '<tr><td>' + esc(u.name) + '</td><td class="col-title">' + esc(u.email) + '</td><td>' + esc(u.phone) + '</td><td>' + tierText(ms[u.id]) + '</td><td class="col-date">' + fmtDate(u.createdAt) + '</td></tr>').join('') +
+      '</tbody></table></div>';
   } catch (e) { tab().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; }
 }
 

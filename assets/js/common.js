@@ -6,7 +6,8 @@ var MENU = [
     { title: '대한수상안전협회 소개', href: 'about.html' },
     { title: '이사장 인사말', href: 'greeting.html' },
     { title: '조직도', href: 'organization.html' },
-    { title: '오시는길', href: 'location.html' }
+    { title: '오시는길', href: 'location.html' },
+    { title: '회원 안내', href: 'membership.html' }
   ]},
   { title: '활동영역', href: 'activities-talent.html', children: [
     { title: '수상안전 인재육성', href: 'activities-talent.html' },
@@ -159,7 +160,7 @@ var SITE = {
         }).join('') + '</ul>' +
       '</div>' +
       '<div class="footer-info">' +
-        '<p class="footer-links"><a href="privacy.html"><b>개인정보처리방침</b></a></p>' +
+        '<p class="footer-links"><a href="privacy.html"><b>개인정보처리방침</b></a><i>|</i><a href="terms.html">회원 약관</a><i>|</i><a href="membership.html">회원 안내</a></p>' +
         '<p>' + SITE.name + ' <i>|</i> 전화 : <a href="tel:' + SITE.tel + '">' + SITE.tel + '</a> <i>|</i> 팩스 : ' + SITE.fax +
         ' <i>|</i> 이메일 : <a href="mailto:' + SITE.email + '">' + SITE.email + '</a></p>' +
         '<p>주소 : ' + SITE.address + ' <i>|</i> 등록번호 : ' + SITE.regNo + '</p>' +
