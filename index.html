@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>사단법인 대한수상안전협회</title>
+  <meta name="description" content="사단법인 대한수상안전협회 - 생명보다 더 소중한 가치는 없습니다. 생존수영 교육, 자격제도, 수상안전 문화 확산">
+  <meta property="og:title" content="사단법인 대한수상안전협회">
+  <meta property="og:image" content="assets/img/og-image.png">
+  <link rel="icon" href="assets/img/logo-mobile.png">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-home>
+<main>
+  <section class="hero">
+    <div class="container">
+      <p class="hero-eyebrow">생명보다 더 소중한 가치는 없습니다</p>
+      <h1>대한수상안전협회</h1>
+      <p class="hero-desc">대한수상안전협회는 대한민국을 넘어 전 세계의<br>
+        수상안전과 재난안전의 필요성을 알리기 위해 최선을 다하고 있습니다.<br>
+        끊임없는 연구를 통해 보다 많은 사람을<br>
+        생명의 위협으로부터 지킬 수 있도록 최선을 다하겠습니다.</p>
+    </div>
+    <a class="scroll-down" href="#activities" aria-label="아래로 스크롤"></a>
+  </section>
+
+  <section class="section section-soft" id="activities">
+    <div class="container">
+      <div class="section-head">
+        <p class="eyebrow">ACTIVITIES</p>
+        <h2>활동영역</h2>
+        <p class="keywords"><span>생존수영 교육</span><span>능력 인증제</span><span>교구개발 및 시범사업운영 등</span></p>
+        <p>아래의 다양한 활동을 통해 '대한수상안전협회'는 생존수영 교육부터 인증제를 통한 저변 확대를 기대하며<br>
+          이에 필요한 교구 개발, 판매 및 시범사업운영 등을 하고 있습니다.</p>
+      </div>
+      <div class="activity-grid">
+        <article class="activity-card">
+          <span class="activity-num">01</span>
+          <p class="sub">생존수영 지도자 자격제 등</p>
+          <h3>생존수영 교육</h3>
+          <p>생존수영 분야 전문가를 육성하고자 직접 자격제도를 운영하여 대한민국 생존수영 발전에 이바지하고자 합니다.</p>
+        </article>
+        <article class="activity-card">
+          <span class="activity-num">02</span>
+          <p class="sub">생존수영 능력 인증제 등</p>
+          <h3>생존수영 저변 확대</h3>
+          <p>영유아부터 성인까지 생존수영 능력 인증제를 실시하여, 교육 목표 달성부터 생존수영 실제 능력 습득 등 저변 확대에 앞장서고자 합니다.</p>
+        </article>
+        <article class="activity-card">
+          <span class="activity-num">03</span>
+          <p class="sub">생존수영 교구 개발, 판매 및</p>
+          <h3>시범사업 운영, 포럼 개최</h3>
+          <p>생존수영에 필요한 교구부터 입수를 어려워하는 친구들까지 생존수영을 익힐 수 있도록 다양한 교구 개발과 시범사업(행사)를 추진중에 있습니다.</p>
+        </article>
+      </div>
+      <p class="center" style="margin-top:50px"><a class="btn btn-primary" href="activities-talent.html">더 알아보기</a></p>
+    </div>
+  </section>
+
+  <section class="mission">
+    <div class="container">
+      <p class="quote">- 생명보다 더 소중한 가치는 없습니다 -</p>
+      <h2>대한수상안전협회</h2>
+      <h3>보다 안전한 세상을 만드는데 앞장서겠습니다</h3>
+      <p>대한수상안전협회는 대한민국을 넘어 전세계의 수상 안전과 재난 안전의 필요성을 알리기 위해 최선을 다하고 있습니다.<br>
+        끊임없는 연구를 통해 보다 많은 사람을 생명의 위협으로부터 지킬 수 있도록 최선을 다하겠습니다.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container latest-grid">
+      <div>
+        <div class="latest-box-head"><h3>공지사항</h3><a href="notice.html">더보기 +</a></div>
+        <ul class="latest-list" id="latest-notice"></ul>
+      </div>
+      <div>
+        <div class="latest-box-head"><h3>협회소식</h3><a href="news.html">더보기 +</a></div>
+        <ul class="latest-list" id="latest-news"></ul>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="assets/js/common.js"></script>
+<script src="assets/js/posts.js"></script>
+<script>renderLatest(document.getElementById('latest-notice'),'notice',4);renderLatest(document.getElementById('latest-news'),'news',4,true);</script>
+</body>
+</html>
