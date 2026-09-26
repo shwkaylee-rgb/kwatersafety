@@ -58,6 +58,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ---------- 협회 자격 ----------
+    // 자격 원장: 관리자만 발급·수정. 회원은 자기 자격만 조회
+    match /qualifications/{certNo} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    // 공개 자격 확인: 문서 ID가 sha256(자격번호|성명)이라 둘 다 알아야 한 건만 조회 가능. 목록 조회는 막음
+    match /qualVerify/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow write: if isAdmin();
+    }
+
     // ---------- 온라인 학습 ----------
     // 수강 중(수료 포함)이고 수강 기간 안인지
     function enrolledNow(courseId) {

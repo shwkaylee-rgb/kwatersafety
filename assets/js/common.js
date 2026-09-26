@@ -19,6 +19,7 @@ var MENU = [
     { title: '수상인명구조사', href: 'cert-lifeguard.html' },
     { title: '응급처치 이수교육', href: 'cert-firstaid.html' },
     { title: '온라인 학습', href: 'online.html' },
+    { title: '자격 확인', href: 'verify.html' },
     { title: '교육·자격 신청', href: 'programs.html' }
   ]},
   { title: '공지사항', href: 'notice.html', children: [

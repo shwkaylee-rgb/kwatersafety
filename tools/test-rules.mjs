@@ -122,5 +122,20 @@ await expect('증빙 "발급 대기"로 교육 신청', 'allow', req('PATCH', `a
 await expect('증빙을 "발급"으로 교육 신청', 'deny', req('PATCH', `applications/${RUN}ap2`, c.token, courseApp({ receiptStatus: '발급' })));
 await expect('승인번호를 넣어 교육 신청', 'deny', req('PATCH', `applications/${RUN}ap3`, c.token, courseApp({ receiptNo: 'X' })));
 
+console.log('\n[협회 자격]');
+const qd = `qualifications/KWSA-CS-${RUN}`, vd = `qualVerify/${RUN}hash`;
+await expect('회원이 스스로 자격 발급', 'deny', req('PATCH', qd, c.token, { uid: c.uid, typeId: 'clothed', status: 'active', expiresOn: '2099-01-01' }));
+await expect('관리자가 자격 발급', 'allow', req('PATCH', qd, admin.token, { uid: c.uid, typeId: 'clothed', name: 'C', status: 'active', issuedOn: '2026-10-10', expiresOn: '2028-10-09' }));
+await expect('본인 자격 읽기', 'allow', req('GET', qd, c.token));
+await expect('남의 자격 읽기', 'deny', req('GET', qd, b.token));
+await expect('로그인 없이 자격 원장 읽기', 'deny', req('GET', qd, null));
+await expect('회원이 유효기간 늘리기', 'deny', req('PATCH', qd, c.token, { expiresOn: '2099-01-01' }, ['expiresOn']));
+await expect('관리자가 공개 확인 문서 작성', 'allow', req('PATCH', vd, admin.token, { certNo: 'KWSA-CS-X', maskedName: 'C', status: 'active' }));
+await expect('로그인 없이 자격 확인 조회', 'allow', req('GET', vd, null));
+await expect('로그인 없이 없는 자격 조회', 'allow404', req('GET', `qualVerify/${RUN}none`, null));
+await expect('자격 확인 목록 전체 조회', 'deny', req('GET', 'qualVerify', null));
+await expect('회원이 공개 확인 문서 위조', 'deny', req('PATCH', `qualVerify/${RUN}fake`, c.token, { certNo: 'FAKE', status: 'active' }));
+await expect('회원이 자격번호 일련번호 바꾸기', 'deny', req('PATCH', 'counters/qual_clothed', c.token, { year: '2026', seq: 0 }));
+
 console.log(`\n결과: 통과 ${pass} / 실패 ${fail}`);
 process.exit(fail ? 1 : 0);

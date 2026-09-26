@@ -3,6 +3,7 @@ import { db, fs, toast, errMsg, esc, fmtDate, won } from '../app.js';
 import { MEMBERSHIP as M, TIER_NAMES, KIND_NAMES, STATUS_NAMES, memberStatus, daysLeft, nextPeriod,
   formatMemberNo, retierMemberNo, todayYmd, addDays } from '../membership.js';
 import { statusBadge, appStatusBadge } from '../membership-ui.js';
+import { qualStatus, QUAL_STATUS_NAMES, normNo, normName } from '../qual.js';
 
 const RECEIPT_NAMES = { none: '필요 없음', '대기': '발급 대기', '발급': '발급 완료', '취소필요': '취소 발급 필요', '취소': '취소 완료' };
 let box, view = 'apps';
@@ -53,6 +54,7 @@ async function viewApps() {
         (s === '전체' ? apps.length : apps.filter(a => a.status === s).length) + '</button>').join('') + '</div></div>' +
       (list.length ? list.map(appCard).join('') : '<p class="board-empty">해당하는 신청이 없습니다.</p>');
     target().querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => { filter = b.getAttribute('data-filter'); draw(); }));
+    checkQuals(target());
     target().querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => act(b.getAttribute('data-act'), apps.find(a => a.id === b.getAttribute('data-id')))));
   }
   async function act(kind, a) {
@@ -75,6 +77,24 @@ async function viewApps() {
   draw();
 }
 
+// 협회 자격이면 자격 원장에서 번호·이름·유효 여부를 바로 확인해서 표시
+async function checkQuals(root) {
+  for (const sp of root.querySelectorAll('[data-qcheck]')) {
+    const no = sp.getAttribute('data-qcheck');
+    let html;
+    try {
+      const d = no ? await fs.getDoc(fs.doc(db, 'qualifications', no)) : null;
+      if (!d || !d.exists()) html = '<span class="mstatus mstatus-no">자격 원장에 없는 번호</span>';
+      else {
+        const q = d.data(), st = qualStatus(q), same = normName(q.name) === normName(sp.getAttribute('data-qname'));
+        const ok = (st === 'valid' || st === 'soon') && same;
+        html = '<span class="mstatus mstatus-' + (ok ? 'ok' : 'no') + '">원장 확인: ' + esc(q.typeName) + ' ' + QUAL_STATUS_NAMES[st] + (same ? '' : ' · 이름 불일치(' + esc(q.name) + ')') + (ok ? ' ✓' : '') + '</span>';
+      }
+    } catch (e) { html = '<span class="muted">자격 확인 실패</span>'; }
+    sp.innerHTML = html;
+  }
+}
+
 function appCard(a) {
   const q = a.qualification;
   return '<article class="app-card admin">' +
@@ -84,7 +104,8 @@ function appCard(a) {
     '<p class="pay-line">입금액 <b>' + won(a.fee) + '</b> · 입금자명 <b>' + esc(a.depositor) + '</b>' +
       (a.alumni ? ' · <span class="guardian-line">준회원 출신 할인 (인증서 ' + esc(a.alumni.certNo) + ') 확인 필요</span>' : '') + '</p>' +
     (q ? '<p class="memo">자격: ' + (q.type === 'kwsa' ? '협회 자격' : '외부 자격') + ' · ' + esc(q.name) + ' · 번호 ' + esc(q.number) +
-      (q.type === 'external' ? ' · ' + esc(q.issuer) : '') + (q.date ? ' · 취득 ' + esc(q.date) : '') + ' · 윤리강령 동의 ' + (a.ethicsAgreed ? '✓' : '✗') + '</p>' : '') +
+      (q.type === 'external' ? ' · ' + esc(q.issuer) : '') + (q.date ? ' · 취득 ' + esc(q.date) : '') + ' · 윤리강령 동의 ' + (a.ethicsAgreed ? '✓' : '✗') +
+      (q.type === 'kwsa' ? ' <span data-qcheck="' + esc(normNo(q.number)) + '" data-qname="' + esc(a.applicant.name) + '"></span>' : '') + '</p>' : '') +
     '<p class="form-help">' + receiptText(a.receipt) + ' · ' + RECEIPT_NAMES[a.receiptStatus || 'none'] + '</p>' +
     (a.status === '활성화' ? '<p class="form-help">회원번호 ' + esc(a.memberNo) + ' · 기간 ' + esc(a.periodStart) + ' ~ ' + esc(a.periodEnd) + ' · 처리 ' + esc(a.processedOn) + '</p>' : '') +
     (a.adminMemo ? '<p class="admin-memo">사유: ' + esc(a.adminMemo) + '</p>' : '') +

@@ -1,6 +1,8 @@
 import { enabled, auth, db, fa, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, qs, logout } from '../app.js';
 import { TIER_NAMES, KIND_NAMES, memberStatus, availableKinds, daysLeft, MEMBERSHIP as M } from '../membership.js';
 import { benefitsTable, statusBadge, appStatusBadge } from '../membership-ui.js';
+import { qualStatus, QUAL_STATUS_NAMES } from '../qual.js';
+import { daysBetween, todayYmd } from '../membership.js';
 import { enrollmentStatus, completionValid, progressPercent, ENR_STATUS_NAMES } from '../course.js';
 
 const el = document.getElementById('mypage');
@@ -36,6 +38,7 @@ async function init() {
       '</form>' +
       '<div class="my-col">' +
         '<section class="my-apps"><h2>멤버십</h2><div id="ms"><p class="board-empty">불러오는 중…</p></div></section>' +
+        '<section class="my-apps"><h2>자격증</h2><div id="qual"><p class="board-empty">불러오는 중…</p></div></section>' +
         '<section class="my-apps"><h2>내 교육</h2><div id="edu"><p class="board-empty">불러오는 중…</p></div></section>' +
         '<section class="my-apps"><h2>온라인 학습</h2><div id="ol"><p class="board-empty">불러오는 중…</p></div></section>' +
         '<section class="my-apps"><h2>교육·자격 신청 내역</h2><div id="apps"><p class="board-empty">불러오는 중…</p></div></section>' +
@@ -60,7 +63,29 @@ async function init() {
   loadMembership();
   loadOnline();
   loadEdu();
+  loadQual();
   loadApps();
+}
+
+// 자격증: 보유 자격, 유효기간, 갱신 안내
+async function loadQual() {
+  const box = document.getElementById('qual');
+  try {
+    const snap = await fs.getDocs(fs.query(fs.collection(db, 'qualifications'), fs.where('uid', '==', state.user.uid)));
+    const qs2 = snap.docs.map(d => ({ ...d.data(), certNo: d.id })).sort((a, b) => (b.issuedOn || '').localeCompare(a.issuedOn || ''));
+    if (!qs2.length) { box.innerHTML = '<p class="board-empty">보유한 협회 자격이 없습니다. <a href="programs.html">자격 과정 보기</a></p>'; return; }
+    const pill = { valid: 'ok', soon: 'wait', expired: 'off', suspended: 'no', revoked: 'no' };
+    box.innerHTML = '<div class="table-scroll"><table class="board-table"><thead><tr><th>자격명</th><th>자격번호</th><th class="col-date">유효기간</th><th>상태</th><th></th></tr></thead><tbody>' +
+      qs2.map(q => {
+        const st = qualStatus(q), left = daysBetween(todayYmd(), q.expiresOn);
+        const note = st === 'soon' ? '<br><small>만료 ' + left + '일 전 · <a href="programs.html">갱신교육 신청</a></small>'
+          : st === 'expired' ? '<br><small><a href="programs.html">갱신교육</a>을 이수하면 다시 유효해집니다</small>'
+          : (st === 'suspended' || st === 'revoked') && q.statusReason ? '<br><small>' + esc(q.statusReason) + '</small>' : '';
+        return '<tr><td class="col-title">' + esc(q.typeName) + (q.name !== state.profile?.name ? '<br><small>' + esc(q.name) + '</small>' : '') + '</td><td class="nowrap">' + esc(q.certNo) + '</td>' +
+          '<td class="col-date">' + esc(q.issuedOn) + '<br>~ ' + esc(q.expiresOn) + '</td><td><span class="mstatus mstatus-' + pill[st] + '">' + QUAL_STATUS_NAMES[st] + '</span>' + note + '</td>' +
+          '<td class="nowrap">' + (st === 'revoked' || st === 'suspended' ? '' : '<a class="link-btn" href="qual-certificate.html?no=' + encodeURIComponent(q.certNo) + '">자격증</a>') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">자격 정보를 불러오지 못했습니다.</p>'; }
 }
 
 // 내 교육: 대면 교육·자격 과정별 진행 상태와 이수 결과
