@@ -55,7 +55,7 @@ async function init() {
       '<div class="agree"><p><strong>[필수] 개인정보 수집·이용 동의</strong><br>' +
         '수집 항목: 학생 이름·생년월일·학교·학년·반, 생존수영 평가 결과, 보호자 이름·관계·휴대폰 번호<br>' +
         '이용 목적: 생존수영 능력 평가, 인증서 발급, 준회원(인증일로부터 5년) 관리와 안내<br>' +
-        '보유 기간: 준회원 기간이 끝날 때까지. 인증서를 받기 전에 등록을 취소하면 바로 파기합니다.<br>' +
+        '보유 기간: 인증서를 받으면 준회원 기간(5년)이 끝날 때까지, 받지 못하면 수업 종료 후 1년까지. 인증서를 받기 전에 등록을 취소하면 바로 파기합니다.<br>' +
         '동의하지 않을 수 있으며, 이 경우 인증서를 발급받을 수 없습니다. <a href="privacy.html" target="_blank">개인정보처리방침</a></p>' +
         '<label class="check" id="legal-box"><input type="checkbox" name="legal"> 저는 이 학생의 법정대리인(보호자)이며, 만 14세 미만 자녀의 개인정보 처리에 동의합니다.</label>' +
         '<label class="check"><input type="checkbox" name="agree"> 위 개인정보 수집·이용에 동의합니다.</label></div>' +

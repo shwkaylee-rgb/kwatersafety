@@ -51,9 +51,12 @@ async function viewGroups(editing) {
       '<fieldset class="choice"><legend>평가 강사</legend>' + (evals.length ? evals.map(e => '<label class="check"><input type="checkbox" name="ev" value="' + e.uid + '"' + ((g0.evaluatorUids || []).includes(e.uid) ? ' checked' : '') + '> ' + esc(e.name) + ' <small>' + esc(e.email) + '</small></label>').join('')
         : '<p class="form-help">지정된 평가 강사가 없습니다. [평가 강사]에서 먼저 추가하세요.</p>') + '</fieldset>' +
       '<label class="check"><input type="checkbox" name="regOpen"' + (g0.regOpen !== false ? ' checked' : '') + '> 보호자 등록 받기</label>' +
-      '<div class="btn-row">' + (editing ? '<button type="button" class="btn btn-outline" id="gf-cancel">취소</button>' : '') + '<button class="btn btn-primary" type="submit">' + (editing ? '수정 완료' : '만들기') + '</button></div></form>';
+      '<div class="btn-row">' + (editing ? '<button type="button" class="btn btn-outline" id="gf-cancel">취소</button>' : '') + '<button class="btn btn-primary" type="submit">' + (editing ? '수정 완료' : '만들기') + '</button></div></form>' +
+    '<div class="notice-box left"><h3>보관기간 지난 등록 정리</h3><p>인증서를 받지 못한 등록(평가 전·평가 미완료)은 <b>수업 종료 후 1년</b>이 지나면 보호자 연락처와 함께 삭제합니다. 발급된 인증은 준회원 기간 동안 보관하므로 지우지 않습니다.</p>' +
+      '<button type="button" class="btn btn-outline btn-sm" id="sw-purge">보관기간 지난 미발급 등록 삭제</button></div>';
 
   target().querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => groupView(b.dataset.open)));
+  document.getElementById('sw-purge').addEventListener('click', () => purgeUnissued(groups));
   target().querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => { viewGroups(groups.find(g => g.id === b.dataset.edit)); }));
   const cancel = document.getElementById('gf-cancel');
   if (cancel) cancel.addEventListener('click', () => viewGroups());
@@ -288,4 +291,24 @@ async function viewItems() {
     try { await fs.setDoc(fs.doc(db, 'settings', 'swimItems'), { items: list, updatedAt: fs.serverTimestamp() }); toast('저장했습니다.'); }
     catch (err) { toast(errMsg(err)); }
   });
+}
+
+// 보관기간(수업 종료 후 1년) 지난 미발급 등록과 보호자 연락처 삭제
+export const UNISSUED_KEEP_DAYS = 365;
+async function purgeUnissued(groups) {
+  const limit = new Date(); limit.setDate(limit.getDate() - UNISSUED_KEEP_DAYS);
+  const cut = limit.getFullYear() + '-' + String(limit.getMonth() + 1).padStart(2, '0') + '-' + String(limit.getDate()).padStart(2, '0');
+  const expired = new Set(groups.filter(g => (g.endDate || g.startDate) && (g.endDate || g.startDate) < cut).map(g => g.id));
+  try {
+    const snap = await fs.getDocs(fs.collection(db, 'swimStudents'));
+    const old = snap.docs.filter(d => expired.has(d.data().groupId) && d.data().status !== 'issued');
+    if (!old.length) { toast('보관기간이 지난 미발급 등록이 없습니다.'); return; }
+    if (!confirm('수업 종료 후 1년이 지난 미발급 등록 ' + old.length + '건을 보호자 연락처와 함께 영구 삭제할까요?')) return;
+    for (let i = 0; i < old.length; i += 200) {
+      const batch = fs.writeBatch(db);
+      old.slice(i, i + 200).forEach(d => { batch.delete(d.ref); batch.delete(fs.doc(db, 'swimContacts', d.id)); });
+      await batch.commit();
+    }
+    toast(old.length + '건을 삭제했습니다.'); viewGroups();
+  } catch (err) { toast(errMsg(err)); }
 }
