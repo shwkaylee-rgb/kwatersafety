@@ -54,16 +54,21 @@ export async function makeQrPoster(g, link) {
   let fs = 60;
   do { ctx.font = '800 ' + fs + 'px ' + FONT; } while (splitLines(ctx, groupTitle(g), W - 140).length > 2 && (fs -= 4) >= 36);
   let y = wrapText(ctx, groupTitle(g), 300, W - 140, Math.round(fs * 1.2));
-  ctx.fillStyle = '#55657a'; ctx.font = '500 34px ' + FONT;
-  const sub = [groupPeriod(g) && '교육 ' + groupPeriod(g), g.place].filter(Boolean).join(' · ');
-  if (sub) { y += 60; ctx.fillText(sub, W / 2, y); }
+  // 교육 기간과 장소는 한 줄씩. 양옆 여백(좌우 100px)을 넘으면 글자를 줄임
+  ctx.fillStyle = '#55657a';
+  [groupPeriod(g) && '교육 ' + groupPeriod(g), g.place].filter(Boolean).forEach((line, i) => {
+    let size = 34;
+    do { ctx.font = '500 ' + size + 'px ' + FONT; } while (ctx.measureText(line).width > W - 200 && (size -= 2) >= 22);
+    y += i ? 48 : 60; ctx.fillText(line, W / 2, y);
+  });
 
   // QR 코드
   const qr = qrcode(0, 'M'); qr.addData(link); qr.make();
   // 아래 안내가 바닥 띠에 닿지 않는 범위에서 QR을 크게 (420~560px)
-  const qy = y + 110, below = 60 + 78 + 56 + (g.regDeadline ? 56 : 0) + 40;
+  const qy = Math.round(y + 110), below = 60 + 78 + 56 + (g.regDeadline ? 56 : 0) + 40;
   const n = qr.getModuleCount(), size = Math.max(420, Math.min(560, H - 110 - below - qy)), cell = Math.floor(size / n), qrW = cell * n;
-  const qx = (W - qrW) / 2, pad = Math.max(36, cell * 4);   // QR 둘레 흰 여백(4칸 이상)이 있어야 잘 읽힘
+  // 좌표는 정수여야 칸 사이에 흐린 선이 생기지 않고, QR 둘레 흰 여백은 4칸 이상이어야 잘 읽힘
+  const qx = Math.round((W - qrW) / 2), pad = Math.max(36, cell * 4);
   ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#d8e0e8'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.roundRect(qx - pad, qy - pad, qrW + pad * 2, qrW + pad * 2, 28); ctx.fill(); ctx.stroke();
   ctx.fillStyle = '#10233d';
