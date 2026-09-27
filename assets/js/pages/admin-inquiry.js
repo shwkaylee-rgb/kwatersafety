@@ -48,12 +48,13 @@ export async function tabInquiry(container) {
         logAdmin(again ? '문의 답변 수정' : '문의 답변', q.name + ' · ' + q.title, answer.slice(0, 100));
         Object.assign(q, { status: '답변완료', answer, answeredAt: new Date() });
         toast('답변을 보냈습니다.'); draw();
+        document.dispatchEvent(new Event('qna-changed'));
       } catch (e) { toast(errMsg(e)); b.disabled = false; }
     }));
     box.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
       const q = list.find(x => x.id === b.dataset.del);
       if (!confirm('「' + q.title + '」 문의를 삭제할까요? 회원 화면에서도 사라집니다.')) return;
-      try { await fs.deleteDoc(fs.doc(db, 'inquiries', q.id)); logAdmin('문의 삭제', q.name + ' · ' + q.title); list = list.filter(x => x !== q); toast('삭제했습니다.'); draw(); }
+      try { await fs.deleteDoc(fs.doc(db, 'inquiries', q.id)); logAdmin('문의 삭제', q.name + ' · ' + q.title); list = list.filter(x => x !== q); toast('삭제했습니다.'); draw(); document.dispatchEvent(new Event('qna-changed')); }
       catch (e) { toast(errMsg(e)); }
     }));
     document.getElementById('iq-purge').addEventListener('click', async () => {

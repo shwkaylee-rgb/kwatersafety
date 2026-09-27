@@ -1,4 +1,4 @@
-import { enabled, db, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, BOARD_TITLES } from '../app.js';
+import { enabled, db, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, BOARD_TITLES, displayName } from '../app.js';
 import { tabMembership } from './admin-membership.js';
 import { TIER_NAMES, memberStatus, STATUS_NAMES, todayYmd } from '../membership.js';
 import { tabOnline } from './admin-online.js';
@@ -28,30 +28,72 @@ async function init() {
       'Firebase 콘솔 &gt; Firestore 에서 <b>admins</b> 컬렉션에 위 UID로 문서를 만들면 관리자가 됩니다.</small></div>';
     return;
   }
-  el.innerHTML =
-    '<div class="admin-tabs" role="tablist">' +
-      '<button type="button" data-tab="dash" class="is-active">대시보드</button>' +
-      '<button type="button" data-tab="apps">신청 관리</button>' +
-      '<button type="button" data-tab="inquiry">문의</button>' +
-      '<button type="button" data-tab="membership">멤버십</button>' +
-      '<button type="button" data-tab="programs">교육·자격 과정</button>' +
-      '<button type="button" data-tab="edu">교육 이수</button>' +
-      '<button type="button" data-tab="qual">자격증</button>' +
-      '<button type="button" data-tab="swim">생존수영 인증</button>' +
-      '<button type="button" data-tab="online">온라인 학습</button>' +
-      '<button type="button" data-tab="members">회원 목록</button>' +
-      '<button type="button" data-tab="notice">알림·메일</button>' +
-      '<button type="button" data-tab="library">자료실·제휴</button>' +
-      '<button type="button" data-tab="posts">게시판</button>' +
-      '<button type="button" data-tab="logs">활동 기록</button>' +
-    '</div><div id="tab"></div>';
   const tabs = { dash: () => tabDashboard(tab(), openTab), apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), swim: () => tabSwim(tab()), members: tabMembers, notice: () => tabNotice(tab()), library: () => tabLibrary(tab()), posts: tabPosts, logs: () => tabLogs(tab()), inquiry: () => tabInquiry(tab()) };
-  function openTab(name) {
-    el.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-active', x.getAttribute('data-tab') === name));
-    tabs[name]();
+  const title = id => MENU.flatMap(g => g.items).find(([k]) => k === id)[1];
+
+  // 마이페이지와 같은 왼쪽 메뉴 (휴대폰에서는 [메뉴] 버튼으로 펼침). 주소 끝 #아이디 로 바로 열 수 있음 (예: admin.html#qual)
+  el.innerHTML =
+    '<div class="my-layout">' +
+      '<button type="button" class="my-menu-btn" id="my-menu-btn" aria-expanded="false" aria-controls="my-nav">' +
+        '<span class="my-bars" aria-hidden="true"></span><b id="my-current">대시보드</b><span class="my-menu-label">메뉴</span></button>' +
+      '<nav class="my-nav" id="my-nav" aria-label="관리자 메뉴">' +
+        '<p class="my-hello"><b>관리자</b> · ' + esc(displayName()) + '</p>' +
+        MENU.map(g => (g.title ? '<p class="my-nav-group">' + g.title + '</p>' : '') + '<ul>' +
+          g.items.map(([id, t]) => '<li><a href="#' + id + '" data-go="' + id + '">' + t + (id === 'inquiry' ? '<b class="notice-count" data-qna-count hidden></b>' : '') + '</a></li>').join('') +
+          '</ul>').join('') +
+      '</nav>' +
+      '<div class="my-main"><h2 class="my-sec-title" id="tab-title"></h2><div id="tab"></div></div>' +
+    '</div>';
+
+  const btn = document.getElementById('my-menu-btn'), nav = document.getElementById('my-nav');
+  const setMenu = open => { nav.classList.toggle('is-open', open); btn.setAttribute('aria-expanded', open ? 'true' : 'false'); };
+  btn.addEventListener('click', () => setMenu(!nav.classList.contains('is-open')));
+  document.addEventListener('click', e => { if (!nav.contains(e.target) && !btn.contains(e.target)) setMenu(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+
+  function show(id) {
+    if (!tabs[id]) id = 'dash';
+    el.querySelectorAll('[data-go]').forEach(a => {
+      const on = a.getAttribute('data-go') === id;
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    document.getElementById('my-current').textContent = document.getElementById('tab-title').textContent = title(id);
+    tabs[id]();
   }
-  el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => openTab(b.getAttribute('data-tab'))));
-  openTab('dash');
+  // 대시보드 숫자 등에서 다른 메뉴로 이동할 때도 주소를 바꿔 뒤로 가기가 되게 함
+  function openTab(id) {
+    history.pushState(null, '', '#' + id);
+    show(id); setMenu(false);
+    const top = el.getBoundingClientRect().top + window.scrollY - 90;
+    if (window.scrollY > top) window.scrollTo(0, top);
+  }
+  nav.addEventListener('click', e => {
+    const a = e.target.closest('a[data-go]');
+    if (!a) return;
+    e.preventDefault();
+    openTab(a.getAttribute('data-go'));
+  });
+  window.addEventListener('popstate', () => show(location.hash.slice(1)));
+  show(location.hash.slice(1));
+  refreshQnaCount();
+  document.addEventListener('qna-changed', refreshQnaCount);
+}
+
+const MENU = [
+  { items: [['dash', '대시보드']] },
+  { title: '회원·신청', items: [['apps', '신청 관리'], ['membership', '멤버십'], ['members', '회원 목록'], ['inquiry', '1:1 문의']] },
+  { title: '교육·자격', items: [['programs', '교육·자격 과정'], ['edu', '교육 이수'], ['qual', '자격증'], ['swim', '생존수영 인증'], ['online', '온라인 학습']] },
+  { title: '사이트 운영', items: [['posts', '게시판'], ['notice', '알림·메일·팝업'], ['library', '자료실·제휴']] },
+  { title: '기록', items: [['logs', '활동 기록']] }
+];
+
+// [1:1 문의] 옆에 답변 대기 건수
+async function refreshQnaCount() {
+  try {
+    const n = (await fs.getCountFromServer(fs.query(fs.collection(db, 'inquiries'), fs.where('status', '==', '접수')))).data().count;
+    document.querySelectorAll('[data-qna-count]').forEach(b => { b.textContent = n > 99 ? '99+' : n; b.hidden = !n; });
+  } catch (e) { console.warn(e); }
 }
 const tab = () => document.getElementById('tab');
 
