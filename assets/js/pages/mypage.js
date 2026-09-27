@@ -2,6 +2,7 @@ import { enabled, auth, db, fa, fs, state, requireLogin, disabledNotice, toast, 
 import { loadInbox, markAllRead } from '../notify.js';
 import { loadConsent, saveConsent, needsReconfirm, consentText, MKT_TEXT } from '../marketing.js';
 import { surveyId } from '../survey.js';
+import { SOCIAL, socialEnabled, startSocial } from '../social.js';
 import { STUDENT_STATUS, groupTitle } from '../swim.js';
 import { LEVEL_NAMES, myLevel, canAccess, fileSize, downloadResource } from '../library.js';
 import { TIER_NAMES, KIND_NAMES, memberStatus, availableKinds, daysLeft, MEMBERSHIP as M } from '../membership.js';
@@ -40,7 +41,7 @@ async function init() {
       '<div class="my-main">' +
         sec('dashboard', '대시보드', loading('dash')) +
         sec('inbox', '알림', loading('inbox-list')) +
-        sec('info', '내 정보', infoForm(u, p) + '<div id="mkt" class="my-info mkt-box"><p class="board-empty">불러오는 중…</p></div>') +
+        sec('info', '내 정보', infoForm(u, p) + '<div id="social" class="my-info mkt-box" hidden></div><div id="mkt" class="my-info mkt-box"><p class="board-empty">불러오는 중…</p></div>') +
         sec('ms', '멤버십', loading('ms')) +
         sec('qual', '자격증', loading('qual')) +
         sec('edu', '내 교육', loading('edu')) +
@@ -88,6 +89,7 @@ async function init() {
   loadSurveys();
   loadPay();
   loadMkt();
+  loadSocial();
   loadLibrary();
   loadSwim();
   loadPartners();
@@ -202,6 +204,24 @@ async function loadPay() {
           '<td class="nowrap">' + (r.state === 'paid' ? '<a class="link-btn" href="payment-receipt.html?kind=' + r.src + '&id=' + encodeURIComponent(r.id) + '">납부확인서</a>' : '') + '</td></tr>').join('') +
         '</tbody></table></div>' : '<p class="board-empty">납부 내역이 없습니다.</p>');
   } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">결제 내역을 불러오지 못했습니다.</p>'; }
+}
+
+/* ---------- 간편 로그인 연결 ---------- */
+async function loadSocial() {
+  const box = document.getElementById('social'), providers = Object.keys(SOCIAL).filter(socialEnabled);
+  if (!providers.length) return;
+  let links = [];
+  try { links = (await fs.getDocs(fs.query(fs.collection(db, 'socialLinks'), fs.where('uid', '==', state.user.uid)))).docs.map(d => d.data()); } catch (e) { console.error(e); }
+  box.hidden = false;
+  box.innerHTML = '<h3>간편 로그인 연결</h3><p class="form-help">연결해 두면 다음부터 그 방법으로도 이 계정에 로그인할 수 있습니다.</p>' +
+    providers.map(p => { const l = links.find(x => x.provider === p);
+      return '<p class="social-row"><b>' + SOCIAL[p].name + '</b> ' + (l ? '<span class="mstatus mstatus-ok">연결됨</span> <small>' + esc(l.email || '') + '</small> <button type="button" class="link-btn" data-unlink="' + p + '">연결 해제</button>'
+        : '<button type="button" class="btn btn-outline btn-sm" data-link="' + p + '">' + SOCIAL[p].name + ' 연결하기</button>') + '</p>'; }).join('');
+  box.querySelectorAll('[data-link]').forEach(b => b.addEventListener('click', () => { try { startSocial(b.dataset.link, 'link', 'mypage.html#info'); } catch (e) { toast(e.message); } }));
+  box.querySelectorAll('[data-unlink]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm(SOCIAL[b.dataset.unlink].name + ' 연결을 해제할까요?')) return;
+    try { await callFn('socialUnlink', { provider: b.dataset.unlink }); toast('연결을 해제했습니다.'); loadSocial(); } catch (e) { toast(errMsg(e)); }
+  }));
 }
 
 /* ---------- 소식지 수신 설정 ---------- */
@@ -536,6 +556,7 @@ function initWithdraw(u) {
       qna.docs.forEach(d => batch.delete(d.ref));
       batch.delete(fs.doc(db, 'users', u.uid, 'state', 'inbox'));
       batch.delete(fs.doc(db, 'marketingConsents', u.uid));
+      (await fs.getDocs(fs.query(fs.collection(db, 'socialLinks'), fs.where('uid', '==', u.uid)))).docs.forEach(d => batch.delete(d.ref));
       batch.delete(fs.doc(db, 'users', u.uid));
       await batch.commit();
       await u.delete();

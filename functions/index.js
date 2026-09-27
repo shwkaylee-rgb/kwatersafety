@@ -143,3 +143,6 @@ exports.submitExam = onCall(async req => {
 
 // 회원 서비스 (자료실, 제휴 할인, 알림 메일, 매일 안내)
 Object.assign(exports, require('./member'));
+
+// 간편 로그인 (네이버)
+Object.assign(exports, require('./social'));

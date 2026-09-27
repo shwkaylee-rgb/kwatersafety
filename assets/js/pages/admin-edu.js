@@ -71,7 +71,8 @@ async function rosterView(program, apps, comps) {
       '<td><input type="number" min="0" max="100" class="mini-input" data-f="score" placeholder="선택" value="' + (c && c.score != null ? c.score : '') + '"></td>' +
       '<td><input class="mini-input wide" data-f="comment" placeholder="선택" value="' + esc(c ? c.comment || '' : '') + '"></td>' +
       '<td class="nowrap">' + esc(c && c.certNo || '') + (c && c.completedOn ? '<br><small>' + esc(c.completedOn) + '</small>' : '') + '</td>' +
-      svCell(a) + '<td><button type="button" class="btn btn-primary btn-sm" data-save="' + a.id + '">저장</button></td></tr>').join('') +
+      svCell(a) + '<td class="nowrap"><button type="button" class="btn btn-primary btn-sm" data-save="' + a.id + '">저장</button>' +
+        (c ? '<br><button type="button" class="link-btn" data-cdel="' + a.id + '">기록 삭제</button>' : '') + '</td></tr>').join('') +
     '</tbody></table></div>' +
     (program.surveyOn ? '<p class="btn-row left"><button type="button" class="btn btn-outline btn-sm" id="sv-all">문진표 모아보기·인쇄 (' + Object.keys(surveys).length + '/' + rows.length + '명 제출)</button></p>' : '') +
     '<div id="sv-panel"></div>';
@@ -138,6 +139,19 @@ async function rosterView(program, apps, comps) {
       comps[completionId(a.id, program.id)] = data;
     });
   }
+  // 이수 기록 삭제: 잘못 입력한 기록만. 이 기록으로 발급한 자격이 있으면 막음. 이수번호는 다시 쓰지 않음
+  view().querySelectorAll('[data-cdel]').forEach(b => b.addEventListener('click', async () => {
+    const a = apps.find(x => x.id === b.dataset.cdel), cid = completionId(a.id, program.id), c = comps[cid];
+    try {
+      const q = await fs.getDocs(fs.query(fs.collection(db, 'qualifications'), fs.where('source.completionId', '==', cid), fs.limit(1)));
+      if (!q.empty) { toast('이 이수 기록으로 발급한 자격(' + q.docs[0].id + ')이 있어 삭제할 수 없습니다. [자격증] 탭에서 먼저 처리해 주세요.'); return; }
+      if (!confirm(a.applicant.name + '님의 이수 기록(' + (c.result || '') + (c.certNo ? ' · ' + c.certNo : '') + ')을 삭제할까요?\n이수증을 더 이상 볼 수 없게 되고, 이수번호는 다시 쓰지 않습니다.')) return;
+      await fs.deleteDoc(fs.doc(db, 'completions', cid));
+      delete comps[cid];
+      logAdmin('이수 기록 삭제', a.applicant.name + ' · ' + program.title, (c.result || '') + (c.certNo ? ' · ' + c.certNo : ''));
+      toast('삭제했습니다.'); rosterView(program, apps, comps);
+    } catch (err) { toast(errMsg(err)); }
+  }));
   const rowVal = tr => ({ result: tr.querySelector('[data-f=result]').value, score: tr.querySelector('[data-f=score]').value.trim(), comment: tr.querySelector('[data-f=comment]').value.trim() });
 
   view().querySelectorAll('[data-save]').forEach(b => b.addEventListener('click', async () => {

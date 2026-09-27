@@ -4,3 +4,4 @@ node_modules/
 private/
 .secret.local
 functions/.secret.local
+functions-mail/.secret.local

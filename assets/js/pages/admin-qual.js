@@ -172,10 +172,24 @@ function detail(q) {
     '<div class="form-row"><label>유효기간 만료일 <small>(특별한 경우에만 직접 수정)</small><input type="date" name="expiresOn" value="' + esc(q.expiresOn) + '"></label>' +
     '<label>회원 연결 <small>(다른 회원으로 바꾸려면 이메일 입력)</small><input type="email" name="email" placeholder="' + (q.uid ? '현재 회원과 연결됨' : '연결 안 됨') + '"></label></div>' +
     (q.uid ? '<label class="check"><input type="checkbox" name="unlink"> 회원 연결 해제 (마이페이지에서 보이지 않게)</label>' : '') +
-    '<div class="btn-row"><button type="button" class="btn btn-outline" id="qd-close">닫기</button><button class="btn btn-primary" type="submit">저장</button></div></form>';
+    '<div class="btn-row"><button type="button" class="btn btn-outline" id="qd-del">자격 삭제</button><button type="button" class="btn btn-outline" id="qd-close">닫기</button><button class="btn btn-primary" type="submit">저장</button></div>' +
+    '<p class="form-help">잘못 등록한 자격만 삭제하세요. 발급을 무르는 경우에는 삭제 대신 상태를 <b>취소</b>로 바꾸면 이력이 남습니다.</p></form>';
   box2.scrollIntoView({ behavior: 'smooth' });
   const f = document.getElementById('qd');
   document.getElementById('qd-close').addEventListener('click', () => { box2.innerHTML = ''; });
+  document.getElementById('qd-del').addEventListener('click', async () => {
+    const typed = prompt('자격을 영구 삭제합니다. 공개 자격 확인에서도 조회되지 않습니다.\n확인을 위해 자격번호(' + q.certNo + ')를 그대로 입력해 주세요.');
+    if (typed == null) return;
+    if (normNo(typed) !== q.certNo) { toast('자격번호가 맞지 않아 삭제하지 않았습니다.'); return; }
+    try {
+      const batch = fs.writeBatch(db);
+      batch.delete(qualRef(q.certNo));
+      batch.delete(fs.doc(db, 'qualVerify', await verifyId(q.certNo, q.name)));
+      await batch.commit();
+      logAdmin('자격 삭제', q.name + ' · ' + qualTitle(q), q.certNo + ' · ' + q.issuedOn + ' ~ ' + q.expiresOn);
+      toast('삭제했습니다.'); tabQual(box);
+    } catch (err) { toast(errMsg(err)); }
+  });
   f.addEventListener('submit', async e => {
     e.preventDefault();
     const upd = { grade: f.grade.value, status: f.status.value, statusReason: f.status.value === 'active' ? '' : f.reason.value.trim(), expiresOn: f.expiresOn.value || q.expiresOn, updatedAt: fs.serverTimestamp() };

@@ -1,5 +1,6 @@
 import { enabled, auth, db, fa, fs, ready, state, disabledNotice, toast, errMsg, esc, qs } from '../app.js';
 import { saveConsent, MKT_TEXT } from '../marketing.js';
+import { socialEnabled, startSocial, naverButton } from '../social.js';
 
 const el = document.getElementById('signup');
 // 가입 후 돌아갈 페이지 (예: 생존수영 인증 등록 링크). 같은 사이트 안의 페이지만 허용
@@ -26,7 +27,7 @@ function checkAgree(f) {
 
 async function saveProfile(user, name, phone, f) {
   await fs.setDoc(fs.doc(db, 'users', user.uid), {
-    name, phone, email: user.email, agreePrivacy: true, over14: true, createdAt: fs.serverTimestamp()
+    name, phone, email: user.email || (f && f.email ? f.email.value.trim() : ''), agreePrivacy: true, over14: true, createdAt: fs.serverTimestamp()
   });
   // 선택 동의: 하나라도 체크했을 때만 기록 (실패해도 가입은 그대로)
   if (f && (f.mktEmail.checked || f.mktSms.checked)) {
@@ -52,6 +53,7 @@ async function init() {
       '<button class="btn btn-primary btn-block" type="submit">가입하기</button>' +
       '<p class="divider"><span>또는</span></p>' +
       '<button class="btn btn-google btn-block" type="button" id="google"><span class="g-icon" aria-hidden="true">G</span> 구글 계정으로 가입</button>' +
+      (socialEnabled('naver') ? naverButton('naver', '네이버로 가입') + '<p class="form-help center">네이버로 가입하면 다음 화면에서 동의와 휴대폰 번호를 확인합니다.</p>' : '') +
       '<p class="form-links">이미 회원이신가요? <a href="login.html' + (back ? '?back=' + encodeURIComponent(back) : '') + '">로그인</a></p>' +
     '</form>';
   const f = document.getElementById('f');
@@ -70,6 +72,9 @@ async function init() {
       location.replace(after(true));
     } catch (err) { toast(errMsg(err)); btn.disabled = false; }
   });
+
+  const naver = document.getElementById('naver');
+  if (naver) naver.addEventListener('click', () => { try { startSocial('naver', 'login', back); } catch (e) { toast(e.message); } });
 
   // 구글 가입: 동의를 먼저 받고, 로그인 후 바로 프로필 저장
   document.getElementById('google').addEventListener('click', async () => {
@@ -90,7 +95,8 @@ function completeForm() {
     '<form class="form-card" id="f" novalidate>' +
       '<h2>가입 마무리</h2>' +
       '<p class="form-help" style="text-align:center">서비스 이용을 위해 아래 정보를 확인하고 동의해 주세요.</p>' +
-      '<label>이메일<input value="' + esc(u.email) + '" disabled></label>' +
+      (u.email ? '<label>이메일<input value="' + esc(u.email) + '" disabled></label>'
+        : '<label>이메일 <small>(알림 메일·문의 답변을 받을 주소)</small><input type="email" name="email" autocomplete="email"></label>') +
       '<label>이름<input name="name" maxlength="30" value="' + esc(u.displayName || '') + '"></label>' +
       '<label>휴대폰 번호<input type="tel" name="phone" placeholder="010-0000-0000" autocomplete="tel"></label>' +
       agreeHTML +
@@ -102,6 +108,7 @@ function completeForm() {
     e.preventDefault();
     const name = f.name.value.trim();
     if (!name) { toast('이름을 입력해 주세요.'); return; }
+    if (!u.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.value.trim())) { toast('이메일을 입력해 주세요.'); return; }
     if (!checkAgree(f)) return;
     try { await saveProfile(u, name, f.phone.value.trim(), f); location.replace(after(true)); }
     catch (err) { toast(errMsg(err)); }

@@ -41,7 +41,7 @@ async function viewGroups(editing) {
       (groups.length ? groups.map(g => '<tr><td class="col-title">' + esc(groupTitle(g)) + (g.programId ? '<br><small class="guardian-line">협회 교육</small>' : '') + '</td><td class="col-date">' + esc(groupPeriod(g)) + '</td>' +
         '<td>' + count(g.id) + '</td><td>' + count(g.id, 'evaluated') + '</td><td>' + count(g.id, 'issued') + '</td>' +
         '<td>' + (g.status !== 'open' ? '<span class="status status-취소">평가 마감</span>' : g.regOpen ? '<span class="status status-승인">등록 받는 중</span>' : '<span class="status status-접수완료">등록 마감</span>') + '</td>' +
-        '<td class="nowrap"><button type="button" class="btn btn-outline btn-sm" data-open="' + g.id + '">관리</button> <button type="button" class="link-btn" data-edit="' + g.id + '">수정</button></td></tr>').join('')
+        '<td class="nowrap"><button type="button" class="btn btn-outline btn-sm" data-open="' + g.id + '">관리</button> <button type="button" class="link-btn" data-edit="' + g.id + '">수정</button> <button type="button" class="link-btn" data-gdel="' + g.id + '">삭제</button></td></tr>').join('')
         : '<tr><td colspan="7">만든 수업이 없습니다.</td></tr>') +
     '</tbody></table></div>' +
     '<form class="form-card wide" id="gf" data-id="' + (editing ? editing.id : '') + '"><h2>' + (editing ? '수업 수정' : '새 수업 만들기') + '</h2>' +
@@ -60,6 +60,14 @@ async function viewGroups(editing) {
   target().querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => groupView(b.dataset.open)));
   document.getElementById('sw-purge').addEventListener('click', () => purgeUnissued(groups));
   target().querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => { viewGroups(groups.find(g => g.id === b.dataset.edit)); }));
+  // 수업 삭제: 등록한 학생이 없을 때만 (발급 기록·보호자 연락처가 수업에 딸려 있으므로)
+  target().querySelectorAll('[data-gdel]').forEach(b => b.addEventListener('click', async () => {
+    const g = groups.find(x => x.id === b.dataset.gdel), n = count(g.id);
+    if (n) { toast('등록한 학생이 ' + n + '명 있어 삭제할 수 없습니다. 수업 [관리]에서 등록을 먼저 지우거나, [평가 마감]으로 닫아 두세요.'); return; }
+    if (!confirm('「' + groupTitle(g) + '」 수업을 삭제할까요? 등록 링크도 더 이상 열리지 않습니다.')) return;
+    try { await fs.deleteDoc(fs.doc(db, 'swimGroups', g.id)); logAdmin('생존수영 수업 삭제', groupTitle(g), groupPeriod(g)); toast('삭제했습니다.'); viewGroups(); }
+    catch (err) { toast(errMsg(err)); }
+  }));
   const cancel = document.getElementById('gf-cancel');
   if (cancel) cancel.addEventListener('click', () => viewGroups());
   const f = document.getElementById('gf');

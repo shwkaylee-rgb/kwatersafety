@@ -22,11 +22,36 @@ export async function tabOnline(container) {
     (courses.length ? '<div class="table-scroll"><table class="board-table"><thead><tr><th>과정명</th><th>수강료</th><th>챕터</th><th>수강 기간</th><th>공개</th><th></th></tr></thead><tbody>' +
       courses.map(c => '<tr><td class="col-title">' + esc(c.title) + '</td><td>' + won(c.fee) + '</td><td>' + (c.chapters || []).length + '개 · ' + totalMinutes(c) + '분</td>' +
         '<td>' + (c.accessDays || '-') + '일</td><td>' + (c.open ? '<span class="mstatus mstatus-ok">공개</span>' : '<span class="mstatus mstatus-off">비공개</span>') + '</td>' +
-        '<td class="nowrap"><button type="button" class="link-btn" data-edit="' + c.id + '">수정</button> <button type="button" class="link-btn" data-stat="' + c.id + '">수강 현황</button></td></tr>').join('') +
+        '<td class="nowrap"><button type="button" class="link-btn" data-edit="' + c.id + '">수정</button> <button type="button" class="link-btn" data-stat="' + c.id + '">수강 현황</button> <button type="button" class="link-btn" data-cdel="' + c.id + '">삭제</button></td></tr>').join('') +
       '</tbody></table></div>' : '<p class="board-empty">등록된 온라인 과정이 없습니다.</p>');
   document.getElementById('ol-new').addEventListener('click', () => editor(null));
   view().querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => editor(courses.find(c => c.id === b.getAttribute('data-edit')))));
   view().querySelectorAll('[data-stat]').forEach(b => b.addEventListener('click', () => stats(courses.find(c => c.id === b.getAttribute('data-stat')))));
+  view().querySelectorAll('[data-cdel]').forEach(b => b.addEventListener('click', () => removeCourse(courses.find(c => c.id === b.dataset.cdel))));
+}
+
+// 과정 삭제: 수강 기록이 있거나 처리 전 신청에 담겨 있으면 막음 (수료 증명·사전요건 확인에 쓰이므로). 없으면 챕터·문제 은행·신청 목록까지 함께 삭제
+async function removeCourse(c) {
+  try {
+    const [enr, apps, progs] = await Promise.all([
+      fs.getDocs(fs.query(fs.collection(db, 'enrollments'), fs.where('courseId', '==', c.id), fs.limit(1))),
+      fs.getDocs(fs.query(fs.collection(db, 'applications'), fs.where('status', '==', '접수완료'))),
+      fs.getDocs(fs.query(fs.collection(db, 'programs'), fs.where('requiresCourse', '==', c.id)))
+    ]);
+    if (!enr.empty) { toast('수강 기록이 있어 삭제할 수 없습니다. 더 받지 않으려면 [수정]에서 공개를 해제하세요.'); return; }
+    if (apps.docs.some(d => (d.data().items || []).some(i => i.courseId === c.id))) { toast('이 과정을 담은 처리 전 신청이 있어 삭제할 수 없습니다. [신청 관리]에서 먼저 처리해 주세요.'); return; }
+    if (!progs.empty) { toast('사전요건으로 지정한 대면 과정(' + progs.docs.map(d => d.data().title).join(', ') + ')이 있어 삭제할 수 없습니다.'); return; }
+    if (!confirm('「' + c.title + '」 온라인 과정을 삭제할까요? 챕터와 평가 문제 은행도 함께 지워지고 되돌릴 수 없습니다.')) return;
+    const batch = fs.writeBatch(db);
+    const ch = await fs.getDocs(fs.collection(db, 'courses', c.id, 'chapters'));
+    ch.docs.forEach(d => batch.delete(d.ref));
+    batch.delete(fs.doc(db, 'courseExams', c.id));
+    batch.delete(fs.doc(db, 'programs', 'online-' + c.id));
+    batch.delete(fs.doc(db, 'courses', c.id));
+    await batch.commit();
+    logAdmin('온라인 과정 삭제', c.title, '챕터 ' + ch.size + '개');
+    toast('삭제했습니다.'); tabOnline(box);
+  } catch (err) { toast(errMsg(err)); }
 }
 
 /* ---------- 과정 편집 ---------- */

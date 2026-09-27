@@ -11,6 +11,15 @@
         ".git",
         "*.log"
       ]
+    },
+    {
+      "source": "functions-mail",
+      "codebase": "mail",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "*.log"
+      ]
     }
   ],
   "emulators": {

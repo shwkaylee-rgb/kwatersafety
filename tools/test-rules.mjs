@@ -247,6 +247,15 @@ await expect('관리자가 답변', 'allow', req('PATCH', `inquiries/${RUN}q1`, 
 await expect('다른 회원이 문의 삭제', 'deny', req('DELETE', `inquiries/${RUN}q1`, b.token));
 await expect('본인이 문의 삭제', 'allow', req('DELETE', `inquiries/${RUN}q1`, c.token));
 
+console.log('\n[간편 로그인 연결]');
+await req('PATCH', `socialLinks/naver_${RUN}`, 'owner', { uid: c.uid, provider: 'naver', email: 'c@naver.com' });
+await expect('회원이 스스로 네이버 연결 만들기(남의 네이버 계정 가로채기)', 'deny', req('PATCH', `socialLinks/naver_${RUN}x`, c.token, { uid: c.uid, provider: 'naver' }));
+await expect('회원이 남의 연결을 내 계정으로 바꾸기', 'deny', req('PATCH', `socialLinks/naver_${RUN}`, b.token, { uid: b.uid }, ['uid']));
+await expect('본인 연결 정보 보기', 'allow', req('GET', `socialLinks/naver_${RUN}`, c.token));
+await expect('남의 연결 정보 보기', 'deny', req('GET', `socialLinks/naver_${RUN}`, b.token));
+await expect('남의 연결 삭제', 'deny', req('DELETE', `socialLinks/naver_${RUN}`, b.token));
+await expect('본인 연결 삭제(탈퇴 시)', 'allow', req('DELETE', `socialLinks/naver_${RUN}`, c.token));
+
 console.log('\n[첫 화면 팝업]');
 await expect('관리자가 팝업 설정', 'allow', req('PATCH', 'settings/popup', admin.token, { on: true, title: '안내' }));
 await expect('회원이 팝업 설정', 'deny', req('PATCH', 'settings/popup', c.token, { on: true, title: '가짜' }));

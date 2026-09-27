@@ -408,6 +408,7 @@ P['qual-certificate.html']=simple('cert','자격증','qual-certificate');
 P['survey.html']=simple('survey','사전 설문','survey');
 P['payment-receipt.html']=simple('cert','납부확인서','payment-receipt');
 P['swim.html']=simple('swim','생존수영 인증 등록','swim-register');
+P['oauth.html']=simple('oauth','간편 로그인','oauth');
 P['evaluate.html']=simple('evaluate','생존수영 평가','evaluate');
 P['swim-certificate.html']=simple('cert','생존수영 능력 인증서','swim-certificate');
 P['verify.html']=shell(T,`  <section class="page container">

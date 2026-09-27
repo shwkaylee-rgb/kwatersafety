@@ -130,7 +130,7 @@ if (enabled) {
       } catch (e) { console.error(e); }
       // 로그인 페이지에서 구글로 처음 들어온 경우 등, 동의·회원정보가 없으면 가입 마무리 화면으로
       const page = location.pathname.split('/').pop();
-      if (loaded && !state.profile && page !== 'signup.html' && page !== 'privacy.html') {
+      if (loaded && !state.profile && !['signup.html', 'privacy.html', 'oauth.html'].includes(page)) {
         // 가입을 마친 뒤 원래 보던 페이지로 돌아가게 함 (로그인 화면이면 그 화면이 돌아갈 곳)
         const back = page === 'login.html' ? (qs('back') || '') : page + location.search;
         location.replace('signup.html' + (/^[\w-]+\.html(\?[^#]*)?$/.test(back) && back !== 'index.html' ? '?back=' + encodeURIComponent(back) : ''));
