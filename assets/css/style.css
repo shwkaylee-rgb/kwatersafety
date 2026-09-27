@@ -674,6 +674,9 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
 .dash-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; margin-top: 20px; }
 .dash-card { border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 4px; background: #fff; transition: border-color .15s, box-shadow .15s; }
 .dash-card:hover { border-color: var(--primary); box-shadow: 0 4px 14px rgba(49,130,246,.12); }
+button.dash-card { font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.dash-card.is-todo { border-color: #f3d9a4; background: #fff9ec; }
+.dash-card.is-todo b { color: #8a5a00; }
 .dash-card span { font-size: 14px; color: var(--text-sub); }
 .dash-card b { font-size: 19px; font-weight: 800; }
 .dash-card small { font-size: 13px; color: var(--text-sub); }
@@ -807,3 +810,9 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
 .qr-preview img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; display: block; }
 .qr-actions { display: grid; gap: 10px; }
 @media (max-width: 860px) { .qr-box { grid-template-columns: 1fr; } .qr-preview { max-width: 300px; } }
+
+/* ---------- 간편 로그인 ---------- */
+.btn-naver { background: #03c75a; color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px; }
+.btn-naver:hover { background: #02b351; }
+.n-icon { font-weight: 900; font-size: 17px; font-family: Arial, sans-serif; }
+.social-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

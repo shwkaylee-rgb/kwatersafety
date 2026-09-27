@@ -17,16 +17,20 @@ async function syncVerify(q) { await fs.setDoc(fs.doc(db, 'qualVerify', await ve
 export async function tabQual(container) {
   box = container;
   box.innerHTML = '<div id="qual-view"><p class="board-empty">불러오는 중…</p></div>';
-  try {
-    const [pSnap, cSnap, qSnap] = await Promise.all([
-      fs.getDocs(fs.collection(db, 'programs')), fs.getDocs(fs.collection(db, 'completions')), fs.getDocs(fs.collection(db, 'qualifications'))
-    ]);
-    programs = Object.fromEntries(pSnap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
-    comps = cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.result === '이수');
-    quals = qSnap.docs.map(d => ({ ...d.data(), certNo: d.id })).sort((a, b) => (b.issuedOn || '').localeCompare(a.issuedOn || ''));
-  } catch (e) { view().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; return; }
+  try { await loadQualData(); } catch (e) { view().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; return; }
   draw();
 }
+
+async function loadQualData() {
+  const [pSnap, cSnap, qSnap] = await Promise.all([
+    fs.getDocs(fs.collection(db, 'programs')), fs.getDocs(fs.collection(db, 'completions')), fs.getDocs(fs.collection(db, 'qualifications'))
+  ]);
+  programs = Object.fromEntries(pSnap.docs.map(d => [d.id, { id: d.id, ...d.data() }]));
+  comps = cSnap.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.result === '이수');
+  quals = qSnap.docs.map(d => ({ ...d.data(), certNo: d.id })).sort((a, b) => (b.issuedOn || '').localeCompare(a.issuedOn || ''));
+}
+// 대시보드용: 발급·갱신 대기 건수
+export async function qualPendingCount() { await loadQualData(); return pendingList().length; }
 
 // 발급·갱신 대기: 자격 연계 과정을 이수했는데 아직 처리하지 않은 사람
 function pendingList() {
