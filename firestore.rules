@@ -150,9 +150,9 @@ service cloud.firestore {
       allow read: if isOwner(uid) || isAdmin();
       allow write: if isAdmin();
     }
-    // 설정 (새 수업의 기본 평가 항목 등)
+    // 설정 (새 수업의 기본 평가 항목, 첫 화면 팝업 등). 팝업은 로그인 없이도 보여야 해서 공개
     match /settings/{id} {
-      allow read: if signedIn();
+      allow read: if signedIn() || id == 'popup';
       allow write: if isAdmin();
     }
 

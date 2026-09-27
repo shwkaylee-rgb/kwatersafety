@@ -1,14 +1,17 @@
 /* 관리자 > 알림 탭: 전체 공지 알림 보내기, 보낸 공지 목록, 1년 지난 알림 정리 */
-import { db, fs, toast, errMsg, esc, fmtDate, callFn } from '../app.js';
+import { db, fs, toast, errMsg, esc, fmtDate, callFn, storageApi, today } from '../app.js';
 import { TARGET_NAMES, NOTICE_KEEP_DAYS } from '../notify.js';
 import { logAdmin } from '../admin-log.js';
+import { popupActive, openPopup } from '../popup.js';
 
 let box;
 export async function tabNotice(container) {
   box = container;
   box.innerHTML = '<p class="board-empty">불러오는 중…</p>';
-  let list, recent = [];
+  let list, recent = [], popup = {};
   try {
+    const pp = await fs.getDoc(fs.doc(db, 'settings', 'popup')).catch(() => null);
+    if (pp && pp.exists()) popup = pp.data();
     const rs = await fs.getDocs(fs.query(fs.collection(db, 'notifications'), fs.orderBy('createdAt', 'desc'), fs.limit(30))).catch(() => null);
     if (rs) recent = rs.docs.map(d => d.data());
     const snap = await fs.getDocs(fs.collection(db, 'broadcasts'));
@@ -36,9 +39,11 @@ export async function tabNotice(container) {
       (recent.length ? recent.map(n => '<tr><td class="col-date">' + fmtDate(n.createdAt, true) + '</td><td class="col-title">' + esc(n.title) + '</td><td>' +
         (n.mailedAt ? '<span class="mstatus mstatus-ok">발송</span>' : n.mailError ? '<span class="mstatus mstatus-no">실패</span><br><small>' + esc(n.mailError) + '</small>' : '<span class="mstatus mstatus-wait">대기</span>') + '</td></tr>').join('')
         : '<tr><td colspan="3">알림이 없습니다.</td></tr>') + '</tbody></table></div>' +
+    popupForm(popup) +
     '<div class="notice-box left"><h3>오래된 알림 정리</h3><p>알림은 1년 동안 보관합니다. 보낸 지 1년이 지난 개인 알림과 공지를 삭제합니다.</p>' +
       '<button type="button" class="btn btn-outline btn-sm" id="purge">1년 지난 알림 삭제</button></div>';
 
+  initPopup(popup);
   const f = document.getElementById('bc');
   f.addEventListener('submit', async e => {
     e.preventDefault();
@@ -83,5 +88,60 @@ export async function tabNotice(container) {
       logAdmin('알림 일괄 삭제', '1년 지난 알림', refs.length + '건');
       toast(refs.length + '건을 삭제했습니다.'); tabNotice(box);
     } catch (err) { toast(errMsg(err)); }
+  });
+}
+
+/* ---------- 첫 화면 팝업 ---------- */
+function popupForm(p) {
+  const state = popupActive(p) ? '<span class="mstatus mstatus-ok">지금 표시 중</span>' : p.on ? '<span class="mstatus mstatus-wait">켜짐 · 기간 밖</span>' : '<span class="mstatus mstatus-off">꺼짐</span>';
+  return '<form class="form-card wide" id="pp"><h2>첫 화면 팝업 ' + state + '</h2>' +
+    '<p class="form-help">홈페이지 첫 화면에 뜨는 안내 창입니다. 방문자는 "오늘 하루 보지 않기"를 누를 수 있고, 내용을 고쳐 저장하면 다시 보입니다.</p>' +
+    '<label class="check"><input type="checkbox" name="on"' + (p.on ? ' checked' : '') + '> 팝업 켜기</label>' +
+    '<div class="form-row"><label>보이기 시작하는 날 <small>(비우면 바로)</small><input type="date" name="start" value="' + esc(p.start || '') + '"></label>' +
+    '<label>마지막 날 <small>(비우면 끌 때까지)</small><input type="date" name="end" value="' + esc(p.end || '') + '"></label></div>' +
+    '<label>제목<input name="title" maxlength="60" value="' + esc(p.title || '') + '"></label>' +
+    '<label>내용 <small>(선택)</small><textarea name="body" rows="3" maxlength="500">' + esc(p.body || '') + '</textarea></label>' +
+    '<label>바로가기 주소 <small>(선택. 예: programs.html 또는 https://…)</small><input name="link" maxlength="300" value="' + esc(p.link || '') + '"></label>' +
+    '<div class="form-row"><label>이미지 <small>(선택. 5MB 이하 jpg·png·webp. 제목·내용 위에 표시)</small><input type="file" name="image" accept="image/jpeg,image/png,image/webp,image/gif"></label>' +
+    (p.imageUrl ? '<label class="check"><input type="checkbox" name="noImage"> 지금 이미지 빼기 <small>(' + esc(p.imagePath ? p.imagePath.split('/').pop() : '') + ')</small></label>' : '<span></span>') + '</div>' +
+    '<div class="btn-row"><button type="button" class="btn btn-outline" id="pp-preview">미리 보기</button><button class="btn btn-primary" type="submit">저장</button></div></form>';
+}
+
+function initPopup(p) {
+  const f = document.getElementById('pp');
+  const read = () => ({ on: f.on.checked, start: f.start.value, end: f.end.value, title: f.title.value.trim(), body: f.body.value.trim(), link: f.link.value.trim() });
+  document.getElementById('pp-preview').addEventListener('click', () => {
+    const file = f.image.files[0];
+    const v = { ...read(), imageUrl: file ? URL.createObjectURL(file) : f.noImage && f.noImage.checked ? '' : p.imageUrl || '' };
+    if (!v.title && !v.imageUrl) { toast('제목이나 이미지를 넣어 주세요.'); return; }
+    openPopup(v, true);
+  });
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const v = read(), file = f.image.files[0];
+    if (v.link && !/^(https:\/\/|[a-z0-9-]+\.html)/i.test(v.link)) { toast('바로가기 주소는 https:// 로 시작하거나 사이트 안 페이지(예: programs.html)여야 합니다.'); return; }
+    if (v.start && v.end && v.start > v.end) { toast('마지막 날이 시작일보다 빠릅니다.'); return; }
+    if (file && file.size > 5 * 1024 * 1024) { toast('이미지는 5MB 이하만 올릴 수 있습니다.'); return; }
+    const dropOld = file || (f.noImage && f.noImage.checked);
+    if (v.on && !v.title && !file && (dropOld || !p.imageUrl)) { toast('제목이나 이미지를 넣어 주세요.'); return; }
+    const btn = f.querySelector('[type=submit]'); btn.disabled = true;
+    try {
+      let imageUrl = p.imageUrl || '', imagePath = p.imagePath || '';
+      if (dropOld || file) {
+        const { m, s } = await storageApi();
+        if (dropOld && imagePath) await m.deleteObject(m.ref(s, imagePath)).catch(err => { if (err.code !== 'storage/object-not-found') throw err; });
+        imageUrl = ''; imagePath = '';
+        if (file) {
+          imagePath = 'popup/' + Date.now() + '_' + file.name.replace(/[^\w.\-가-힣]/g, '_').slice(-60);
+          const r = m.ref(s, imagePath);
+          await m.uploadBytes(r, file, { contentType: file.type });
+          imageUrl = await m.getDownloadURL(r);
+        }
+      }
+      await fs.setDoc(fs.doc(db, 'settings', 'popup'), { ...v, imageUrl, imagePath, updatedAt: fs.serverTimestamp() });
+      logAdmin('첫 화면 팝업 저장', v.title || '(이미지만)', (v.on ? '켜짐' : '꺼짐') + ' · ' + (v.start || '바로') + ' ~ ' + (v.end || '끌 때까지'));
+      toast(v.on ? (popupActive({ ...v, imageUrl }, today()) ? '저장했습니다. 지금 첫 화면에 보입니다.' : '저장했습니다. 정한 기간에 보입니다.') : '저장했습니다. 팝업은 꺼져 있습니다.');
+      tabNotice(box);
+    } catch (err) { toast(errMsg(err)); btn.disabled = false; }
   });
 }

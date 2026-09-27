@@ -825,3 +825,14 @@ button.dash-card { font: inherit; color: inherit; text-align: left; cursor: poin
 .btn-naver:hover { background: #02b351; }
 .n-icon { font-weight: 900; font-size: 17px; font-family: Arial, sans-serif; }
 .social-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- 첫 화면 팝업 ---------- */
+.site-popup { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.site-popup-box { background: #fff; border-radius: 14px; overflow: hidden; width: min(440px, 100%); max-height: calc(100vh - 32px); display: flex; flex-direction: column; box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+.site-popup-box > img, .site-popup-box > a > img { display: block; width: 100%; height: auto; max-height: 60vh; object-fit: contain; background: #f2f4f6; }
+.site-popup-text { padding: 20px 22px 8px; overflow-y: auto; }
+.site-popup-text h2 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+.site-popup-text p { font-size: 15px; line-height: 1.7; margin-bottom: 12px; }
+.site-popup-foot { display: flex; border-top: 1px solid var(--line); margin-top: auto; }
+.site-popup-foot button { flex: 1; background: none; border: 0; padding: 14px; font: inherit; font-size: 14px; color: var(--text-sub); cursor: pointer; }
+.site-popup-foot button + button { border-left: 1px solid var(--line); font-weight: 700; color: var(--text); }

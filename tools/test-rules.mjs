@@ -247,5 +247,11 @@ await expect('관리자가 답변', 'allow', req('PATCH', `inquiries/${RUN}q1`, 
 await expect('다른 회원이 문의 삭제', 'deny', req('DELETE', `inquiries/${RUN}q1`, b.token));
 await expect('본인이 문의 삭제', 'allow', req('DELETE', `inquiries/${RUN}q1`, c.token));
 
+console.log('\n[첫 화면 팝업]');
+await expect('관리자가 팝업 설정', 'allow', req('PATCH', 'settings/popup', admin.token, { on: true, title: '안내' }));
+await expect('회원이 팝업 설정', 'deny', req('PATCH', 'settings/popup', c.token, { on: true, title: '가짜' }));
+await expect('로그인 없이 팝업 보기', 'allow', req('GET', 'settings/popup', null));
+await expect('로그인 없이 다른 설정 보기', 'deny', req('GET', 'settings/swimItems', null));
+
 console.log(`\n결과: 통과 ${pass} / 실패 ${fail}`);
 process.exit(fail ? 1 : 0);

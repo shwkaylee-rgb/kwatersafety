@@ -1,4 +1,5 @@
 import { listPosts, postURL, esc } from '../app.js';
+import { showSitePopup } from '../popup.js';
 
 async function latest(elId, board, withSummary) {
   const el = document.getElementById(elId);
@@ -19,3 +20,4 @@ async function latest(elId, board, withSummary) {
 }
 latest('latest-notice', 'notice');
 latest('latest-news', 'news', true);
+showSitePopup();

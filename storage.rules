@@ -18,6 +18,12 @@ service firebase.storage {
       allow delete: if isAdmin();
       allow create, update: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
     }
+    // 첫 화면 팝업 이미지: 누구나 보기, 관리자만 올리고 지움
+    match /popup/{fileName} {
+      allow read: if true;
+      allow delete: if isAdmin();
+      allow create, update: if isAdmin() && request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+    }
     match /{path=**} {
       allow read, write: if false;
     }
