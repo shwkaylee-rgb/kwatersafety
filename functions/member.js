@@ -16,17 +16,7 @@ const SMTP_PASS = defineSecret('SMTP_PASS');
 const MAIL_FROM = defineString('MAIL_FROM', { default: 'info@kwasa.or.kr' });
 const SITE = 'https://kwasa.or.kr/';
 const GRACE_DAYS = 30;            // assets/js/membership-config.js 의 graceDays 와 같게
-const MKT_RECONFIRM_DAYS = 730;   // 생존수영 인증 준회원: 5년 끝나기 30일 전
-  const sw = await db().collection('swimStudents').where('status', '==', 'issued').get();
-  for (const d of sw.docs) {
-    const s = d.data();
-    if (!s.uid || !s.memberUntil) continue;
-    const left = daysBetween(today, s.memberUntil);
-    if (left < 0 || left > 30) continue;
-    if (await once(`swim_${d.id}_${s.memberUntil}`, () => addNote(s.uid, 'reminder', s.name + ' 학생의 협회 준회원 기간이 ' + left + '일 뒤 끝납니다',
-      '생존수영 능력 인증(' + s.certNo + ')으로 등록된 준회원 기간이 ' + s.memberUntil + '에 끝납니다.\n일반회원으로 가입하면 첫해 회비를 할인받을 수 있습니다.', 'membership.html'))) sent.swim++;
-  }
-  // 소식지 수신 동의 2년 확인
+const MKT_RECONFIRM_DAYS = 730;   // 소식지 수신 동의 재확인 주기(2년)
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const db = () => getFirestore();
 
@@ -186,6 +176,16 @@ async function runReminders(today = kstYmd()) {
         '교육 시작 전에 건강 문진표를 제출해야 합니다.' + (a.applicant && a.applicant.guardianName ? ' (참가자 ' + a.applicant.name + ')' : ''),
         'survey.html?app=' + encodeURIComponent(d.id) + '&program=' + encodeURIComponent(i.programId)))) sent.survey++;
     }
+  }
+  // 생존수영 인증 준회원: 5년 끝나기 30일 전
+  const sw = await db().collection('swimStudents').where('status', '==', 'issued').get();
+  for (const d of sw.docs) {
+    const s = d.data();
+    if (!s.uid || !s.memberUntil) continue;
+    const left = daysBetween(today, s.memberUntil);
+    if (left < 0 || left > 30) continue;
+    if (await once(`swim_${d.id}_${s.memberUntil}`, () => addNote(s.uid, 'reminder', s.name + ' 학생의 협회 준회원 기간이 ' + left + '일 뒤 끝납니다',
+      '생존수영 능력 인증(' + s.certNo + ')으로 등록된 준회원 기간이 ' + s.memberUntil + '에 끝납니다.\n일반회원으로 가입하면 첫해 회비를 할인받을 수 있습니다.', 'membership.html'))) sent.swim++;
   }
   // 소식지 수신 동의 2년 확인 (정보통신망법 시행령 제62조의3: 보내는 곳, 동의 날짜·사실, 유지·철회 방법 통지)
   for (const d of mk.docs) {
