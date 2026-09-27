@@ -13,7 +13,7 @@ const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getStorage } = require('firebase-admin/storage');
 
 const SMTP_PASS = defineSecret('SMTP_PASS');
-const MAIL_FROM = defineString('MAIL_FROM', { default: 'support@kwatersafety.com' });
+const MAIL_FROM = defineString('MAIL_FROM', { default: 'info@kwasa.or.kr' });
 const SITE = 'https://kwasa.or.kr/';
 const GRACE_DAYS = 30;            // assets/js/membership-config.js 의 graceDays 와 같게
 const MKT_RECONFIRM_DAYS = 730;   // 소식지 수신 동의 2년 확인
@@ -92,7 +92,7 @@ function mailHtml(n) {
       '<h2 style="font-size:19px;margin:0 0 12px">' + esc(n.title) + '</h2>' +
       (n.body ? '<p style="margin:0 0 18px;white-space:pre-line">' + esc(n.body) + '</p>' : '') +
       (link ? '<p><a href="' + esc(link) + '" style="display:inline-block;background:#3182f6;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px">바로 가기</a></p>' : '') +
-      '<p style="margin-top:24px;font-size:12px;color:#888">이 메일은 발신 전용입니다. 문의: 010-3483-9209 · support@kwatersafety.com<br>' +
+      '<p style="margin-top:24px;font-size:12px;color:#888">이 메일은 발신 전용입니다. 문의: 010-3483-9209 · info@kwasa.or.kr<br>' +
       '회원 서비스 이용에 관한 안내 메일로, 소식지 수신 동의와 관계없이 보내 드립니다. 받은 알림은 <a href="' + SITE + 'mypage.html#inbox">마이페이지 알림함</a>에서도 볼 수 있습니다.</p>' +
     '</div></div>';
 }
