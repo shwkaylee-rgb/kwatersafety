@@ -2,6 +2,7 @@
 import { db, fs, toast, errMsg, esc, won, fmtDate } from '../app.js';
 import { COURSE_DEFAULTS, ENR_STATUS_NAMES, enrollmentStatus, progressPercent, youtubeId, totalMinutes } from '../course.js';
 import { addDays, todayYmd } from '../membership.js';
+import { logAdmin } from '../admin-log.js';
 
 let box;
 const rid = p => p + Math.random().toString(36).slice(2, 9);
@@ -166,7 +167,7 @@ async function editor(course) {
       type: 'online', courseId: id, category: '온라인 학습', title: meta.title, fee: meta.fee,
       date: '승인 후 ' + meta.accessDays + '일간 수강', place: '온라인', description: meta.description, open: meta.open, order: -1
     });
-    try { await batch.commit(); toast('저장했습니다.'); tabOnline(box); } catch (err) { toast(errMsg(err)); }
+    try { await batch.commit(); logAdmin(course ? '온라인 과정 수정' : '온라인 과정 등록', meta.title, '챕터 ' + chapters.length + '개 · 문항 ' + questions.length + '개 · ' + (meta.open ? '공개' : '비공개')); toast('저장했습니다.'); tabOnline(box); } catch (err) { toast(errMsg(err)); }
   });
 }
 
@@ -200,13 +201,13 @@ async function stats(course) {
   view().querySelectorAll('[data-extend]').forEach(b => b.addEventListener('click', async () => {
     const e = enrs.find(x => x.docId === b.getAttribute('data-extend'));
     const base = e.endDate < todayYmd() ? todayYmd() : e.endDate, endDate = addDays(base, 30);
-    try { await fs.updateDoc(fs.doc(db, 'enrollments', e.docId), { endDate, endAt: new Date(endDate + 'T23:59:59+09:00') }); toast('수강 기간을 ' + endDate + '까지 늘렸습니다.'); stats(course); }
+    try { await fs.updateDoc(fs.doc(db, 'enrollments', e.docId), { endDate, endAt: new Date(endDate + 'T23:59:59+09:00') }); logAdmin('수강 기간 연장', e.name + ' · ' + course.title, e.endDate + ' → ' + endDate); toast('수강 기간을 ' + endDate + '까지 늘렸습니다.'); stats(course); }
     catch (err) { toast(errMsg(err)); }
   }));
   view().querySelectorAll('[data-revoke]').forEach(b => b.addEventListener('click', async () => {
     const e = enrs.find(x => x.docId === b.getAttribute('data-revoke'));
     if (!confirm(e.name + '님의 수료를 취소할까요? 사전요건 인정도 함께 사라집니다.')) return;
-    try { await fs.updateDoc(fs.doc(db, 'enrollments', e.docId), { status: 'active', revokedCertNo: e.certNo || '', certNo: '', passedOn: '', validUntil: '', revokedOn: todayYmd() }); toast('수료를 취소했습니다.'); stats(course); }
+    try { await fs.updateDoc(fs.doc(db, 'enrollments', e.docId), { status: 'active', revokedCertNo: e.certNo || '', certNo: '', passedOn: '', validUntil: '', revokedOn: todayYmd() }); logAdmin('온라인 수료 취소', e.name + ' · ' + course.title, e.certNo || ''); toast('수료를 취소했습니다.'); stats(course); }
     catch (err) { toast(errMsg(err)); }
   }));
   document.getElementById('st-csv').addEventListener('click', () => {

@@ -214,5 +214,23 @@ await expect('회원이 스스로 평가 강사 되기', 'deny', req('PATCH', `e
 await expect('관리자가 평가 항목 설정', 'allow', req('PATCH', 'settings/swimItems', admin.token, { items: ['물적응'] }));
 await expect('회원이 평가 항목 바꾸기', 'deny', req('PATCH', 'settings/swimItems', c.token, { items: [] }));
 
+console.log('\n[관리자 활동 기록]');
+// 서버 시각(at)은 REST로 넣을 수 없어 transform 쓰기로 보냄
+async function addLog(token, id, data) {
+  const r = await fetch(`${FS.replace(/\/documents$/, '/documents:commit')}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+    body: JSON.stringify({ writes: [{ update: { name: `projects/${P}/databases/(default)/documents/adminLogs/${id}`, fields: fields(data) },
+      currentDocument: { exists: false }, updateTransforms: [{ fieldPath: 'at', setToServerValue: 'REQUEST_TIME' }] }] }) });
+  return r.status;
+}
+const log = uid => ({ uid, name: '관리자', action: '테스트', target: '', detail: '' });
+await expect('관리자가 활동 기록 남기기', 'allow', addLog(admin.token, `${RUN}l1`, log(admin.uid)));
+await expect('관리자가 남의 이름으로 기록', 'deny', addLog(admin.token, `${RUN}l2`, log(c.uid)));
+await expect('관리자가 시각을 직접 넣어 기록', 'deny', req('PATCH', `adminLogs/${RUN}l3`, admin.token, { ...log(admin.uid), at: new Date('2020-01-01') }));
+await expect('회원이 활동 기록 남기기', 'deny', addLog(c.token, `${RUN}l4`, log(c.uid)));
+await expect('관리자가 활동 기록 읽기', 'allow', req('GET', `adminLogs/${RUN}l1`, admin.token));
+await expect('회원이 활동 기록 읽기', 'deny', req('GET', `adminLogs/${RUN}l1`, c.token));
+await expect('관리자가 활동 기록 고치기', 'deny', req('PATCH', `adminLogs/${RUN}l1`, admin.token, { detail: '고침' }, ['detail']));
+await expect('관리자가 활동 기록 지우기', 'deny', req('DELETE', `adminLogs/${RUN}l1`, admin.token));
+
 console.log(`\n결과: 통과 ${pass} / 실패 ${fail}`);
 process.exit(fail ? 1 : 0);

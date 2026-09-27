@@ -4,6 +4,7 @@
    - 평가 항목: 새 수업의 기본 평가 항목 */
 import { db, fs, state, toast, errMsg, esc, fmtDate, today } from '../app.js';
 import { makeQrPoster, canvasBlob } from '../swim-qr.js';
+import { logAdmin } from '../admin-log.js';
 import { loadSwimItems, groupTitle, groupPeriod, regLink, fullyEvaluated, memberUntilOf, formatSwimNo, STUDENT_STATUS, RESULTS, DEFAULT_SWIM_ITEMS } from '../swim.js';
 
 let box, view = 'groups';
@@ -69,8 +70,8 @@ async function viewGroups(editing) {
     const data = { school: f.school.value.trim(), className: f.className.value.trim(), place: f.place.value.trim(), startDate: f.startDate.value, endDate: f.endDate.value || f.startDate.value,
       regDeadline: f.regDeadline.value, regOpen: f.regOpen.checked, items, evaluatorUids: [...f.querySelectorAll('[name=ev]:checked')].map(x => x.value), updatedAt: fs.serverTimestamp() };
     try {
-      if (f.dataset.id) await fs.updateDoc(fs.doc(db, 'swimGroups', f.dataset.id), data);
-      else { const ref = await fs.addDoc(fs.collection(db, 'swimGroups'), { ...data, status: 'open', createdAt: fs.serverTimestamp() }); toast('만들었습니다. 등록 링크를 학교에 전달해 주세요.'); return groupView(ref.id); }
+      if (f.dataset.id) { await fs.updateDoc(fs.doc(db, 'swimGroups', f.dataset.id), data); logAdmin('생존수영 수업 수정', groupTitle(data), groupPeriod(data)); }
+      else { const ref = await fs.addDoc(fs.collection(db, 'swimGroups'), { ...data, status: 'open', createdAt: fs.serverTimestamp() }); logAdmin('생존수영 수업 만들기', groupTitle(data), groupPeriod(data)); toast('만들었습니다. 등록 링크를 학교에 전달해 주세요.'); return groupView(ref.id); }
       toast('저장했습니다.'); viewGroups();
     } catch (err) { toast(errMsg(err)); }
   });
@@ -143,7 +144,7 @@ async function groupView(gid) {
   })();
   document.getElementById('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(link); toast('링크를 복사했습니다.'); } catch (e) { toast('복사하지 못했습니다. 링크를 직접 선택해 복사해 주세요.'); } });
   document.getElementById('toggle').addEventListener('click', async () => {
-    try { await fs.updateDoc(fs.doc(db, 'swimGroups', g.id), { status: g.status === 'open' ? 'closed' : 'open' }); groupView(g.id); } catch (e) { toast(errMsg(e)); }
+    try { await fs.updateDoc(fs.doc(db, 'swimGroups', g.id), { status: g.status === 'open' ? 'closed' : 'open' }); logAdmin(g.status === 'open' ? '생존수영 평가 마감' : '생존수영 평가 다시 열기', groupTitle(g)); groupView(g.id); } catch (e) { toast(errMsg(e)); }
   });
   // 관리자가 표에서 바로 결과 고치기
   target().querySelectorAll('select[data-item]').forEach(sel => sel.addEventListener('change', async () => {
@@ -157,7 +158,7 @@ async function groupView(gid) {
   target().querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
     const s = students.find(x => x.id === b.dataset.del);
     if (!confirm(s.name + ' 학생 등록을 삭제할까요? 보호자 연락처도 함께 지워집니다.')) return;
-    try { const batch = fs.writeBatch(db); batch.delete(fs.doc(db, 'swimContacts', s.id)); batch.delete(fs.doc(db, 'swimStudents', s.id)); await batch.commit(); toast('삭제했습니다.'); groupView(g.id); }
+    try { const batch = fs.writeBatch(db); batch.delete(fs.doc(db, 'swimContacts', s.id)); batch.delete(fs.doc(db, 'swimStudents', s.id)); await batch.commit(); logAdmin('생존수영 등록 삭제', s.name + ' · ' + groupTitle(g)); toast('삭제했습니다.'); groupView(g.id); }
     catch (e) { toast(errMsg(e)); }
   }));
   document.getElementById('xl-down').addEventListener('click', async () => {
@@ -188,6 +189,7 @@ async function groupView(gid) {
         writes.push([s.id, { results, status, evaluatedBy: state.user.uid, evaluatedAt: fs.serverTimestamp() }]); ok++;
       }
       for (let i = 0; i < writes.length; i += 400) { const batch = fs.writeBatch(db); writes.slice(i, i + 400).forEach(([id, d]) => batch.update(fs.doc(db, 'swimStudents', id), d)); await batch.commit(); }
+      logAdmin('생존수영 평가 엑셀 반영', groupTitle(g), ok + '명');
       toast(ok + '명 반영' + (skip ? ', 모르는 번호·발급 완료 ' + skip + '줄 건너뜀' : '') + (bad ? ', 알 수 없는 값 ' + bad + '칸은 비워 둠' : ''));
       groupView(g.id);
     } catch (err) { toast(errMsg(err)); }
@@ -195,7 +197,7 @@ async function groupView(gid) {
   document.getElementById('issue').addEventListener('click', async () => {
     const on = document.getElementById('issue-on').value || today();
     if (!confirm(ready.length + '명에게 ' + on + ' 날짜로 인증서를 발급할까요?')) return;
-    try { await issueCerts(g, ready, on); toast(ready.length + '명에게 발급했습니다.'); groupView(g.id); } catch (e) { toast(errMsg(e)); }
+    try { await issueCerts(g, ready, on); logAdmin('생존수영 인증서 발급', groupTitle(g), ready.length + '명 · 발급일 ' + on); toast(ready.length + '명에게 발급했습니다.'); groupView(g.id); } catch (e) { toast(errMsg(e)); }
   });
   document.getElementById('csv').addEventListener('click', () => {
     const rows = [['인증번호', '이름', '생년월일', '학년·반', '보호자', '관계', '연락처'].concat(items, ['상태', '발급일', '준회원 기간'])].concat(students.map(s => {
@@ -287,6 +289,7 @@ async function viewEvaluators() {
       if (!snap.size) { toast('그 이메일로 가입한 회원이 없습니다. 강사가 먼저 회원가입해야 합니다.'); return; }
       const u = snap.docs[0];
       await fs.setDoc(fs.doc(db, 'evaluators', u.id), { name: u.data().name || '', email: u.data().email, createdAt: fs.serverTimestamp() });
+      logAdmin('평가 강사 지정', u.data().name + ' · ' + u.data().email);
       toast(u.data().name + '님을 평가 강사로 지정했습니다. 수업 [수정]에서 배정해 주세요.'); viewEvaluators();
     } catch (err) { toast(errMsg(err)); }
   });
@@ -297,7 +300,7 @@ async function viewEvaluators() {
       const batch = fs.writeBatch(db);
       gs.docs.forEach(d => batch.update(d.ref, { evaluatorUids: fs.arrayRemove(b.dataset.del) }));
       batch.delete(fs.doc(db, 'evaluators', b.dataset.del));
-      await batch.commit(); toast('해제했습니다.'); viewEvaluators();
+      await batch.commit(); const e0 = list.find(x => x.uid === b.dataset.del) || {}; logAdmin('평가 강사 해제', (e0.name || '') + ' · ' + (e0.email || '')); toast('해제했습니다.'); viewEvaluators();
     } catch (err) { toast(errMsg(err)); }
   }));
 }
@@ -315,7 +318,7 @@ async function viewItems() {
     e.preventDefault();
     const list = f.items.value.split('\n').map(x => x.trim()).filter(Boolean);
     if (!list.length) { toast('항목을 하나 이상 적어 주세요.'); return; }
-    try { await fs.setDoc(fs.doc(db, 'settings', 'swimItems'), { items: list, updatedAt: fs.serverTimestamp() }); toast('저장했습니다.'); }
+    try { await fs.setDoc(fs.doc(db, 'settings', 'swimItems'), { items: list, updatedAt: fs.serverTimestamp() }); logAdmin('생존수영 기본 평가 항목 변경', '', list.join(', ')); toast('저장했습니다.'); }
     catch (err) { toast(errMsg(err)); }
   });
 }
@@ -336,6 +339,7 @@ async function purgeUnissued(groups) {
       old.slice(i, i + 200).forEach(d => { batch.delete(d.ref); batch.delete(fs.doc(db, 'swimContacts', d.id)); });
       await batch.commit();
     }
+    logAdmin('생존수영 미발급 등록 일괄 삭제', '수업 종료 후 1년 지난 등록', old.length + '건');
     toast(old.length + '건을 삭제했습니다.'); viewGroups();
   } catch (err) { toast(errMsg(err)); }
 }

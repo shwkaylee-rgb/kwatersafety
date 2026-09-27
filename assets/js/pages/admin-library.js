@@ -1,6 +1,7 @@
 /* 관리자 > 자료실·제휴 탭: 회원 전용 자료 올리기(등급별 공개), 제휴 할인 등록 */
 import { db, fs, toast, errMsg, esc, fmtDate, storageApi } from '../app.js';
 import { LEVEL_NAMES, RES_CATEGORIES, fileSize, downloadResource } from '../library.js';
+import { logAdmin } from '../admin-log.js';
 
 const MAX = 20 * 1024 * 1024;
 let box, view = 'res';
@@ -55,6 +56,7 @@ async function viewResources() {
       await m.uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
       await fs.setDoc(ref, { title: f.title.value.trim(), category: f.category.value, description: f.description.value.trim(), level: f.level.value,
         path, bucket: fileRef.bucket, fileName: file.name, contentType: file.type || 'application/octet-stream', size: file.size, open: true, downloads: 0, createdAt: fs.serverTimestamp() });
+      logAdmin('자료 올리기', f.title.value.trim(), file.name + ' · ' + LEVEL_NAMES[f.level.value]);
       toast('올렸습니다.'); viewResources();
     } catch (err) { toast(errMsg(err)); btn.disabled = false; btn.textContent = '올리기'; }
   });
@@ -78,6 +80,7 @@ async function viewResources() {
       const { m, s } = await storageApi();
       await m.deleteObject(m.ref(s, r.path)).catch(e => { if (e.code !== 'storage/object-not-found') throw e; });
       await fs.deleteDoc(fs.doc(db, 'resources', r.id));
+      logAdmin('자료 삭제', r.title, r.fileName);
       toast('삭제했습니다.'); viewResources();
     } catch (err) { toast(errMsg(err)); }
   }));
@@ -116,7 +119,8 @@ async function viewPartners(editing) {
   target().querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => viewPartners(list.find(p => p.id === b.dataset.edit))));
   target().querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
     if (!confirm('이 제휴 할인을 삭제할까요?')) return;
-    try { const batch = fs.writeBatch(db); batch.delete(fs.doc(db, 'partners', b.dataset.del)); batch.delete(fs.doc(db, 'partnerCodes', b.dataset.del)); await batch.commit(); toast('삭제했습니다.'); viewPartners(); }
+    const p = list.find(x => x.id === b.dataset.del);
+    try { const batch = fs.writeBatch(db); batch.delete(fs.doc(db, 'partners', p.id)); batch.delete(fs.doc(db, 'partnerCodes', p.id)); await batch.commit(); logAdmin('제휴 할인 삭제', p.name); toast('삭제했습니다.'); viewPartners(); }
     catch (err) { toast(errMsg(err)); }
   }));
   const cancel = document.getElementById('pf-cancel');
@@ -133,6 +137,7 @@ async function viewPartners(editing) {
         link, level: f.level.value, validUntil: f.validUntil.value, order: Number(f.order.value) || 0, open: f.open.checked, updatedAt: fs.serverTimestamp() });
       batch.set(fs.doc(db, 'partnerCodes', ref.id), { code: f.code.value.trim(), howTo: f.howTo.value.trim() });
       await batch.commit();
+      logAdmin(f.dataset.id ? '제휴 할인 수정' : '제휴 할인 등록', f.name.value.trim(), f.benefit.value.trim());
       toast('저장했습니다.'); viewPartners();
     } catch (err) { toast(errMsg(err)); }
   });

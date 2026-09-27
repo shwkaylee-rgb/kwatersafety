@@ -12,6 +12,8 @@ import { EXTRA_TYPES } from '../survey.js';
 import { needsReconfirm, consentText } from '../marketing.js';
 import { QUALS, QUAL_GRADES } from '../qual.js';
 import { enrollmentId, newAccessPeriod, completionValid } from '../course.js';
+import { logAdmin } from '../admin-log.js';
+import { tabLogs } from './admin-logs.js';
 
 const el = document.getElementById('admin');
 const STATUSES = ['접수완료', '승인', '반려', '취소'];
@@ -37,8 +39,9 @@ async function init() {
       '<button type="button" data-tab="notice">알림·메일</button>' +
       '<button type="button" data-tab="library">자료실·제휴</button>' +
       '<button type="button" data-tab="posts">게시판</button>' +
+      '<button type="button" data-tab="logs">활동 기록</button>' +
     '</div><div id="tab"></div>';
-  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), swim: () => tabSwim(tab()), members: tabMembers, notice: () => tabNotice(tab()), library: () => tabLibrary(tab()), posts: tabPosts };
+  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), swim: () => tabSwim(tab()), members: tabMembers, notice: () => tabNotice(tab()), library: () => tabLibrary(tab()), posts: tabPosts, logs: () => tabLogs(tab()) };
   el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
     el.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-active', x === b));
     tabs[b.getAttribute('data-tab')]();
@@ -113,6 +116,7 @@ async function tabApps() {
           await batch.commit();
         }
         apps = apps.filter(a => !old.includes(a));
+        logAdmin('신청서 일괄 삭제', '보관기간(3년) 지난 신청서', old.length + '건');
         toast(old.length + '건을 삭제했습니다.'); draw();
       } catch (e) { toast(errMsg(e)); }
     });
@@ -154,6 +158,7 @@ async function saveApplication(a, status, adminMemo) {
   }
   batch.update(fs.doc(db, 'applications', a.id), upd);
   await batch.commit();
+  if (status !== a.status) logAdmin('신청 상태 변경', a.applicant.name + ' · ' + a.items.map(i => i.title).join(', '), a.status + ' → ' + status + (opened ? ' (온라인 수강 ' + opened + '개 열림)' : ''));
   // 회원에게 알림 (승인·반려로 바뀔 때)
   if (status !== a.status && (status === '승인' || status === '반려')) {
     const names = a.items.map(i => i.title).join(', ');
@@ -230,7 +235,8 @@ async function tabPrograms() {
     }));
     tab().querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', async () => {
       if (!confirm('이 과정을 삭제할까요? (이미 접수된 신청 내역은 남습니다)')) return;
-      try { await fs.deleteDoc(fs.doc(db, 'programs', b.getAttribute('data-remove'))); toast('삭제했습니다.'); tabPrograms(); }
+      const p = programs.find(x => x.id === b.getAttribute('data-remove'));
+      try { await fs.deleteDoc(fs.doc(db, 'programs', p.id)); logAdmin('과정 삭제', p.title, p.date || ''); toast('삭제했습니다.'); tabPrograms(); }
       catch (e) { toast(errMsg(e)); }
     }));
     const cancel = document.getElementById('pf-cancel');
@@ -272,6 +278,7 @@ async function tabPrograms() {
         const id = f.getAttribute('data-id');
         if (id) await fs.updateDoc(fs.doc(db, 'programs', id), data);
         else await fs.addDoc(fs.collection(db, 'programs'), { ...data, createdAt: fs.serverTimestamp() });
+        logAdmin(id ? '과정 수정' : '과정 등록', data.title, data.date);
         toast('저장했습니다.'); tabPrograms();
       } catch (err) { toast(errMsg(err)); }
     });
@@ -335,6 +342,7 @@ async function tabPosts() {
       }));
       if (!n) { toast('새로 가져올 글이 없습니다.'); return; }
       await batch.commit();
+      logAdmin('기존 게시글 가져오기', '', n + '건');
       toast(n + '개의 글을 가져왔습니다.');
     } catch (e) { toast(errMsg(e)); }
   });

@@ -7,6 +7,7 @@ import { notify } from '../notify.js';
 import { surveyId, summarize, surveyQuestions, SURVEY_KEEP_DAYS } from '../survey.js';
 import { addDays } from '../membership.js';
 import { groupFromProgram } from './admin-swim.js';
+import { logAdmin } from '../admin-log.js';
 
 let box;
 const view = () => document.getElementById('edu-view');
@@ -78,7 +79,7 @@ async function rosterView(program, apps, comps) {
   document.getElementById('edu-swim').addEventListener('click', async e => {
     if (!confirm('이 교육으로 생존수영 인증 수업을 만들고, 승인된 수강생 ' + rows.length + '명에게 학생 정보 등록 링크를 알림으로 보낼까요?')) return;
     e.target.disabled = true;
-    try { const r = await groupFromProgram(program, rows.map(x => x.a)); toast('수업을 만들고 ' + r.notified + '명에게 등록 안내를 보냈습니다. [생존수영 인증] 탭에서 평가·발급하세요.'); }
+    try { const r = await groupFromProgram(program, rows.map(x => x.a)); logAdmin('생존수영 수업 만들기', program.title, '협회 교육 연계 · 안내 ' + r.notified + '명'); toast('수업을 만들고 ' + r.notified + '명에게 등록 안내를 보냈습니다. [생존수영 인증] 탭에서 평가·발급하세요.'); }
     catch (err) { toast(errMsg(err)); e.target.disabled = false; }
   });
   // 문진표 보기: 한 명 또는 전체 (지도자에게 줄 인쇄용)
@@ -104,6 +105,7 @@ async function rosterView(program, apps, comps) {
     // 결과가 새로 정해지거나 바뀌면 회원에게 알림
     if (before !== result) {
       const c = comps[completionId(a.id, program.id)];
+      logAdmin('교육 이수 결과', a.applicant.name + ' · ' + program.title, (before || '대기') + ' → ' + result + (c.certNo ? ' (' + c.certNo + ')' : ''));
       await notify(a.uid, 'edu', '「' + program.title + '」 ' + (result === '이수' ? '이수 처리되었습니다' : '결과: 미이수'),
         (result === '이수' ? '이수번호 ' + c.certNo + ' · 이수증을 받을 수 있습니다.' : '') + (comment ? (result === '이수' ? '\n' : '') + '평가 의견: ' + comment : ''),
         result === '이수' ? 'edu-certificate.html?id=' + encodeURIComponent(completionId(a.id, program.id)) : 'mypage.html#edu');
@@ -185,6 +187,7 @@ async function purgeSurveys(comps) {
       old.slice(i, i + 400).forEach(d => batch.delete(d.ref));
       await batch.commit();
     }
+    logAdmin('문진표 일괄 삭제', '보관기간 지난 사전 설문', old.length + '건');
     toast(old.length + '건을 삭제했습니다.');
   } catch (e) { toast(errMsg(e)); }
 }

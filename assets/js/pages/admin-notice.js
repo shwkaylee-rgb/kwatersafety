@@ -1,6 +1,7 @@
 /* 관리자 > 알림 탭: 전체 공지 알림 보내기, 보낸 공지 목록, 1년 지난 알림 정리 */
 import { db, fs, toast, errMsg, esc, fmtDate, callFn } from '../app.js';
 import { TARGET_NAMES, NOTICE_KEEP_DAYS } from '../notify.js';
+import { logAdmin } from '../admin-log.js';
 
 let box;
 export async function tabNotice(container) {
@@ -46,12 +47,14 @@ export async function tabNotice(container) {
     if (!confirm(TARGET_NAMES[f.target.value] + '에게 알림을 보낼까요?')) return;
     try {
       await fs.addDoc(fs.collection(db, 'broadcasts'), { target: f.target.value, title: f.title.value.trim(), body: f.body.value.trim(), link, createdAt: fs.serverTimestamp() });
+      logAdmin('전체 공지 보내기', f.title.value.trim(), TARGET_NAMES[f.target.value]);
       toast('알림을 보냈습니다.'); tabNotice(box);
     } catch (err) { toast(errMsg(err)); }
   });
   box.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
     if (!confirm('이 공지를 삭제할까요? 회원 알림함에서도 사라집니다.')) return;
-    try { await fs.deleteDoc(fs.doc(db, 'broadcasts', b.getAttribute('data-del'))); toast('삭제했습니다.'); tabNotice(box); }
+    const bc = list.find(x => x.id === b.getAttribute('data-del'));
+    try { await fs.deleteDoc(fs.doc(db, 'broadcasts', bc.id)); logAdmin('전체 공지 삭제', bc.title); toast('삭제했습니다.'); tabNotice(box); }
     catch (err) { toast(errMsg(err)); }
   }));
   document.getElementById('remind-now').addEventListener('click', async e => {
@@ -77,6 +80,7 @@ export async function tabNotice(container) {
         refs.slice(i, i + 400).forEach(r => batch.delete(r));
         await batch.commit();
       }
+      logAdmin('알림 일괄 삭제', '1년 지난 알림', refs.length + '건');
       toast(refs.length + '건을 삭제했습니다.'); tabNotice(box);
     } catch (err) { toast(errMsg(err)); }
   });

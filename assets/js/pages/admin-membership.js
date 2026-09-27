@@ -4,6 +4,7 @@ import { MEMBERSHIP as M, TIER_NAMES, KIND_NAMES, STATUS_NAMES, memberStatus, da
   formatMemberNo, retierMemberNo, todayYmd, addDays } from '../membership.js';
 import { statusBadge, appStatusBadge } from '../membership-ui.js';
 import { notify } from '../notify.js';
+import { logAdmin } from '../admin-log.js';
 import { qualStatus, qualTitle, QUAL_STATUS_NAMES, normNo, normName } from '../qual.js';
 
 const RECEIPT_NAMES = { none: '필요 없음', '대기': '발급 대기', '발급': '발급 완료', '취소필요': '취소 발급 필요', '취소': '취소 완료' };
@@ -63,16 +64,19 @@ async function viewApps() {
       if (kind === 'activate') {
         if (!confirm(a.applicant.name + '님의 ' + KIND_NAMES[a.kind] + '(' + won(a.fee) + ') 입금을 확인하고 활성화할까요?')) return;
         await activate(a); toast('활성화했습니다.');
+        logAdmin('멤버십 활성화', a.applicant.name, KIND_NAMES[a.kind] + ' · ' + TIER_NAMES[a.kind === 'upgrade' ? 'full' : a.tier] + ' · ' + won(a.fee));
         await notify(a.uid, 'membership', '멤버십이 활성화되었습니다', KIND_NAMES[a.kind] + ' · ' + TIER_NAMES[a.kind === 'upgrade' ? 'full' : a.tier] + '. 마이페이지에서 회원증을 확인하세요.', 'mypage.html#ms');
       } else if (kind === 'reject') {
         const memo = document.getElementById('memo-' + a.id).value.trim();
         if (!memo) { toast('반려 사유를 입력해 주세요. 신청자에게 보입니다.'); return; }
         await fs.updateDoc(fs.doc(db, 'membershipApplications', a.id), { status: '반려', adminMemo: memo, receiptStatus: 'none', processedOn: todayYmd() });
         toast('반려했습니다.');
+        logAdmin('멤버십 반려', a.applicant.name, '사유: ' + memo);
         await notify(a.uid, 'membership', '멤버십 신청이 반려되었습니다', '사유: ' + memo, 'mypage.html#ms');
       } else if (kind === 'refund') {
         if (!confirm('환불 처리할까요? 멤버십 기간이 신청 전 상태로 돌아갑니다. 발급한 증빙은 취소 발급이 필요합니다.')) return;
         await refund(a); toast('환불 처리했습니다.');
+        logAdmin('멤버십 환불', a.applicant.name, KIND_NAMES[a.kind] + ' · ' + won(a.fee));
       }
       apps = await loadApps(); draw();
     } catch (e) { toast(e.message && !e.code ? e.message : errMsg(e)); }
@@ -219,6 +223,7 @@ async function viewReceipts() {
       await fs.updateDoc(fs.doc(db, a.src, a.id), cancel
         ? { receiptStatus: '취소', receiptCancelNo: no, receiptCancelledOn: todayYmd() }
         : { receiptStatus: '발급', receiptNo: no, receiptIssuedOn: todayYmd() });
+      logAdmin(cancel ? '증빙 취소 발급' : '증빙 발급', a.applicant.name + ' · ' + kindText(a), '승인번호 ' + no);
       toast(cancel ? '취소 발급을 기록했습니다.' : '발급 완료로 기록했습니다.'); viewReceipts();
     } catch (e) { toast(errMsg(e)); }
   }));
@@ -262,6 +267,7 @@ async function viewMembers() {
       try {
         await fs.updateDoc(fs.doc(db, 'memberships', m.uid), { suspended: !m.suspended, updatedAt: fs.serverTimestamp() });
         m.suspended = !m.suspended; draw();
+        logAdmin(m.suspended ? '멤버십 정지' : '멤버십 정지 해제', m.name + ' · ' + m.memberNo);
       } catch (e) { toast(errMsg(e)); }
     }));
     document.getElementById('mcsv').addEventListener('click', () => csv('멤버십회원',

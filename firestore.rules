@@ -85,6 +85,14 @@ service cloud.firestore {
     match /partnerCodes/{id} {
       allow read, write: if isAdmin();
     }
+    // 관리자 활동 기록: 관리자가 자기 이름으로 추가만. 고치거나 지울 수 없음
+    match /adminLogs/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'action', 'target', 'detail', 'at'])
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
     // 매일 안내 발송 기록: 서버 함수만 씀
     match /reminderLog/{id} {
       allow read: if isAdmin();

@@ -3,6 +3,7 @@
 import { db, fs, toast, errMsg, esc } from '../app.js';
 import { todayYmd } from '../membership.js';
 import { notify } from '../notify.js';
+import { logAdmin } from '../admin-log.js';
 import { QUALS, QUAL_GRADES, qualTitle, QUAL_STATUS_NAMES, qualStatus, validUntil, formatCertNo, normNo, normName, verifyId, publicView } from '../qual.js';
 
 let box, programs, comps, quals;
@@ -141,6 +142,7 @@ async function issue({ typeId, grade, uid, name, birth, issuedOn, certNo, source
     tx.set(qualRef(no), q);
   });
   await syncVerify(q);
+  logAdmin(source && source.manual ? '자격 직접 등록' : '자격 발급', q.name + ' · ' + qualTitle(q), q.certNo + ' · ' + q.issuedOn + ' ~ ' + q.expiresOn);
   await notify(q.uid, 'qual', '「' + qualTitle(q) + '」 자격이 발급되었습니다', '자격번호 ' + q.certNo + ' · 유효기간 ' + q.expiresOn + '까지', 'qual-certificate.html?no=' + encodeURIComponent(q.certNo));
   return q.certNo;
 }
@@ -150,6 +152,7 @@ async function renew(q, on, src) {
   const upd = { expiresOn: validUntil(on), lastRenewedOn: on, renewals: fs.arrayUnion({ on, ...src }), updatedAt: fs.serverTimestamp() };
   await fs.updateDoc(qualRef(q.certNo), upd);
   await syncVerify({ ...q, expiresOn: upd.expiresOn });
+  logAdmin('자격 갱신', q.name + ' · ' + qualTitle(q), q.certNo + ' · ' + q.expiresOn + ' → ' + upd.expiresOn);
   await notify(q.uid, 'qual', '「' + qualTitle(q) + '」 자격이 갱신되었습니다', '자격번호 ' + q.certNo + ' · 유효기간 ' + upd.expiresOn + '까지', 'qual-certificate.html?no=' + encodeURIComponent(q.certNo));
 }
 
@@ -180,6 +183,9 @@ function detail(q) {
       await fs.updateDoc(qualRef(q.certNo), upd);
       await syncVerify({ ...q, ...upd });
       const after = { ...q, ...upd };
+      logAdmin('자격 정보 수정', q.name + ' · ' + q.certNo, [upd.status !== q.status ? '상태 ' + QUAL_STATUS_NAMES[qualStatus(q)] + ' → ' + { active: '유효', suspended: '정지', revoked: '취소' }[upd.status] : '',
+        upd.statusReason ? '사유: ' + upd.statusReason : '', upd.expiresOn !== q.expiresOn ? '만료일 ' + q.expiresOn + ' → ' + upd.expiresOn : '', upd.grade !== q.grade ? '등급 ' + (q.grade || '-') + ' → ' + upd.grade : '',
+        'uid' in upd ? (upd.uid ? '회원 연결 변경' : '회원 연결 해제') : ''].filter(Boolean).join(' · '));
       if (upd.status !== q.status && after.uid) await notify(after.uid, 'qual', '「' + qualTitle(after) + '」 자격이 ' + ({ active: '다시 유효해졌습니다', suspended: '정지되었습니다', revoked: '취소되었습니다' })[upd.status],
         upd.statusReason ? '사유: ' + upd.statusReason : '', 'mypage.html#qual');
       toast('저장했습니다.'); tabQual(box);
