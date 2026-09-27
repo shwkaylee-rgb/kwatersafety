@@ -6,6 +6,8 @@ import { tabEdu } from './admin-edu.js';
 import { tabQual } from './admin-qual.js';
 import { tabNotice } from './admin-notice.js';
 import { notify } from '../notify.js';
+import { EXTRA_TYPES } from '../survey.js';
+import { needsReconfirm, consentText } from '../marketing.js';
 import { QUALS, QUAL_GRADES } from '../qual.js';
 import { enrollmentId, newAccessPeriod, completionValid } from '../course.js';
 
@@ -200,6 +202,10 @@ async function tabPrograms() {
         Object.entries(QUALS).map(([k, v]) => '<option value="' + k + '"' + (k === p.qualType ? ' selected' : '') + '>' + esc(v.name) + '</option>').join('') + '</select></label>' +
       '<label>등급<select name="qualGrade">' + QUAL_GRADES.map(g => '<option' + (g === p.qualGrade ? ' selected' : '') + '>' + g + '</option>').join('') + '</select></label>' +
       '<label>연계 방식<select name="qualAction"><option value="new">신규 발급 (자격 과정)</option><option value="renew"' + (p.qualAction === 'renew' ? ' selected' : '') + '>갱신 (갱신교육)</option></select></label></div>' +
+      '<fieldset class="sv-admin"><legend>사전 설문 (건강 문진표)</legend>' +
+        '<label class="check"><input type="checkbox" name="surveyOn"' + (p.surveyOn ? ' checked' : '') + '> 교육 전에 사전 설문을 받습니다 (협회 표준 문진표 + 아래 추가 문항)</label>' +
+        '<label>교육 종료일 <small>(문진표는 이 날로부터 1년 뒤 파기합니다)</small><input type="date" name="endDate" value="' + esc(p.endDate || '') + '"></label>' +
+        '<div id="sv-extra" class="sv-extra"></div><button type="button" class="btn btn-outline btn-sm" id="sv-add">+ 추가 문항</button></fieldset>' +
       '<label class="check"><input type="checkbox" name="open"' + (p.open ? ' checked' : '') + '> 모집 중 (체크 해제하면 신청 페이지에서 숨김)</label>' +
       '<div class="btn-row">' + (p.id ? '<button type="button" class="btn btn-outline" id="pf-cancel">취소</button>' : '') +
       '<button class="btn btn-primary" type="submit">' + (p.id ? '수정 완료' : '등록') + '</button></div></form>';
@@ -227,6 +233,27 @@ async function tabPrograms() {
     if (cancel) cancel.addEventListener('click', () => draw());
 
     const f = document.getElementById('pf');
+    // 과정별 추가 문항 편집
+    const extraBox = document.getElementById('sv-extra');
+    const addExtra = (q = { label: '', type: 'text', options: [], required: false }) => {
+      const row = document.createElement('div'); row.className = 'sv-extra-row';
+      row.innerHTML = '<input data-x="label" maxlength="100" placeholder="문항 (예: 수영장 이용 경험)" value="' + esc(q.label) + '">' +
+        '<select data-x="type">' + Object.entries(EXTRA_TYPES).map(([k, v]) => '<option value="' + k + '"' + (k === q.type ? ' selected' : '') + '>' + v + '</option>').join('') + '</select>' +
+        '<input data-x="options" placeholder="보기를 쉼표로 (예: 있음, 없음)" value="' + esc((q.options || []).join(', ')) + '">' +
+        '<label class="check"><input type="checkbox" data-x="required"' + (q.required ? ' checked' : '') + '> 필수</label>' +
+        '<button type="button" class="link-btn" data-x="del">삭제</button>';
+      const sync = () => { row.querySelector('[data-x=options]').hidden = !['radio', 'check'].includes(row.querySelector('[data-x=type]').value); };
+      row.querySelector('[data-x=type]').addEventListener('change', sync); sync();
+      row.querySelector('[data-x=del]').addEventListener('click', () => row.remove());
+      extraBox.appendChild(row);
+    };
+    ((editing && editing.surveyExtra) || []).forEach(addExtra);
+    document.getElementById('sv-add').addEventListener('click', () => addExtra());
+    const readExtra = () => [...extraBox.querySelectorAll('.sv-extra-row')].map(r => {
+      const type = r.querySelector('[data-x=type]').value;
+      return { label: r.querySelector('[data-x=label]').value.trim(), type, required: r.querySelector('[data-x=required]').checked,
+        options: ['radio', 'check'].includes(type) ? r.querySelector('[data-x=options]').value.split(',').map(x => x.trim()).filter(Boolean) : [] };
+    }).filter(q => q.label);
     f.addEventListener('submit', async e => {
       e.preventDefault();
       const data = {
@@ -234,7 +261,8 @@ async function tabPrograms() {
         capacity: f.capacity.value ? Number(f.capacity.value) : '', deadline: f.deadline.value.trim(),
         fee: Number(f.fee.value) || 0, order: Number(f.order.value) || 0, description: f.description.value, open: f.open.checked,
         requiresCourse: f.requiresCourse.value, qualType: f.qualType.value, qualGrade: f.qualType.value ? f.qualGrade.value : '', qualAction: f.qualType.value ? f.qualAction.value : '',
-        requiresCourseTitle: f.requiresCourse.value ? courses.find(c => c.id === f.requiresCourse.value).title : ''
+        requiresCourseTitle: f.requiresCourse.value ? courses.find(c => c.id === f.requiresCourse.value).title : '',
+        surveyOn: f.surveyOn.checked, endDate: f.endDate.value, surveyExtra: readExtra()
       };
       try {
         const id = f.getAttribute('data-id');
@@ -251,14 +279,26 @@ async function tabPrograms() {
 async function tabMembers() {
   tab().innerHTML = '<p class="board-empty">불러오는 중…</p>';
   try {
-    const [snap, msSnap] = await Promise.all([fs.getDocs(fs.collection(db, 'users')), fs.getDocs(fs.collection(db, 'memberships'))]);
+    const [snap, msSnap, mkSnap] = await Promise.all([fs.getDocs(fs.collection(db, 'users')), fs.getDocs(fs.collection(db, 'memberships')), fs.getDocs(fs.collection(db, 'marketingConsents'))]);
     const ms = Object.fromEntries(msSnap.docs.map(d => [d.id, d.data()]));
+    const mk = Object.fromEntries(mkSnap.docs.map(d => [d.id, d.data()]));
     const users = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
     const tierText = m => m ? TIER_NAMES[m.tier] + ' <small>(' + STATUS_NAMES[memberStatus(m)] + ')</small>' : '<span class="muted">–</span>';
-    tab().innerHTML = '<p class="board-count">전체 회원 <b>' + users.length + '</b>명 <small>(멤버십 관리는 [멤버십] 탭)</small></p>' +
-      '<div class="table-scroll"><table class="board-table"><thead><tr><th>이름</th><th>이메일</th><th>휴대폰</th><th>멤버십</th><th class="col-date">가입일</th></tr></thead><tbody>' +
-      users.map(u => '<tr><td>' + esc(u.name) + '</td><td class="col-title">' + esc(u.email) + '</td><td>' + esc(u.phone) + '</td><td>' + tierText(ms[u.id]) + '</td><td class="col-date">' + fmtDate(u.createdAt) + '</td></tr>').join('') +
+    const optIn = users.filter(u => mk[u.id] && (mk[u.id].email || mk[u.id].sms)), again = optIn.filter(u => needsReconfirm(mk[u.id]));
+    tab().innerHTML = '<div class="admin-toolbar"><p class="board-count">전체 회원 <b>' + users.length + '</b>명 · 소식지 수신 동의 <b>' + optIn.length + '</b>명' +
+        (again.length ? ' · <span class="warn">2년 재확인 필요 ' + again.length + '명</span>' : '') + ' <small>(멤버십 관리는 [멤버십] 탭)</small></p>' +
+        '<button type="button" class="btn btn-outline btn-sm" id="mk-csv">수신 동의 명단 CSV</button></div>' +
+      '<p class="form-help">소식지·행사 안내는 수신에 동의한 회원에게만 보내세요. 광고성 메일·문자는 제목이나 첫머리에 (광고)와 보내는 곳을 적고, 수신 거부 방법을 안내해야 합니다. 동의 후 2년이 되면 회원 대시보드에 재확인 안내가 뜹니다.</p>' +
+      '<div class="table-scroll"><table class="board-table"><thead><tr><th>이름</th><th>이메일</th><th>휴대폰</th><th>멤버십</th><th>소식지</th><th class="col-date">가입일</th></tr></thead><tbody>' +
+      users.map(u => '<tr><td>' + esc(u.name) + '</td><td class="col-title">' + esc(u.email) + '</td><td>' + esc(u.phone) + '</td><td>' + tierText(ms[u.id]) + '</td><td>' + consentText(mk[u.id]) + (needsReconfirm(mk[u.id]) ? ' <small class="warn">재확인</small>' : '') + '</td><td class="col-date">' + fmtDate(u.createdAt) + '</td></tr>').join('') +
       '</tbody></table></div>';
+    document.getElementById('mk-csv').addEventListener('click', () => {
+      const rows = [['이름', '이메일', '휴대폰', '이메일 수신', '문자 수신', '동의일', '마지막 확인일']].concat(optIn.map(u => { const c = mk[u.id];
+        return [u.name, c.email ? u.email : '', c.sms ? u.phone : '', c.email ? 'Y' : 'N', c.sms ? 'Y' : 'N', fmtDate(c.agreedAt), fmtDate(c.confirmedAt)]; }));
+      const csv = '\ufeff' + rows.map(r => r.map(v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = '소식지수신동의_' + fmtDate(new Date()) + '.csv'; a.click(); URL.revokeObjectURL(a.href);
+    });
   } catch (e) { tab().innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; }
 }
 

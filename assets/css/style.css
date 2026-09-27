@@ -706,3 +706,42 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
   .dash-todo li { flex-direction: column; align-items: flex-start; gap: 8px; }
   .nt-item { flex-wrap: wrap; }
 }
+
+/* ---------- 사전 설문 · 수신 설정 · 납부확인서 ---------- */
+.sv-form { gap: 18px; }
+.sv-meta { text-align: center; line-height: 1.8; }
+.sv-q { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+.sv-q legend { font-weight: 700; padding: 0 6px; font-size: 15px; }
+.sv-q .req { color: #e5484d; }
+.sv-options { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.sv-options .check { white-space: nowrap; }
+.sv-q input[type=radio] { width: 18px; height: 18px; padding: 0; flex-shrink: 0; }
+.agree.sensitive { border-color: #f3d9a4; background: #fff9ec; }
+.mkt-box { margin-top: 24px; display: grid; gap: 10px; }
+.mkt-box h3 { font-size: 17px; font-weight: 800; }
+.mkt-box form { display: grid; gap: 8px; justify-items: start; }
+.mkt-choice { border-top: 1px dashed var(--line); padding-top: 10px; display: grid; gap: 6px; }
+.warn { color: #b45309; }
+.sv-admin { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; }
+.sv-admin legend { font-weight: 700; padding: 0 6px; }
+.sv-extra { display: grid; gap: 8px; }
+.sv-extra-row { display: grid; grid-template-columns: 2fr 1fr 2fr auto auto; gap: 8px; align-items: center; }
+.sv-extra-row input, .sv-extra-row select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+.sv-print { margin-top: 24px; display: grid; gap: 14px; }
+.sv-card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; break-inside: avoid; }
+.sv-card h4 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+.sv-card dl { display: grid; grid-template-columns: minmax(160px, 1fr) 2fr; gap: 4px 14px; font-size: 14px; }
+.sv-card dt { color: var(--text-sub); }
+.sv-card dd.flag { color: #c62828; font-weight: 700; }
+.pay-cert dl { max-width: 420px; }
+.pay-table { width: 100%; max-width: 480px; margin: 0 auto; border-collapse: collapse; font-size: 15px; text-align: left; }
+.pay-table th, .pay-table td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
+.pay-table thead th { border-bottom: 2px solid #333; }
+.pay-table tfoot th { border-top: 2px solid #333; border-bottom: 0; font-size: 17px; }
+.pay-table .num { text-align: right; white-space: nowrap; }
+@media (max-width: 860px) { .sv-extra-row { grid-template-columns: 1fr 1fr; } }
+@media print {
+  body.printing-sv * { visibility: hidden; }
+  body.printing-sv #sv-panel, body.printing-sv #sv-panel * { visibility: visible; }
+  body.printing-sv #sv-panel { position: absolute; left: 0; top: 0; width: 100%; }
+}

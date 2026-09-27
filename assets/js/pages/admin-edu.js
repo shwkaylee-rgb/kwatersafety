@@ -4,6 +4,8 @@
 import { db, fs, toast, errMsg, esc } from '../app.js';
 import { todayYmd } from '../membership.js';
 import { notify } from '../notify.js';
+import { surveyId, summarize, surveyQuestions, SURVEY_KEEP_DAYS } from '../survey.js';
+import { addDays } from '../membership.js';
 
 let box;
 const view = () => document.getElementById('edu-view');
@@ -32,12 +34,24 @@ export async function tabEdu(container) {
       return '<tr><td>' + esc(p.category) + '</td><td class="col-title">' + esc(p.title) + '</td><td class="col-date">' + esc(p.date || '') + '</td>' +
         '<td>' + r.length + '명</td><td>' + done + '명</td><td>' + (r.length ? '<button type="button" class="btn btn-outline btn-sm" data-roster="' + p.id + '">이수 처리</button>' : '<span class="muted">수강생 없음</span>') + '</td></tr>';
     }).join('') : '<tr><td colspan="6">등록된 대면 과정이 없습니다.</td></tr>') +
-    '</tbody></table></div>';
+    '</tbody></table></div>' +
+    '<div class="notice-box left"><h3>사전 설문(건강 문진표) 정리</h3><p>문진표는 민감정보라 교육 종료 후 1년이 지나면 삭제합니다. 종료일은 과정의 [교육 종료일], 없으면 이수일, 그것도 없으면 제출일로 계산합니다.</p>' +
+      '<button type="button" class="btn btn-outline btn-sm" id="sv-purge">보관기간 지난 문진표 삭제</button></div>';
+  document.getElementById('sv-purge').addEventListener('click', () => purgeSurveys(comps));
   view().querySelectorAll('[data-roster]').forEach(b => b.addEventListener('click', () => rosterView(programs.find(p => p.id === b.getAttribute('data-roster')), roster(b.getAttribute('data-roster')), comps)));
 }
 
-function rosterView(program, apps, comps) {
+async function rosterView(program, apps, comps) {
   const today = todayYmd();
+  let surveys = {};
+  if (program.surveyOn) {
+    try { const sv = await fs.getDocs(fs.query(fs.collection(db, 'surveys'), fs.where('programId', '==', program.id))); surveys = Object.fromEntries(sv.docs.map(d => [d.id, d.data()])); }
+    catch (e) { console.error(e); }
+  }
+  const svCell = a => { if (!program.surveyOn) return ''; const sv = surveys[surveyId(a.id, program.id)];
+    if (!sv) return '<td><span class="mstatus mstatus-wait">미제출</span></td>';
+    const flags = summarize(sv.questions || surveyQuestions(program), sv.answers).filter(x => x.flagged).length;
+    return '<td class="nowrap"><button type="button" class="link-btn" data-sv="' + a.id + '">보기</button>' + (flags ? ' <span class="mstatus mstatus-no">주의 ' + flags + '</span>' : ' <span class="mstatus mstatus-ok">특이 없음</span>') + '</td>'; };
   const rows = apps.map(a => ({ a, c: comps[completionId(a.id, program.id)] || null }))
     .sort((x, y) => String(x.a.applicant.name).localeCompare(String(y.a.applicant.name), 'ko'));
   view().innerHTML =
@@ -46,7 +60,7 @@ function rosterView(program, apps, comps) {
     '<div class="admin-toolbar"><label class="inline-field">이수일 <input type="date" id="edu-date" value="' + today + '"></label>' +
       '<div class="btn-row"><button type="button" class="btn btn-outline btn-sm" id="edu-all">결과 없는 수강생 모두 "이수"로</button>' +
       '<button type="button" class="btn btn-outline btn-sm" id="edu-csv">CSV 내려받기</button></div></div>' +
-    '<div class="table-scroll"><table class="board-table edu-table"><thead><tr><th>이름</th><th>생년월일</th><th>결과</th><th>점수</th><th>평가 의견</th><th>이수번호</th><th></th></tr></thead><tbody>' +
+    '<div class="table-scroll"><table class="board-table edu-table"><thead><tr><th>이름</th><th>생년월일</th><th>결과</th><th>점수</th><th>평가 의견</th><th>이수번호</th>' + (program.surveyOn ? '<th>문진표</th>' : '') + '<th></th></tr></thead><tbody>' +
     rows.map(({ a, c }) => '<tr data-app="' + a.id + '">' +
       '<td>' + esc(a.applicant.name) + (a.applicant.guardianName ? '<br><small>보호자 ' + esc(a.applicant.guardianName) + '</small>' : '') + '</td>' +
       '<td>' + esc(a.applicant.birth || '') + '</td>' +
@@ -54,9 +68,27 @@ function rosterView(program, apps, comps) {
       '<td><input type="number" min="0" max="100" class="mini-input" data-f="score" placeholder="선택" value="' + (c && c.score != null ? c.score : '') + '"></td>' +
       '<td><input class="mini-input wide" data-f="comment" placeholder="선택" value="' + esc(c ? c.comment || '' : '') + '"></td>' +
       '<td class="nowrap">' + esc(c && c.certNo || '') + (c && c.completedOn ? '<br><small>' + esc(c.completedOn) + '</small>' : '') + '</td>' +
-      '<td><button type="button" class="btn btn-primary btn-sm" data-save="' + a.id + '">저장</button></td></tr>').join('') +
-    '</tbody></table></div>';
+      svCell(a) + '<td><button type="button" class="btn btn-primary btn-sm" data-save="' + a.id + '">저장</button></td></tr>').join('') +
+    '</tbody></table></div>' +
+    (program.surveyOn ? '<p class="btn-row left"><button type="button" class="btn btn-outline btn-sm" id="sv-all">문진표 모아보기·인쇄 (' + Object.keys(surveys).length + '/' + rows.length + '명 제출)</button></p>' : '') +
+    '<div id="sv-panel"></div>';
   document.getElementById('edu-back').addEventListener('click', () => tabEdu(box));
+  // 문진표 보기: 한 명 또는 전체 (지도자에게 줄 인쇄용)
+  const svCard = a => { const sv = surveys[surveyId(a.id, program.id)]; if (!sv) return '';
+    return '<article class="sv-card"><h4>' + esc(a.applicant.name) + (a.applicant.birth ? ' <small>' + esc(a.applicant.birth) + '</small>' : '') + '</h4><dl>' +
+      summarize(sv.questions || surveyQuestions(program), sv.answers).map(x => '<dt>' + esc(x.label) + '</dt><dd' + (x.flagged ? ' class="flag"' : '') + '>' + (esc(x.value) || '–') + '</dd>').join('') + '</dl></article>'; };
+  const showPanel = list => {
+    const panel = document.getElementById('sv-panel');
+    panel.innerHTML = '<div class="sv-print"><div class="sv-print-head"><h3>' + esc(program.title) + ' 사전 설문</h3><p class="form-help">민감정보입니다. 교육 담당 지도자에게만 전달하고, 인쇄물은 교육이 끝나면 파기해 주세요.</p>' +
+      '<p class="btn-row left no-print"><button type="button" class="btn btn-primary btn-sm" id="sv-print">인쇄</button><button type="button" class="btn btn-outline btn-sm" id="sv-close">닫기</button></p></div>' +
+      list.map(svCard).join('') + '</div>';
+    document.getElementById('sv-close').addEventListener('click', () => { panel.innerHTML = ''; });
+    document.getElementById('sv-print').addEventListener('click', () => { document.body.classList.add('printing-sv'); window.print(); document.body.classList.remove('printing-sv'); });
+    panel.scrollIntoView({ behavior: 'smooth' });
+  };
+  view().querySelectorAll('[data-sv]').forEach(b => b.addEventListener('click', () => showPanel([apps.find(x => x.id === b.getAttribute('data-sv'))])));
+  const svAll = document.getElementById('sv-all');
+  if (svAll) svAll.addEventListener('click', () => showPanel(rows.map(r => r.a).filter(a => surveys[surveyId(a.id, program.id)])));
 
   async function save(a, result, score, comment) {
     const before = (comps[completionId(a.id, program.id)] || {}).result;
@@ -127,3 +159,25 @@ function rosterView(program, apps, comps) {
     el.download = '이수현황_' + program.title + '_' + todayYmd() + '.csv'; el.click(); URL.revokeObjectURL(el.href);
   });
 }
+
+// 보관기간(교육 종료 후 1년) 지난 문진표 삭제
+async function purgeSurveys(comps) {
+  try {
+    const [sv, ps] = await Promise.all([fs.getDocs(fs.collection(db, 'surveys')), fs.getDocs(fs.collection(db, 'programs'))]);
+    const progs = Object.fromEntries(ps.docs.map(d => [d.id, d.data()])), today = todayYmd();
+    const old = sv.docs.filter(d => {
+      const x = d.data(), c = comps[d.id];
+      const end = (progs[x.programId] && progs[x.programId].endDate) || x.eduEnd || (c && c.completedOn) || (x.submittedAt && x.submittedAt.toDate ? todayOf(x.submittedAt.toDate()) : '');
+      return end && addDays(end, SURVEY_KEEP_DAYS) < today;
+    });
+    if (!old.length) { toast('보관기간이 지난 문진표가 없습니다.'); return; }
+    if (!confirm('보관기간이 지난 문진표 ' + old.length + '건을 영구 삭제할까요?')) return;
+    for (let i = 0; i < old.length; i += 400) {
+      const batch = fs.writeBatch(db);
+      old.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    toast(old.length + '건을 삭제했습니다.');
+  } catch (e) { toast(errMsg(e)); }
+}
+const todayOf = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');

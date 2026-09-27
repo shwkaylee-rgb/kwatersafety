@@ -156,5 +156,27 @@ await expect('남의 알림 읽음 기록 저장', 'deny', req('PATCH', `users/$
 await expect('내 정보에 생년월일 저장', 'allow', req('PATCH', `users/${c.uid}`, c.token, { name: 'C', phone: '010', email: 'c@x', birth: '1990-01-01' }));
 await expect('내 정보에 허용 안 된 항목 저장', 'deny', req('PATCH', `users/${c.uid}`, c.token, { name: 'C', address: '서울' }));
 
+console.log('\n[사전 설문 · 수신 동의]');
+await req('PATCH', `applications/${RUN}sva`, 'owner', { uid: c.uid, status: '승인', items: [] });
+await req('PATCH', `applications/${RUN}svb`, 'owner', { uid: b.uid, status: '승인', items: [] });
+const sv = (appId, extra = {}) => ({ uid: c.uid, applicationId: appId, programId: 'p1', consentSensitive: true, answers: { swim: { value: '25m 이상' } }, ...extra });
+await expect('본인 신청서의 문진표 제출', 'allow', req('PATCH', `surveys/${RUN}sva_p1`, c.token, sv(`${RUN}sva`)));
+await expect('민감정보 동의 없이 제출', 'deny', req('PATCH', `surveys/${RUN}sva_p2`, c.token, sv(`${RUN}sva`, { programId: 'p2', consentSensitive: false })));
+await expect('남의 신청서로 문진표 제출', 'deny', req('PATCH', `surveys/${RUN}svb_p1`, c.token, sv(`${RUN}svb`)));
+await expect('문서 번호와 신청서가 다른 제출', 'deny', req('PATCH', `surveys/${RUN}svx_p1`, c.token, sv(`${RUN}sva`)));
+await expect('본인 문진표 읽기', 'allow', req('GET', `surveys/${RUN}sva_p1`, c.token));
+await expect('남의 문진표 읽기', 'deny', req('GET', `surveys/${RUN}sva_p1`, b.token));
+await expect('관리자가 문진표 읽기', 'allow', req('GET', `surveys/${RUN}sva_p1`, admin.token));
+await expect('본인이 문진표 수정', 'allow', req('PATCH', `surveys/${RUN}sva_p1`, c.token, sv(`${RUN}sva`, { answers: { swim: { value: '50m 이상 자유롭게' } } })));
+await expect('본인이 문진표 삭제', 'deny', req('DELETE', `surveys/${RUN}sva_p1`, c.token));
+await expect('관리자가 문진표 삭제(보관기간 경과)', 'allow', req('DELETE', `surveys/${RUN}sva_p1`, admin.token));
+await expect('본인 수신 동의 저장', 'allow', req('PATCH', `marketingConsents/${c.uid}`, c.token, { uid: c.uid, email: true, sms: false, updatedAt: new Date(), confirmedAt: new Date(), agreedAt: new Date() }));
+await expect('남의 수신 동의 바꾸기', 'deny', req('PATCH', `marketingConsents/${c.uid}`, b.token, { uid: c.uid, email: false, sms: false }));
+await expect('수신 동의에 다른 항목 넣기', 'deny', req('PATCH', `marketingConsents/${c.uid}`, c.token, { uid: c.uid, email: true, sms: true, phone: '010' }));
+await expect('관리자가 수신 동의 명단 읽기', 'allow', req('GET', `marketingConsents/${c.uid}`, admin.token));
+await expect('다른 회원이 수신 동의 읽기', 'deny', req('GET', `marketingConsents/${c.uid}`, b.token));
+await expect('본인이 수신 설정 처리 결과 알림 만들기', 'allow', req('PATCH', `notifications/${RUN}nc`, c.token, { uid: c.uid, type: 'consent', title: '수신 설정 변경', read: false }));
+await expect('본인이 다른 종류 알림 만들기', 'deny', req('PATCH', `notifications/${RUN}nd`, c.token, { uid: c.uid, type: 'qual', title: '가짜 자격', read: false }));
+
 console.log(`\n결과: 통과 ${pass} / 실패 ${fail}`);
 process.exit(fail ? 1 : 0);

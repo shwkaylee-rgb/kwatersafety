@@ -35,7 +35,9 @@ service cloud.firestore {
     // 알림: 관리자 처리 시 생성. 본인은 읽기, 읽음 표시, (탈퇴 시) 삭제만
     match /notifications/{id} {
       allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
-      allow create: if isAdmin();
+      // 관리자, 또는 본인이 수신 설정을 바꿀 때의 처리 결과 알림(type: consent)
+      allow create: if isAdmin()
+        || (signedIn() && request.resource.data.uid == request.auth.uid && request.resource.data.type == 'consent');
       allow update: if isAdmin()
         || (signedIn() && resource.data.uid == request.auth.uid
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']));
@@ -45,6 +47,29 @@ service cloud.firestore {
     match /broadcasts/{id} {
       allow read: if signedIn();
       allow write: if isAdmin();
+    }
+
+    // 소식지 수신 동의: 본인만 설정, 관리자는 명단 조회
+    match /marketingConsents/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid) && request.resource.data.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'sms', 'agreedAt', 'confirmedAt', 'updatedAt'])
+        && request.resource.data.email is bool && request.resource.data.sms is bool;
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    // 사전 설문(건강 문진표, 민감정보): 본인이 자기 신청서에 대해 제출·수정, 관리자만 모두 조회·삭제
+    match /surveys/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.consentSensitive == true
+        && id == request.resource.data.applicationId + '_' + request.resource.data.programId
+        && get(/databases/$(database)/documents/applications/$(request.resource.data.applicationId)).data.uid == request.auth.uid;
+      allow update: if signedIn() && resource.data.uid == request.auth.uid && request.resource.data.uid == request.auth.uid
+        && request.resource.data.consentSensitive == true
+        && request.resource.data.applicationId == resource.data.applicationId
+        && request.resource.data.programId == resource.data.programId;
+      allow delete: if isAdmin();
     }
 
     // 게시판: 누구나 읽기, 관리자만 쓰기

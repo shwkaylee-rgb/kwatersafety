@@ -1,5 +1,7 @@
 import { enabled, auth, db, fa, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, qs, logout, textToHTML, refreshNoticeCount } from '../app.js';
 import { loadInbox, markAllRead } from '../notify.js';
+import { loadConsent, saveConsent, needsReconfirm, consentText, MKT_TEXT } from '../marketing.js';
+import { surveyId } from '../survey.js';
 import { TIER_NAMES, KIND_NAMES, memberStatus, availableKinds, daysLeft, MEMBERSHIP as M } from '../membership.js';
 import { benefitsTable, statusBadge, appStatusBadge } from '../membership-ui.js';
 import { qualStatus, qualTitle, qualValid, QUAL_STATUS_NAMES } from '../qual.js';
@@ -10,9 +12,9 @@ const el = document.getElementById('mypage');
 // 왼쪽 메뉴 (휴대폰에서는 [메뉴] 버튼을 누르면 펼쳐짐). 주소 끝 #아이디 로 바로 열 수 있음 (예: mypage.html#qual)
 const SECTIONS = [
   ['dashboard', '대시보드'], ['inbox', '알림'], ['info', '내 정보'], ['ms', '멤버십'], ['qual', '자격증'],
-  ['edu', '내 교육'], ['ol', '온라인 학습'], ['apps', '신청 내역']
+  ['edu', '내 교육'], ['survey', '사전 설문'], ['ol', '온라인 학습'], ['apps', '신청 내역'], ['pay', '결제·증빙']
 ];
-const TYPE_NAMES = { app: '신청', membership: '멤버십', edu: '교육', qual: '자격', online: '온라인' };
+const TYPE_NAMES = { app: '신청', membership: '멤버십', edu: '교육', qual: '자격', online: '온라인', consent: '수신 설정' };
 let inbox = { items: [], unread: 0 }, inboxP = null;
 
 async function init() {
@@ -35,12 +37,14 @@ async function init() {
       '<div class="my-main">' +
         sec('dashboard', '대시보드', loading('dash')) +
         sec('inbox', '알림', loading('inbox-list')) +
-        sec('info', '내 정보', infoForm(u, p)) +
+        sec('info', '내 정보', infoForm(u, p) + '<div id="mkt" class="my-info mkt-box"><p class="board-empty">불러오는 중…</p></div>') +
         sec('ms', '멤버십', loading('ms')) +
         sec('qual', '자격증', loading('qual')) +
         sec('edu', '내 교육', loading('edu')) +
+        sec('survey', '사전 설문 (건강 문진표)', loading('survey-list')) +
         sec('ol', '온라인 학습', loading('ol')) +
         sec('apps', '교육·자격 신청 내역', loading('apps')) +
+        sec('pay', '결제·증빙 내역', loading('pay-list')) +
       '</div>' +
     '</div>';
 
@@ -74,6 +78,9 @@ async function init() {
   loadEdu();
   loadQual();
   loadApps();
+  loadSurveys();
+  loadPay();
+  loadMkt();
   show(location.hash.slice(1) || (qs('withdraw') ? 'info' : 'dashboard'));
 }
 
@@ -114,6 +121,105 @@ async function openInbox() {
   } catch (e) { console.error(e); }
 }
 
+/* ---------- 사전 설문 ---------- */
+// 승인·접수된 신청 중 사전 설문을 받는 과정 목록 (제출 여부 포함)
+let surveyTodoP = null;
+function surveyTodo() {
+  return surveyTodoP ||= (async () => {
+    const uid = state.user.uid;
+    const [aSnap, sSnap] = await Promise.all([
+      fs.getDocs(fs.query(fs.collection(db, 'applications'), fs.where('uid', '==', uid))),
+      fs.getDocs(fs.query(fs.collection(db, 'surveys'), fs.where('uid', '==', uid)))
+    ]);
+    const done = Object.fromEntries(sSnap.docs.map(d => [d.id, d.data()]));
+    const rows = [], progs = {};
+    for (const d of aSnap.docs) {
+      const a = d.data();
+      if (a.status !== '승인' && a.status !== '접수완료') continue;
+      for (const i of a.items || []) {
+        if (i.type === 'online') continue;
+        if (!(i.programId in progs)) {
+          try { const p = await fs.getDoc(fs.doc(db, 'programs', i.programId)); progs[i.programId] = p.exists() ? p.data() : null; } catch (e) { progs[i.programId] = null; }
+        }
+        const p = progs[i.programId];
+        if (!p || !p.surveyOn) continue;
+        const sv = done[surveyId(d.id, i.programId)], ended = !!(p.endDate && p.endDate < todayYmd());
+        if (ended && !sv) continue;   // 끝난 교육은 미제출이면 목록에서 뺌
+        rows.push({ appId: d.id, item: i, who: a.applicant && a.applicant.guardianName ? a.applicant.name : '', done: !!sv, submittedAt: sv && sv.submittedAt, ended });
+      }
+    }
+    return rows;
+  })().catch(e => { console.error(e); return []; });
+}
+const surveyLink = r => 'survey.html?app=' + encodeURIComponent(r.appId) + '&program=' + encodeURIComponent(r.item.programId);
+async function loadSurveys() {
+  const box = document.getElementById('survey-list'), rows = await surveyTodo();
+  box.innerHTML = '<p class="form-help">안전한 수상 교육을 위해 일부 과정은 교육 전에 건강 문진표를 받습니다. 지도자와 협회 담당자만 보며, 교육 종료 후 1년 뒤 파기합니다.</p>' +
+    (rows.length ? '<div class="table-scroll"><table class="board-table"><thead><tr><th>과정명</th><th class="col-date">일정</th><th>상태</th><th></th></tr></thead><tbody>' +
+      rows.map(r => '<tr><td class="col-title">' + esc(r.item.title) + (r.who ? '<br><small>참가자 ' + esc(r.who) + '</small>' : '') + '</td><td class="col-date">' + esc(r.item.date || '') + '</td>' +
+        '<td>' + (r.done ? '<span class="mstatus mstatus-ok">제출함</span><br><small>' + fmtDate(r.submittedAt) + '</small>' : '<span class="mstatus mstatus-wait">미제출</span>') + '</td>' +
+        '<td class="nowrap">' + (r.ended ? '<span class="muted">교육 종료</span>' : '<a class="btn btn-' + (r.done ? 'outline' : 'primary') + ' btn-sm" href="' + surveyLink(r) + '">' + (r.done ? '수정' : '작성하기') + '</a>') + '</td></tr>').join('') +
+      '</tbody></table></div>' : '<p class="board-empty">제출할 사전 설문이 없습니다.</p>');
+}
+
+/* ---------- 결제·증빙 내역 ---------- */
+const RECEIPT_TEXT = { none: '필요 없음', '대기': '발급 대기', '발급': '발급 완료', '취소필요': '취소 처리 중', '취소': '발급 취소' };
+async function loadPay() {
+  const box = document.getElementById('pay-list'), uid = state.user.uid;
+  try {
+    const [mSnap, aSnap] = await Promise.all([
+      fs.getDocs(fs.query(fs.collection(db, 'membershipApplications'), fs.where('uid', '==', uid))),
+      fs.getDocs(fs.query(fs.collection(db, 'applications'), fs.where('uid', '==', uid)))
+    ]);
+    const rows = mSnap.docs.map(d => ({ id: d.id, src: 'm', ...d.data() })).map(r => ({ ...r, amount: r.fee,
+        title: '연회비 · ' + TIER_NAMES[r.kind === 'upgrade' ? 'full' : r.tier] + ' ' + KIND_NAMES[r.kind],
+        state: r.status === '활성화' ? 'paid' : r.status === '환불' ? 'refund' : r.status === '접수' ? 'wait' : 'cancel', on: r.processedOn }))
+      .concat(aSnap.docs.map(d => ({ id: d.id, src: 'a', ...d.data() })).map(r => ({ ...r, amount: r.total,
+        title: '교육비 · ' + (r.items || []).map(i => i.title).join(', '),
+        state: r.status === '승인' ? 'paid' : r.status === '접수완료' ? 'wait' : 'cancel', on: r.approvedOn })))
+      .filter(r => Number(r.amount) > 0 && r.state !== 'cancel')
+      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+    const ST = { paid: ['ok', '납부 완료'], wait: ['wait', '입금 대기'], refund: ['off', '환불'] };
+    const receipt = r => r.receipt && r.receipt.type !== 'none'
+      ? (r.receipt.type === 'cash' ? '현금영수증' : '계산서') + '<br><small>' + (RECEIPT_TEXT[r.receiptStatus] || '') + (r.receiptNo ? ' · ' + esc(r.receiptNo) : '') + '</small>'
+      : '<small class="muted">신청 안 함</small>';
+    box.innerHTML = '<p class="form-help">회비·교육비 납부 내역과 현금영수증·계산서 발급 상태입니다. 납부확인서는 입금이 확인된 건만 출력할 수 있으며, 세법상 증빙을 대신하지 않습니다.</p>' +
+      (rows.length ? '<div class="table-scroll"><table class="board-table"><thead><tr><th class="col-date">신청일</th><th>내용</th><th>금액</th><th>상태</th><th>증빙</th><th></th></tr></thead><tbody>' +
+        rows.map(r => '<tr><td class="col-date">' + fmtDate(r.createdAt) + '</td><td class="col-title">' + esc(r.title) + '</td><td class="nowrap">' + won(r.amount) + '</td>' +
+          '<td><span class="mstatus mstatus-' + ST[r.state][0] + '">' + ST[r.state][1] + '</span>' + (r.on && r.state === 'paid' ? '<br><small>' + esc(r.on) + '</small>' : '') + '</td>' +
+          '<td>' + receipt(r) + '</td>' +
+          '<td class="nowrap">' + (r.state === 'paid' ? '<a class="link-btn" href="payment-receipt.html?kind=' + r.src + '&id=' + encodeURIComponent(r.id) + '">납부확인서</a>' : '') + '</td></tr>').join('') +
+        '</tbody></table></div>' : '<p class="board-empty">납부 내역이 없습니다.</p>');
+  } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">결제 내역을 불러오지 못했습니다.</p>'; }
+}
+
+/* ---------- 소식지 수신 설정 ---------- */
+let consentP = null;
+const getConsent = () => consentP ||= loadConsent(state.user.uid);
+async function loadMkt() {
+  const box = document.getElementById('mkt');
+  let c = await getConsent();
+  const draw = () => {
+    const again = needsReconfirm(c);
+    box.innerHTML = '<h3>소식지·행사 안내 수신 <small>(선택)</small></h3><p class="form-help">' + MKT_TEXT + '</p>' +
+      '<form id="mkt-f"><label class="check"><input type="checkbox" name="email"' + (c && c.email ? ' checked' : '') + '> 이메일로 받기</label>' +
+      '<label class="check"><input type="checkbox" name="sms"' + (c && c.sms ? ' checked' : '') + '> 문자로 받기</label>' +
+      '<p class="form-help">현재: <b>' + consentText(c) + '</b>' + (c && c.updatedAt ? ' · ' + fmtDate(c.updatedAt) + ' 변경' : '') +
+        (again ? '<br><b class="warn">동의한 지 2년이 되어 갑니다. 계속 받으시려면 아래 버튼을 눌러 다시 확인해 주세요.</b>' : '') + '</p>' +
+      '<button class="btn btn-outline btn-sm" type="submit">' + (again ? '이대로 계속 받기' : '저장') + '</button></form>';
+    const mf = document.getElementById('mkt-f');
+    mf.addEventListener('submit', async e => {
+      e.preventDefault();
+      try {
+        await saveConsent(state.user.uid, { email: mf.email.checked, sms: mf.sms.checked }, c);
+        c = await loadConsent(state.user.uid); consentP = Promise.resolve(c);
+        toast('수신 설정을 저장했습니다. 처리 결과를 알림함으로 보냈습니다.'); draw();
+      } catch (err) { toast(errMsg(err)); }
+    });
+  };
+  draw();
+}
+
 /* ---------- 대시보드 ---------- */
 async function loadDash() {
   const box = document.getElementById('dash'), uid = state.user.uid, m = state.membership, today = todayYmd(), p = state.profile || {};
@@ -136,6 +242,8 @@ async function loadDash() {
     const left = daysBetween(today, e.endDate);
     if (left <= 14) todo.push(['「' + e.courseTitle + '」 온라인 수강 기간이 ' + left + '일 남았습니다 (' + e.endDate + '까지).', 'learn.html?course=' + encodeURIComponent(e.courseId), '이어서 학습']);
   });
+  (await surveyTodo()).filter(x => !x.done).forEach(x => todo.push(['「' + x.item.title + '」 사전 설문(건강 문진표)을 교육 전에 제출해 주세요' + (x.who ? ' (참가자 ' + x.who + ')' : '') + '.', surveyLink(x), '작성하기']));
+  if (needsReconfirm(await getConsent())) todo.push(['소식지 수신에 동의한 지 2년이 되어 갑니다. 계속 받을지 다시 확인해 주세요.', '#info', '수신 설정']);
   const waiting = apps.filter(a => a.status === '접수완료');
   if (waiting.length) todo.push(['입금 확인을 기다리는 교육·자격 신청이 ' + waiting.length + '건 있습니다. 협회 안내를 확인해 주세요.', '#apps', '신청 내역']);
 
@@ -177,7 +285,7 @@ function infoForm(u, p) {
     '<p class="form-links"><button type="button" class="link-btn" id="withdraw-open">회원 탈퇴</button></p>' +
     '<div class="withdraw" id="withdraw" hidden>' +
       '<h3>회원 탈퇴</h3>' +
-      '<ul><li>회원 정보(이름, 이메일, 휴대폰 번호, 생년월일), 장바구니, 알림이 바로 삭제되고, 다시 되돌릴 수 없습니다.</li>' +
+      '<ul><li>회원 정보(이름, 이메일, 휴대폰 번호, 생년월일), 장바구니, 알림, 소식지 수신 설정이 바로 삭제되고, 다시 되돌릴 수 없습니다.</li>' +
       '<li>교육·자격 신청 기록은 <a href="privacy.html" target="_blank">개인정보처리방침</a>에 따라 신청일로부터 3년간 보관한 뒤 삭제됩니다.</li>' +
       '<li>멤버십 회비 납부·증빙 기록은 세법에 따라 5년간 보관합니다. 탈퇴하면 남은 멤버십 기간은 사라집니다.</li>' +
       '<li>작성한 댓글은 자동으로 지워지지 않습니다. 필요하면 탈퇴 전에 직접 삭제해 주세요.</li></ul>' +
@@ -345,6 +453,7 @@ function initWithdraw(u) {
       const notes = await fs.getDocs(fs.query(fs.collection(db, 'notifications'), fs.where('uid', '==', u.uid)));
       notes.docs.forEach(d => batch.delete(d.ref));
       batch.delete(fs.doc(db, 'users', u.uid, 'state', 'inbox'));
+      batch.delete(fs.doc(db, 'marketingConsents', u.uid));
       batch.delete(fs.doc(db, 'users', u.uid));
       await batch.commit();
       await u.delete();

@@ -403,6 +403,8 @@ P['learn.html']=simple('learn','온라인 학습','learn');
 P['course-certificate.html']=simple('cert','수료증','course-certificate');
 P['edu-certificate.html']=simple('cert','이수증','edu-certificate');
 P['qual-certificate.html']=simple('cert','자격증','qual-certificate');
+P['survey.html']=simple('survey','사전 설문','survey');
+P['payment-receipt.html']=simple('cert','납부확인서','payment-receipt');
 P['verify.html']=shell(T,`  <section class="page container">
     <p class="page-lead">대한수상안전협회가 발급한 자격의 진위와 유효 여부를 확인할 수 있습니다.<br>자격증에 적힌 <b>자격번호</b>와 <b>성명</b>을 입력해 주세요.</p>
     <form class="form-card" id="verify-form">

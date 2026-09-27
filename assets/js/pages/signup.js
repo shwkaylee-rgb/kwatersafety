@@ -1,4 +1,5 @@
 import { enabled, auth, db, fa, fs, ready, state, disabledNotice, toast, errMsg, esc } from '../app.js';
+import { saveConsent, MKT_TEXT } from '../marketing.js';
 
 const el = document.getElementById('signup');
 
@@ -8,6 +9,9 @@ const agreeHTML =
     '보유 기간: 회원 탈퇴 시까지<br><a href="privacy.html" target="_blank">개인정보처리방침 전문 보기</a></p>' +
     '<label class="check"><input type="checkbox" name="over14" required> 만 14세 이상입니다. (필수)</label>' +
     '<label class="check"><input type="checkbox" name="agree" required> 개인정보 수집·이용에 동의합니다. (필수)</label>' +
+    '<div class="mkt-choice"><p><strong>[선택] 소식지·행사 안내 수신</strong><br><small>' + MKT_TEXT + '</small></p>' +
+      '<label class="check"><input type="checkbox" name="mktEmail"> 이메일로 받기</label>' +
+      '<label class="check"><input type="checkbox" name="mktSms"> 문자로 받기</label></div>' +
     '<p class="form-help">만 14세 미만 자녀의 교육 신청은 보호자가 가입한 뒤 신청서에서 "보호자가 자녀 대신 신청"을 선택해 주세요.</p>' +
   '</div>';
 
@@ -17,10 +21,14 @@ function checkAgree(f) {
   return true;
 }
 
-function saveProfile(user, name, phone) {
-  return fs.setDoc(fs.doc(db, 'users', user.uid), {
+async function saveProfile(user, name, phone, f) {
+  await fs.setDoc(fs.doc(db, 'users', user.uid), {
     name, phone, email: user.email, agreePrivacy: true, over14: true, createdAt: fs.serverTimestamp()
   });
+  // 선택 동의: 하나라도 체크했을 때만 기록 (실패해도 가입은 그대로)
+  if (f && (f.mktEmail.checked || f.mktSms.checked)) {
+    try { await saveConsent(user.uid, { email: f.mktEmail.checked, sms: f.mktSms.checked }, null); } catch (e) { console.warn(e); }
+  }
 }
 
 async function init() {
@@ -55,7 +63,7 @@ async function init() {
     try {
       const cred = await fa.createUserWithEmailAndPassword(auth, email, f.password.value);
       await fa.updateProfile(cred.user, { displayName: name });
-      await saveProfile(cred.user, name, phone);
+      await saveProfile(cred.user, name, phone, f);
       location.replace('mypage.html?welcome=1');
     } catch (err) { toast(errMsg(err)); btn.disabled = false; }
   });
@@ -66,7 +74,7 @@ async function init() {
     try {
       const cred = await fa.signInWithPopup(auth, new fa.GoogleAuthProvider());
       const exists = (await fs.getDoc(fs.doc(db, 'users', cred.user.uid))).exists();
-      if (!exists) await saveProfile(cred.user, cred.user.displayName || cred.user.email.split('@')[0], f.phone.value.trim());
+      if (!exists) await saveProfile(cred.user, cred.user.displayName || cred.user.email.split('@')[0], f.phone.value.trim(), f);
       location.replace('mypage.html' + (exists ? '' : '?welcome=1'));
     } catch (err) { toast(errMsg(err)); }
   });
@@ -92,7 +100,7 @@ function completeForm() {
     const name = f.name.value.trim();
     if (!name) { toast('이름을 입력해 주세요.'); return; }
     if (!checkAgree(f)) return;
-    try { await saveProfile(u, name, f.phone.value.trim()); location.replace('mypage.html?welcome=1'); }
+    try { await saveProfile(u, name, f.phone.value.trim(), f); location.replace('mypage.html?welcome=1'); }
     catch (err) { toast(errMsg(err)); }
   });
   // 동의하지 않으면 방금 만들어진 로그인 계정도 지움
