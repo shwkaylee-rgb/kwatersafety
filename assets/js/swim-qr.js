@@ -54,12 +54,15 @@ export async function makeQrPoster(g, link) {
   let fs = 60;
   do { ctx.font = '800 ' + fs + 'px ' + FONT; } while (splitLines(ctx, groupTitle(g), W - 140).length > 2 && (fs -= 4) >= 36);
   let y = wrapText(ctx, groupTitle(g), 300, W - 140, Math.round(fs * 1.2));
-  // 교육 기간과 장소는 한 줄씩. 양옆 여백(좌우 100px)을 넘으면 글자를 줄임
+  // 교육 기간과 장소는 따로 줄을 나눔. 한 줄이 양옆 여백(좌우 100px)을 넘으면
+  // 띄어쓰기에서 줄을 바꾸고(최대 2줄), 그래도 넘치면 글자를 줄임
   ctx.fillStyle = '#55657a';
-  [groupPeriod(g) && '교육 ' + groupPeriod(g), g.place].filter(Boolean).forEach((line, i) => {
-    let size = 34;
-    do { ctx.font = '500 ' + size + 'px ' + FONT; } while (ctx.measureText(line).width > W - 200 && (size -= 2) >= 22);
-    y += i ? 48 : 60; ctx.fillText(line, W / 2, y);
+  let first = true;
+  [groupPeriod(g) && '교육 ' + groupPeriod(g), g.place].filter(Boolean).forEach(text => {
+    let size = 34, lines;
+    do { ctx.font = '500 ' + size + 'px ' + FONT; lines = splitLines(ctx, text, W - 200); }
+    while ((lines.length > 2 || lines.some(l => ctx.measureText(l).width > W - 200)) && (size -= 2) >= 22);
+    lines.forEach(l => { y += first ? 60 : Math.round(size * 1.4); first = false; ctx.fillText(l, W / 2, y); });
   });
 
   // QR 코드
