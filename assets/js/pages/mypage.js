@@ -556,7 +556,8 @@ function initWithdraw(u) {
       qna.docs.forEach(d => batch.delete(d.ref));
       batch.delete(fs.doc(db, 'users', u.uid, 'state', 'inbox'));
       batch.delete(fs.doc(db, 'marketingConsents', u.uid));
-      (await fs.getDocs(fs.query(fs.collection(db, 'socialLinks'), fs.where('uid', '==', u.uid)))).docs.forEach(d => batch.delete(d.ref));
+      // 간편 로그인 연결 정보 (못 읽어도 탈퇴는 계속 진행)
+      try { (await fs.getDocs(fs.query(fs.collection(db, 'socialLinks'), fs.where('uid', '==', u.uid)))).docs.forEach(d => batch.delete(d.ref)); } catch (e) { console.warn(e); }
       batch.delete(fs.doc(db, 'users', u.uid));
       await batch.commit();
       await u.delete();
