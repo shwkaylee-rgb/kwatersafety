@@ -1,7 +1,7 @@
 import { enabled, auth, db, fa, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, qs, logout } from '../app.js';
 import { TIER_NAMES, KIND_NAMES, memberStatus, availableKinds, daysLeft, MEMBERSHIP as M } from '../membership.js';
 import { benefitsTable, statusBadge, appStatusBadge } from '../membership-ui.js';
-import { qualStatus, QUAL_STATUS_NAMES } from '../qual.js';
+import { qualStatus, qualTitle, QUAL_STATUS_NAMES } from '../qual.js';
 import { daysBetween, todayYmd } from '../membership.js';
 import { enrollmentStatus, completionValid, progressPercent, ENR_STATUS_NAMES } from '../course.js';
 
@@ -81,7 +81,7 @@ async function loadQual() {
         const note = st === 'soon' ? '<br><small>만료 ' + left + '일 전 · <a href="programs.html">갱신교육 신청</a></small>'
           : st === 'expired' ? '<br><small><a href="programs.html">갱신교육</a>을 이수하면 다시 유효해집니다</small>'
           : (st === 'suspended' || st === 'revoked') && q.statusReason ? '<br><small>' + esc(q.statusReason) + '</small>' : '';
-        return '<tr><td class="col-title">' + esc(q.typeName) + (q.name !== state.profile?.name ? '<br><small>' + esc(q.name) + '</small>' : '') + '</td><td class="nowrap">' + esc(q.certNo) + '</td>' +
+        return '<tr><td class="col-title">' + esc(qualTitle(q)) + (q.name !== state.profile?.name ? '<br><small>' + esc(q.name) + '</small>' : '') + '</td><td class="nowrap">' + esc(q.certNo) + '</td>' +
           '<td class="col-date">' + esc(q.issuedOn) + '<br>~ ' + esc(q.expiresOn) + '</td><td><span class="mstatus mstatus-' + pill[st] + '">' + QUAL_STATUS_NAMES[st] + '</span>' + note + '</td>' +
           '<td class="nowrap">' + (st === 'revoked' || st === 'suspended' ? '' : '<a class="link-btn" href="qual-certificate.html?no=' + encodeURIComponent(q.certNo) + '">자격증</a>') + '</td></tr>';
       }).join('') + '</tbody></table></div>';

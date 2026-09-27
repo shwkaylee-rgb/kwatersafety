@@ -1,6 +1,6 @@
 /* 공개 자격 확인: 자격번호와 성명이 모두 맞아야 결과가 나옴 (로그인 필요 없음) */
 import { enabled, db, fs, esc, qs, disabledNotice } from '../app.js';
-import { qualStatus, QUAL_STATUS_NAMES, verifyId, normNo } from '../qual.js';
+import { qualStatus, qualTitle, QUAL_STATUS_NAMES, verifyId, normNo } from '../qual.js';
 
 const f = document.getElementById('verify-form'), out = document.getElementById('verify-result');
 
@@ -15,7 +15,7 @@ async function check(no, name) {
     const v = d.data(), st = qualStatus(v), ok = st === 'valid' || st === 'soon';
     out.innerHTML = '<div class="verify-card ' + (ok ? 'ok' : 'no') + '">' +
       '<p class="verify-head">' + (ok ? '✓ 유효한 자격입니다' : '이 자격은 현재 ' + QUAL_STATUS_NAMES[st] + ' 상태입니다') + '</p>' +
-      '<dl><dt>자격명</dt><dd>' + esc(v.typeName) + '</dd><dt>자격번호</dt><dd>' + esc(v.certNo) + '</dd>' +
+      '<dl><dt>자격명</dt><dd>' + esc(qualTitle(v)) + '</dd><dt>자격번호</dt><dd>' + esc(v.certNo) + '</dd>' +
       '<dt>성명</dt><dd>' + esc(v.maskedName) + '</dd><dt>취득일</dt><dd>' + esc(v.issuedOn) + '</dd>' +
       '<dt>유효기간</dt><dd>' + esc(v.expiresOn) + '까지</dd><dt>상태</dt><dd>' + (ok ? '유효' : QUAL_STATUS_NAMES[st]) + '</dd>' +
       (v.regNo ? '<dt>등록번호</dt><dd>민간자격 ' + esc(v.regNo) + '</dd>' : '') + '</dl>' +

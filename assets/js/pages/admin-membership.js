@@ -3,7 +3,7 @@ import { db, fs, toast, errMsg, esc, fmtDate, won } from '../app.js';
 import { MEMBERSHIP as M, TIER_NAMES, KIND_NAMES, STATUS_NAMES, memberStatus, daysLeft, nextPeriod,
   formatMemberNo, retierMemberNo, todayYmd, addDays } from '../membership.js';
 import { statusBadge, appStatusBadge } from '../membership-ui.js';
-import { qualStatus, QUAL_STATUS_NAMES, normNo, normName } from '../qual.js';
+import { qualStatus, qualTitle, QUAL_STATUS_NAMES, normNo, normName } from '../qual.js';
 
 const RECEIPT_NAMES = { none: '필요 없음', '대기': '발급 대기', '발급': '발급 완료', '취소필요': '취소 발급 필요', '취소': '취소 완료' };
 let box, view = 'apps';
@@ -88,7 +88,7 @@ async function checkQuals(root) {
       else {
         const q = d.data(), st = qualStatus(q), same = normName(q.name) === normName(sp.getAttribute('data-qname'));
         const ok = (st === 'valid' || st === 'soon') && same;
-        html = '<span class="mstatus mstatus-' + (ok ? 'ok' : 'no') + '">원장 확인: ' + esc(q.typeName) + ' ' + QUAL_STATUS_NAMES[st] + (same ? '' : ' · 이름 불일치(' + esc(q.name) + ')') + (ok ? ' ✓' : '') + '</span>';
+        html = '<span class="mstatus mstatus-' + (ok ? 'ok' : 'no') + '">원장 확인: ' + esc(qualTitle(q)) + ' ' + QUAL_STATUS_NAMES[st] + (same ? '' : ' · 이름 불일치(' + esc(q.name) + ')') + (ok ? ' ✓' : '') + '</span>';
       }
     } catch (e) { html = '<span class="muted">자격 확인 실패</span>'; }
     sp.innerHTML = html;

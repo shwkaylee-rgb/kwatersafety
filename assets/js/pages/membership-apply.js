@@ -1,7 +1,7 @@
 import { enabled, db, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, won, fmtDate } from '../app.js';
 import { MEMBERSHIP as M, TIER_NAMES, KIND_NAMES, memberStatus, availableKinds, feeFor, bankText, todayYmd } from '../membership.js';
 import { appStatusBadge } from '../membership-ui.js';
-import { qualValid } from '../qual.js';
+import { qualValid, qualTitle } from '../qual.js';
 
 const el = document.getElementById('apply');
 const col = () => fs.collection(db, 'membershipApplications');
@@ -80,7 +80,7 @@ function showForm(m, kinds, myQuals = []) {
 
     '<div id="qual-box" class="guardian" hidden>' +
       '<h3 class="form-sub">보유 자격 (정회원)</h3>' +
-      (myQuals.length ? '<p class="form-help">협회 자격 불러오기: ' + myQuals.map((q, i) => '<button type="button" class="btn btn-outline btn-sm" data-myqual="' + i + '">' + esc(q.typeName) + ' ' + esc(q.certNo) + '</button>').join(' ') + '</p>' : '') +
+      (myQuals.length ? '<p class="form-help">협회 자격 불러오기: ' + myQuals.map((q, i) => '<button type="button" class="btn btn-outline btn-sm" data-myqual="' + i + '">' + esc(qualTitle(q)) + ' ' + esc(q.certNo) + '</button>').join(' ') + '</p>' : '') +
       '<fieldset class="choice"><legend>자격 구분</legend>' +
         '<label class="check"><input type="radio" name="qualType" value="kwsa" checked> 대한수상안전협회 자격</label>' +
         '<label class="check"><input type="radio" name="qualType" value="external"> 다른 기관의 수상안전 자격</label>' +
@@ -133,7 +133,7 @@ function showForm(m, kinds, myQuals = []) {
   f.querySelectorAll('[data-myqual]').forEach(b => b.addEventListener('click', () => {
     const q = myQuals[b.getAttribute('data-myqual')];
     f.querySelector('[name=qualType][value=kwsa]').checked = true;
-    f.qualName.value = q.typeName; f.qualNo.value = q.certNo; f.qualDate.value = q.issuedOn; sync();
+    f.qualName.value = qualTitle(q); f.qualNo.value = q.certNo; f.qualDate.value = q.issuedOn; sync();
   }));
 
   function sync() {

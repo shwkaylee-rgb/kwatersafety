@@ -4,7 +4,7 @@ import { TIER_NAMES, memberStatus, STATUS_NAMES, todayYmd } from '../membership.
 import { tabOnline } from './admin-online.js';
 import { tabEdu } from './admin-edu.js';
 import { tabQual } from './admin-qual.js';
-import { QUALS } from '../qual.js';
+import { QUALS, QUAL_GRADES } from '../qual.js';
 import { enrollmentId, newAccessPeriod, completionValid } from '../course.js';
 
 const el = document.getElementById('admin');
@@ -189,6 +189,7 @@ async function tabPrograms() {
         courses.map(c => '<option value="' + c.id + '"' + (c.id === p.requiresCourse ? ' selected' : '') + '>' + esc(c.title) + '</option>').join('') + '</select></label>' +
       '<div class="form-row"><label>자격 연계 <small>(이수자에게 자격을 발급하거나 갱신하는 과정)</small><select name="qualType"><option value="">없음</option>' +
         Object.entries(QUALS).map(([k, v]) => '<option value="' + k + '"' + (k === p.qualType ? ' selected' : '') + '>' + esc(v.name) + '</option>').join('') + '</select></label>' +
+      '<label>등급<select name="qualGrade">' + QUAL_GRADES.map(g => '<option' + (g === p.qualGrade ? ' selected' : '') + '>' + g + '</option>').join('') + '</select></label>' +
       '<label>연계 방식<select name="qualAction"><option value="new">신규 발급 (자격 과정)</option><option value="renew"' + (p.qualAction === 'renew' ? ' selected' : '') + '>갱신 (갱신교육)</option></select></label></div>' +
       '<label class="check"><input type="checkbox" name="open"' + (p.open ? ' checked' : '') + '> 모집 중 (체크 해제하면 신청 페이지에서 숨김)</label>' +
       '<div class="btn-row">' + (p.id ? '<button type="button" class="btn btn-outline" id="pf-cancel">취소</button>' : '') +
@@ -200,7 +201,7 @@ async function tabPrograms() {
       '<table class="board-table"><thead><tr><th>구분</th><th>과정명</th><th class="col-date">일정</th><th>비용</th><th>상태</th><th></th></tr></thead><tbody>' +
       (programs.length ? programs.map(p => '<tr><td>' + esc(p.category) + '</td><td class="col-title">' + esc(p.title) + '</td><td class="col-date">' + esc(p.date) + '</td>' +
         '<td>' + won(p.fee) + '</td><td>' + (p.open ? '<span class="status status-승인">모집 중</span>' : '<span class="status status-취소">마감</span>') + '</td>' +
-        '<td class="nowrap">' + (p.requiresCourse ? '<small class="guardian-line">온라인 선수</small><br>' : '') + (QUALS[p.qualType] ? '<small class="guardian-line">' + esc(QUALS[p.qualType].name) + (p.qualAction === 'renew' ? ' 갱신' : ' 자격') + '</small><br>' : '') + '<button type="button" class="link-btn" data-edit="' + p.id + '">수정</button> <button type="button" class="link-btn" data-remove="' + p.id + '">삭제</button></td></tr>').join('')
+        '<td class="nowrap">' + (p.requiresCourse ? '<small class="guardian-line">온라인 선수</small><br>' : '') + (QUALS[p.qualType] ? '<small class="guardian-line">' + esc(QUALS[p.qualType].name + (p.qualGrade ? ' ' + p.qualGrade : '')) + (p.qualAction === 'renew' ? ' 갱신' : ' 자격') + '</small><br>' : '') + '<button type="button" class="link-btn" data-edit="' + p.id + '">수정</button> <button type="button" class="link-btn" data-remove="' + p.id + '">삭제</button></td></tr>').join('')
         : '<tr><td colspan="6">등록된 과정이 없습니다.</td></tr>') +
       '</tbody></table>' + form(editing);
 
@@ -223,7 +224,7 @@ async function tabPrograms() {
         category: f.category.value, title: f.title.value.trim(), date: f.date.value.trim(), place: f.place.value.trim(),
         capacity: f.capacity.value ? Number(f.capacity.value) : '', deadline: f.deadline.value.trim(),
         fee: Number(f.fee.value) || 0, order: Number(f.order.value) || 0, description: f.description.value, open: f.open.checked,
-        requiresCourse: f.requiresCourse.value, qualType: f.qualType.value, qualAction: f.qualType.value ? f.qualAction.value : '',
+        requiresCourse: f.requiresCourse.value, qualType: f.qualType.value, qualGrade: f.qualType.value ? f.qualGrade.value : '', qualAction: f.qualType.value ? f.qualAction.value : '',
         requiresCourseTitle: f.requiresCourse.value ? courses.find(c => c.id === f.requiresCourse.value).title : ''
       };
       try {

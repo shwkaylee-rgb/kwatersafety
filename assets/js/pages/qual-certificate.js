@@ -1,6 +1,6 @@
 import { enabled, db, fs, requireLogin, disabledNotice, esc, qs } from '../app.js';
 import { QUALS, SEAL_IMAGE } from '../qual-config.js';
-import { qualStatus, QUAL_STATUS_NAMES } from '../qual.js';
+import { qualStatus, qualTitle, QUAL_STATUS_NAMES } from '../qual.js';
 
 const el = document.getElementById('cert');
 const krDate = s => { const [y, m, d] = s.split('-'); return y + '년 ' + Number(m) + '월 ' + Number(d) + '일'; };
@@ -26,13 +26,13 @@ async function init() {
     '<div class="course-cert qual-cert">' +
       '<p class="cc-no">자격번호 제 ' + esc(q.certNo) + ' 호</p>' +
       '<h2>자 격 증</h2>' +
-      '<p class="qc-type">' + esc(q.typeName) + '</p>' +
+      '<p class="qc-type">' + esc(qualTitle(q)) + '</p>' +
       '<dl><dt>성명</dt><dd>' + esc(q.name) + '</dd>' +
       (q.birth ? '<dt>생년월일</dt><dd>' + esc(q.birth) + '</dd>' : '') +
       '<dt>취득일</dt><dd>' + esc(q.issuedOn) + '</dd>' +
       (q.lastRenewedOn ? '<dt>최근 갱신</dt><dd>' + esc(q.lastRenewedOn) + '</dd>' : '') +
       '<dt>유효기간</dt><dd>' + esc(q.expiresOn) + '까지</dd></dl>' +
-      '<p class="cc-text">위 사람은 사단법인 대한수상안전협회가 시행한<br>' + esc(q.typeName) + ' 과정을 이수하고 평가에 합격하였으므로<br>이 자격증을 수여합니다.</p>' +
+      '<p class="cc-text">위 사람은 사단법인 대한수상안전협회가 시행한<br>' + esc(qualTitle(q)) + ' 과정을 이수하고 평가에 합격하였으므로<br>이 자격증을 수여합니다.</p>' +
       '<p class="cc-date">' + krDate(q.lastRenewedOn || q.issuedOn) + '</p>' +
       '<p class="cc-issuer qc-issuer"><img src="assets/img/logo-color.png" alt="">사단법인 대한수상안전협회장<img class="qc-seal" src="' + SEAL_IMAGE + '" alt="직인"></p>' +
       '<p class="qc-foot">자격 확인: kwasa.or.kr/verify.html (자격번호와 성명으로 조회)' +

@@ -1,10 +1,12 @@
 /* 자격증 공통 계산 (상태, 유효기간, 자격 확인용 키)
-   qualifications/{자격번호}: { uid, typeId, typeName, certNo, name, birth, issuedOn, expiresOn,
+   qualifications/{자격번호}: { uid, typeId, typeName, grade: '1급'|'2급', certNo, name, birth, issuedOn, expiresOn,
      status: 'active'|'suspended'|'revoked', statusReason, source, renewals: [{ on, completionId, programTitle }] }
    qualVerify/{sha256(자격번호|이름)}: 공개 자격 확인용 최소 정보 (이름은 일부 가림) */
-import { QUALS, QUAL_VALID_YEARS, QUAL_SOON_DAYS } from './qual-config.js';
+import { QUALS, QUAL_GRADES, QUAL_VALID_YEARS, QUAL_SOON_DAYS } from './qual-config.js';
 import { parseYmd, ymd, daysBetween, todayYmd } from './membership.js';
-export { QUALS };
+export { QUALS, QUAL_GRADES };
+// 표시용 자격명: 착의생존수영지도자 1급
+export const qualTitle = q => q.typeName + (q.grade ? ' ' + q.grade : '');
 
 export const QUAL_STATUS_NAMES = { valid: '유효', soon: '갱신 필요', expired: '만료', suspended: '정지', revoked: '취소' };
 
@@ -38,5 +40,5 @@ export function maskName(n) {
   return n[0] + '*'.repeat(n.length - 2) + n[n.length - 1];
 }
 // 공개 문서 내용
-export const publicView = q => ({ certNo: q.certNo, typeName: q.typeName, maskedName: maskName(q.name), issuedOn: q.issuedOn,
+export const publicView = q => ({ certNo: q.certNo, typeName: q.typeName, grade: q.grade || '', maskedName: maskName(q.name), issuedOn: q.issuedOn,
   expiresOn: q.expiresOn, status: q.status, regNo: (QUALS[q.typeId] || {}).regNo || '' });
