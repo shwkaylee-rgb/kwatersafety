@@ -3,6 +3,7 @@
    - 평가 강사: 강사 회원에게 평가 권한 주기
    - 평가 항목: 새 수업의 기본 평가 항목 */
 import { db, fs, state, toast, errMsg, esc, fmtDate, today } from '../app.js';
+import { makeQrPoster, canvasBlob } from '../swim-qr.js';
 import { loadSwimItems, groupTitle, groupPeriod, regLink, fullyEvaluated, memberUntilOf, formatSwimNo, STUDENT_STATUS, RESULTS, DEFAULT_SWIM_ITEMS } from '../swim.js';
 
 let box, view = 'groups';
@@ -91,7 +92,12 @@ async function groupView(gid) {
     '<p><button type="button" class="link-btn" id="back">← 수업 목록</button></p>' +
     '<h3 class="list-title">' + esc(groupTitle(g)) + ' <small>' + esc(groupPeriod(g)) + '</small></h3>' +
     '<div class="notice-box left"><h3>보호자 등록 링크</h3><p class="reg-link"><code>' + esc(link) + '</code> <button type="button" class="btn btn-outline btn-sm" id="copy">링크 복사</button></p>' +
-      '<p class="form-help">학교 가정통신문·알림장에 이 링크를 넣어 보내 주세요. ' + (g.regOpen ? '지금 등록을 받고 있습니다' + (g.regDeadline ? ' (마감 ' + esc(g.regDeadline) + ')' : '') + '.' : '<b>등록을 받지 않는 상태</b>입니다.') + '</p></div>' +
+      '<p class="form-help">학교 가정통신문·알림장에 이 링크를 넣어 보내 주세요. ' + (g.regOpen ? '지금 등록을 받고 있습니다' + (g.regDeadline ? ' (마감 ' + esc(g.regDeadline) + ')' : '') + '.' : '<b>등록을 받지 않는 상태</b>입니다.') + '</p>' +
+      '<div class="qr-box"><div id="qr-out" class="qr-preview"><p class="board-empty">QR 안내 이미지를 만드는 중…</p></div>' +
+      '<div class="qr-actions"><p class="form-help">학교 단체 채팅방·가정통신문에 그대로 올릴 수 있는 이미지입니다. 휴대폰 카메라로 QR을 비추면 등록 화면이 열립니다.</p>' +
+        '<div class="btn-row left"><button type="button" class="btn btn-primary btn-sm" id="qr-save" disabled>이미지 저장</button>' +
+        '<button type="button" class="btn btn-outline btn-sm" id="qr-share" disabled>공유하기</button>' +
+        '<button type="button" class="btn btn-outline btn-sm" id="qr-copy" disabled>이미지 복사</button></div></div></div></div>' +
     '<div class="admin-toolbar"><p class="board-count">등록 <b>' + students.length + '</b> · 평가 완료 <b>' + students.filter(s => s.status === 'evaluated').length + '</b> · 발급 <b>' + issued.length + '</b></p>' +
       '<div class="btn-row"><button type="button" class="btn btn-outline btn-sm" id="xl-down">평가용 엑셀 내려받기</button>' +
       '<label class="btn btn-outline btn-sm file-btn">평가 엑셀 올리기<input type="file" id="xl-up" accept=".xlsx,.xls,.csv" hidden></label>' +
@@ -114,6 +120,27 @@ async function groupView(gid) {
       '<button type="button" class="btn btn-outline btn-sm" id="csv">명단 CSV</button></div></div>';
 
   document.getElementById('back').addEventListener('click', () => viewGroups());
+  // QR 안내 이미지: 저장(내려받기) · 공유(휴대폰 공유 창) · 복사(붙여넣기용)
+  (async () => {
+    const out = document.getElementById('qr-out'), fileName = '생존수영인증등록_' + groupTitle(g).replace(/\s/g, '') + '.png';
+    try {
+      const canvas = await makeQrPoster(g, link), blob = await canvasBlob(canvas), url = URL.createObjectURL(blob);
+      if (!document.body.contains(out)) return;
+      out.innerHTML = '<img src="' + url + '" alt="' + esc(groupTitle(g)) + ' 생존수영 인증 등록 QR 안내 이미지">';
+      const file = new File([blob], fileName, { type: 'image/png' });
+      const save = document.getElementById('qr-save'), share = document.getElementById('qr-share'), copy = document.getElementById('qr-copy');
+      save.disabled = false;
+      save.addEventListener('click', () => { const a = document.createElement('a'); a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove(); });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        share.disabled = false;
+        share.addEventListener('click', async () => { try { await navigator.share({ files: [file], title: groupTitle(g) + ' 생존수영 인증 등록', text: '생존수영 능력 인증서 등록 안내입니다. ' + link }); } catch (e) { if (e.name !== 'AbortError') toast('공유하지 못했습니다. [이미지 저장]을 이용해 주세요.'); } });
+      } else share.title = '이 기기에서는 공유 창을 쓸 수 없습니다. [이미지 저장] 후 보내 주세요.';
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+        copy.disabled = false;
+        copy.addEventListener('click', async () => { try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); toast('이미지를 복사했습니다. 카카오톡 등에 붙여 넣으세요.'); } catch (e) { toast('복사하지 못했습니다. [이미지 저장]을 이용해 주세요.'); } });
+      }
+    } catch (e) { out.innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; }
+  })();
   document.getElementById('copy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(link); toast('링크를 복사했습니다.'); } catch (e) { toast('복사하지 못했습니다. 링크를 직접 선택해 복사해 주세요.'); } });
   document.getElementById('toggle').addEventListener('click', async () => {
     try { await fs.updateDoc(fs.doc(db, 'swimGroups', g.id), { status: g.status === 'open' ? 'closed' : 'open' }); groupView(g.id); } catch (e) { toast(errMsg(e)); }

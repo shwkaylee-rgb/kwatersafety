@@ -802,3 +802,8 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
 .swim-items td.no { color: #b03a2e; font-weight: 700; }
 .cert-page { break-after: page; page-break-after: always; margin-bottom: 30px; }
 .cert-page:last-child { break-after: auto; page-break-after: auto; }
+
+.qr-box { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: center; margin-top: 12px; }
+.qr-preview img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 10px; display: block; }
+.qr-actions { display: grid; gap: 10px; }
+@media (max-width: 860px) { .qr-box { grid-template-columns: 1fr; } .qr-preview { max-width: 300px; } }
