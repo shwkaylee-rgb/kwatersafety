@@ -1,4 +1,6 @@
-import { enabled, db, fs, listPosts, postURL, esc, textToHTML, fmtDate, ready, state, onAuth, displayName, toast, errMsg, BOARD_TITLES } from '../app.js';
+import { enabled, db, fs, listPosts, postURL, esc, textToHTML, fmtDate, ready, state, onAuth, displayName, toast, errMsg, BOARD_TITLES, storageApi } from '../app.js';
+import { postFilesHTML } from '../post-files.js';
+import { logAdmin } from '../admin-log.js';
 
 const el = document.getElementById('post');
 const q = new URLSearchParams(location.search);
@@ -20,7 +22,7 @@ async function render() {
     '<article class="post-view">' +
       '<header class="post-head"><h2>' + esc(p.title) + '</h2>' +
       '<p class="post-meta">' + esc(p.author) + ' <i>|</i> ' + esc(p.date) + '</p></header>' +
-      '<div class="post-body">' + p.bodyHTML + '</div>' +
+      '<div class="post-body">' + p.bodyHTML + postFilesHTML(p.files) + '</div>' +
     '</article>' +
     (enabled && !p.isStatic ? '<section class="comments" id="comments"></section>' : '') +
     '<ul class="post-nav">' +
@@ -31,9 +33,24 @@ async function render() {
 
   const del = document.getElementById('del-post');
   if (del) del.addEventListener('click', async () => {
-    if (!confirm('이 게시물을 삭제할까요? 댓글도 함께 보이지 않게 됩니다.')) return;
-    try { await fs.deleteDoc(fs.doc(db, 'posts', p.id)); location.href = board + '.html'; }
-    catch (e) { toast(errMsg(e)); }
+    if (!confirm('이 게시물을 삭제할까요? 댓글과 첨부 파일도 함께 지워집니다.')) return;
+    del.disabled = true;
+    try {
+      // 댓글 → 첨부 파일 → 글 순서로 지움 (중간에 실패해도 글이 남아 있어 다시 지울 수 있게)
+      const cs = await fs.getDocs(fs.collection(db, 'posts', p.id, 'comments'));
+      for (let i = 0; i < cs.docs.length; i += 400) {
+        const batch = fs.writeBatch(db);
+        cs.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+        await batch.commit();
+      }
+      if ((p.files || []).length) {
+        const { m, s } = await storageApi();
+        for (const x of p.files) await m.deleteObject(m.ref(s, x.path)).catch(e => { if (e.code !== 'storage/object-not-found') throw e; });
+      }
+      await fs.deleteDoc(fs.doc(db, 'posts', p.id));
+      await logAdmin('게시글 삭제', (BOARD_TITLES[board] || board) + ' · ' + p.title, '댓글 ' + cs.size + '개 · 첨부 ' + (p.files || []).length + '개');
+      location.href = board + '.html';
+    } catch (e) { toast(errMsg(e)); del.disabled = false; }
   });
   if (enabled && !p.isStatic) initComments(p.id);
 }
@@ -53,7 +70,7 @@ function initComments(postId) {
     box.innerHTML = '<h3>댓글 <b>' + comments.length + '</b></h3>' +
       '<ul class="comment-list">' + comments.map(c =>
         '<li><div class="comment-meta"><strong>' + esc(c.name) + '</strong> <span>' + fmtDate(c.createdAt, true) + '</span>' +
-        (u && (u.uid === c.uid || state.isAdmin) ? '<button type="button" class="link-btn" data-del="' + c.id + '">삭제</button>' : '') +
+        (u && (u.uid === c.uid || state.isAdmin) ? '<button type="button" class="link-btn" data-del="' + c.id + '" data-by="' + (u.uid === c.uid ? 'me' : 'admin') + '">삭제</button>' : '') +
         '</div><p>' + textToHTML(c.text) + '</p></li>'
       ).join('') + '</ul>' + form;
 
@@ -69,7 +86,11 @@ function initComments(postId) {
     });
     box.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', async () => {
       if (!confirm('댓글을 삭제할까요?')) return;
-      try { await fs.deleteDoc(fs.doc(col, b.getAttribute('data-del'))); } catch (err) { toast(errMsg(err)); }
+      const c = comments.find(x => x.id === b.getAttribute('data-del'));
+      try {
+        await fs.deleteDoc(fs.doc(col, c.id));
+        if (b.dataset.by === 'admin') logAdmin('댓글 삭제', c.name, c.text.slice(0, 100));
+      } catch (err) { toast(errMsg(err)); }
     }));
   }
 

@@ -36,7 +36,7 @@ export async function callFn(name, data) {
   return res.data;
 }
 
-// 파일 저장소 (자료실 파일 올리기). 관리자 화면에서만 불러옴
+// 파일 저장소 (자료실·게시글 파일 올리기). 관리자 화면에서만 불러옴
 let stClient = null;
 export async function storageApi() {
   if (!stClient) {
@@ -195,7 +195,8 @@ function staticPosts(board) {
 }
 function fromDoc(d) {
   const p = d.data();
-  return { id: d.id, board: p.board, title: p.title, author: p.author, date: p.date || fmtDate(p.createdAt), body: p.body, bodyHTML: textToHTML(p.body), createdAt: p.createdAt };
+  return { id: d.id, board: p.board, title: p.title, author: p.author, date: p.date || fmtDate(p.createdAt), body: p.body, bodyHTML: textToHTML(p.body), createdAt: p.createdAt,
+    pinned: !!p.pinned, files: p.files || [] };
 }
 const sortKey = p => (p.date || '') + (p.createdAt && p.createdAt.toMillis ? String(p.createdAt.toMillis()).padStart(15, '0') : '');
 

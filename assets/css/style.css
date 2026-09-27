@@ -231,6 +231,15 @@ i { font-style: normal; color: #bbb; margin: 0 6px; }
 .post-head h2 { font-size: 24px; font-weight: 800; }
 .post-meta { color: #999; font-size: 14px; margin-top: 6px; }
 .post-body { padding: 50px 10px 70px; font-size: 17px; line-height: 1.9; border-bottom: 1px solid var(--line); }
+.post-images { display: grid; gap: 16px; margin-top: 30px; }
+.post-images img { max-width: 100%; height: auto; border-radius: 8px; }
+.post-files { margin-top: 30px; padding: 14px 18px; background: var(--bg-soft, #f7f8fa); border-radius: 10px; font-size: 15px; display: grid; gap: 6px; }
+.post-files-title { font-weight: 700; }
+.post-files small, .post-files-edit small { color: var(--text-sub); }
+.post-files-edit { display: grid; gap: 6px; margin-bottom: 10px; }
+.board-table tr.is-pinned { background: #f5f9ff; }
+.pin-tag { display: inline-block; font-size: 12px; font-weight: 700; color: #fff; background: var(--primary); border-radius: 4px; padding: 2px 7px; }
+.post-clip { font-size: 13px; }
 .post-nav { margin-bottom: 50px; }
 .post-nav li { display: flex; gap: 30px; padding: 16px 10px; border-bottom: 1px solid var(--line); }
 .post-nav span { color: #999; width: 60px; flex: none; }
