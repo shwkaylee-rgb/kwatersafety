@@ -14,9 +14,10 @@ const el = document.getElementById('mypage');
 // 왼쪽 메뉴 (휴대폰에서는 [메뉴] 버튼을 누르면 펼쳐짐). 주소 끝 #아이디 로 바로 열 수 있음 (예: mypage.html#qual)
 const SECTIONS = [
   ['dashboard', '대시보드'], ['inbox', '알림'], ['info', '내 정보'], ['ms', '멤버십'], ['qual', '자격증'],
-  ['edu', '내 교육'], ['swim', '생존수영 인증'], ['survey', '사전 설문'], ['ol', '온라인 학습'], ['apps', '신청 내역'], ['pay', '결제·증빙'], ['library', '자료실'], ['partner', '제휴 할인']
+  ['edu', '내 교육'], ['swim', '생존수영 인증'], ['survey', '사전 설문'], ['ol', '온라인 학습'], ['apps', '신청 내역'], ['pay', '결제·증빙'], ['qna', '1:1 문의'], ['library', '자료실'], ['partner', '제휴 할인']
 ];
-const TYPE_NAMES = { app: '신청', membership: '멤버십', edu: '교육', qual: '자격', online: '온라인', consent: '수신 설정', swim: '생존수영', reminder: '안내' };
+const TYPE_NAMES = { app: '신청', membership: '멤버십', edu: '교육', qual: '자격', online: '온라인', consent: '수신 설정', swim: '생존수영', reminder: '안내', inquiry: '문의' };
+const QNA_CATEGORIES = ['교육·자격', '멤버십', '생존수영 인증', '온라인 학습', '결제·증빙', '홈페이지 이용', '기타'];
 let inbox = { items: [], unread: 0 }, inboxP = null;
 
 async function init() {
@@ -48,6 +49,7 @@ async function init() {
         sec('ol', '온라인 학습', loading('ol')) +
         sec('apps', '교육·자격 신청 내역', loading('apps')) +
         sec('pay', '결제·증빙 내역', loading('pay-list')) +
+        sec('qna', '1:1 문의', loading('qna')) +
         sec('library', '회원 자료실', loading('lib-list')) +
         sec('partner', '제휴 할인', loading('partner-list')) +
       '</div>' +
@@ -89,6 +91,7 @@ async function init() {
   loadLibrary();
   loadSwim();
   loadPartners();
+  loadQna();
   show(location.hash.slice(1) || (qs('withdraw') ? 'info' : 'dashboard'));
 }
 
@@ -529,6 +532,8 @@ function initWithdraw(u) {
       cart.docs.forEach(d => batch.delete(d.ref));
       const notes = await fs.getDocs(fs.query(fs.collection(db, 'notifications'), fs.where('uid', '==', u.uid)));
       notes.docs.forEach(d => batch.delete(d.ref));
+      const qna = await fs.getDocs(fs.query(fs.collection(db, 'inquiries'), fs.where('uid', '==', u.uid)));
+      qna.docs.forEach(d => batch.delete(d.ref));
       batch.delete(fs.doc(db, 'users', u.uid, 'state', 'inbox'));
       batch.delete(fs.doc(db, 'marketingConsents', u.uid));
       batch.delete(fs.doc(db, 'users', u.uid));
@@ -538,6 +543,50 @@ function initWithdraw(u) {
       location.href = 'index.html';
     } catch (err) { toast(errMsg(err)); btn.disabled = false; }
   });
+}
+
+/* ---------- 1:1 문의 ---------- */
+async function loadQna() {
+  const box = document.getElementById('qna'), u = state.user, p = state.profile || {};
+  let list = [];
+  try {
+    const snap = await fs.getDocs(fs.query(fs.collection(db, 'inquiries'), fs.where('uid', '==', u.uid)));
+    list = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+  } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">문의 내역을 불러오지 못했습니다.</p>'; return; }
+  box.innerHTML =
+    '<form class="form-card wide" id="qna-form"><h3>문의하기</h3>' +
+      '<p class="form-help">답변은 이 화면과 알림함, 가입한 이메일(' + esc(u.email || p.email || '') + ')로 보내 드립니다. 문의 내용은 접수일로부터 3년 동안 보관합니다.</p>' +
+      '<div class="form-row"><label>분류<select name="category">' + QNA_CATEGORIES.map(c => '<option>' + c + '</option>').join('') + '</select></label>' +
+      '<label>제목<input name="title" required maxlength="100"></label></div>' +
+      '<label>내용<textarea name="body" rows="6" required maxlength="3000"></textarea></label>' +
+      '<div class="btn-row"><button class="btn btn-primary" type="submit">문의 등록</button></div></form>' +
+    '<h3 class="list-title">내 문의 ' + list.length + '건</h3>' +
+    (list.length ? list.map(q =>
+      '<article class="app-card">' +
+        '<header><span class="status status-' + (q.status === '접수' ? '접수완료' : '승인') + '">' + (q.status === '접수' ? '답변 대기' : '답변 완료') + '</span>' +
+          '<b>[' + esc(q.category) + '] ' + esc(q.title) + '</b><small>' + fmtDate(q.createdAt, true) + '</small></header>' +
+        '<div class="post-body">' + textToHTML(q.body) + '</div>' +
+        (q.answer ? '<div class="admin-memo"><b>협회 답변</b> <small>' + fmtDate(q.answeredAt, true) + '</small><br>' + textToHTML(q.answer) + '</div>' : '') +
+        '<footer><span></span><button type="button" class="link-btn" data-qdel="' + q.id + '">삭제</button></footer>' +
+      '</article>').join('') : '<p class="board-empty">문의 내역이 없습니다.</p>');
+
+  const f = document.getElementById('qna-form');
+  f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const title = f.title.value.trim(), body = f.body.value.trim();
+    if (!title || !body) { toast('제목과 내용을 입력해 주세요.'); return; }
+    f.querySelector('[type=submit]').disabled = true;
+    try {
+      await fs.addDoc(fs.collection(db, 'inquiries'), { uid: u.uid, name: p.name || u.displayName || '', email: u.email || p.email || '',
+        category: f.category.value, title, body, status: '접수', createdAt: fs.serverTimestamp() });
+      toast('문의를 등록했습니다. 답변은 알림과 이메일로 보내 드립니다.'); loadQna();
+    } catch (err) { toast(errMsg(err)); f.querySelector('[type=submit]').disabled = false; }
+  });
+  box.querySelectorAll('[data-qdel]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('이 문의를 삭제할까요? 답변도 함께 지워집니다.')) return;
+    try { await fs.deleteDoc(fs.doc(db, 'inquiries', b.dataset.qdel)); toast('삭제했습니다.'); loadQna(); }
+    catch (err) { toast(errMsg(err)); }
+  }));
 }
 
 async function loadApps() {

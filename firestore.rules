@@ -85,6 +85,19 @@ service cloud.firestore {
     match /partnerCodes/{id} {
       allow read, write: if isAdmin();
     }
+    // 1:1 문의: 본인 작성·조회·삭제, 관리자는 답변만 기록
+    match /inquiries/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == '접수'
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'email', 'category', 'title', 'body', 'status', 'createdAt'])
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 100
+        && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 3000;
+      allow update: if isAdmin()
+        && request.resource.data.status in ['접수', '답변완료']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'answer', 'answeredAt', 'answeredBy']);
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
     // 관리자 활동 기록: 관리자가 자기 이름으로 추가만. 고치거나 지울 수 없음
     match /adminLogs/{id} {
       allow read: if isAdmin();

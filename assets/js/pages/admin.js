@@ -14,6 +14,7 @@ import { QUALS, QUAL_GRADES } from '../qual.js';
 import { enrollmentId, newAccessPeriod, completionValid } from '../course.js';
 import { logAdmin } from '../admin-log.js';
 import { tabLogs } from './admin-logs.js';
+import { tabInquiry } from './admin-inquiry.js';
 
 const el = document.getElementById('admin');
 const STATUSES = ['접수완료', '승인', '반려', '취소'];
@@ -29,6 +30,7 @@ async function init() {
   el.innerHTML =
     '<div class="admin-tabs" role="tablist">' +
       '<button type="button" data-tab="apps" class="is-active">신청 관리</button>' +
+      '<button type="button" data-tab="inquiry">문의</button>' +
       '<button type="button" data-tab="membership">멤버십</button>' +
       '<button type="button" data-tab="programs">교육·자격 과정</button>' +
       '<button type="button" data-tab="edu">교육 이수</button>' +
@@ -41,7 +43,7 @@ async function init() {
       '<button type="button" data-tab="posts">게시판</button>' +
       '<button type="button" data-tab="logs">활동 기록</button>' +
     '</div><div id="tab"></div>';
-  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), swim: () => tabSwim(tab()), members: tabMembers, notice: () => tabNotice(tab()), library: () => tabLibrary(tab()), posts: tabPosts, logs: () => tabLogs(tab()) };
+  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), swim: () => tabSwim(tab()), members: tabMembers, notice: () => tabNotice(tab()), library: () => tabLibrary(tab()), posts: tabPosts, logs: () => tabLogs(tab()), inquiry: () => tabInquiry(tab()) };
   el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
     el.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-active', x === b));
     tabs[b.getAttribute('data-tab')]();

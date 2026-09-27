@@ -232,5 +232,20 @@ await expect('회원이 활동 기록 읽기', 'deny', req('GET', `adminLogs/${R
 await expect('관리자가 활동 기록 고치기', 'deny', req('PATCH', `adminLogs/${RUN}l1`, admin.token, { detail: '고침' }, ['detail']));
 await expect('관리자가 활동 기록 지우기', 'deny', req('DELETE', `adminLogs/${RUN}l1`, admin.token));
 
+console.log('\n[1:1 문의]');
+const iq = (uid, extra = {}) => ({ uid, name: 'C', email: 'c@x', category: '기타', title: '질문', body: '내용', status: '접수', createdAt: new Date(), ...extra });
+await expect('회원이 문의 등록', 'allow', req('PATCH', `inquiries/${RUN}q1`, c.token, iq(c.uid)));
+await expect('로그인 없이 문의 등록', 'deny', req('PATCH', `inquiries/${RUN}q2`, null, iq(c.uid)));
+await expect('남의 이름으로 문의 등록', 'deny', req('PATCH', `inquiries/${RUN}q3`, c.token, iq(b.uid)));
+await expect('답변을 넣어서 문의 등록', 'deny', req('PATCH', `inquiries/${RUN}q4`, c.token, iq(c.uid, { answer: '셀프 답변' })));
+await expect('"답변완료" 상태로 문의 등록', 'deny', req('PATCH', `inquiries/${RUN}q5`, c.token, iq(c.uid, { status: '답변완료' })));
+await expect('본인 문의 읽기', 'allow', req('GET', `inquiries/${RUN}q1`, c.token));
+await expect('남의 문의 읽기', 'deny', req('GET', `inquiries/${RUN}q1`, b.token));
+await expect('회원이 스스로 답변 달기', 'deny', req('PATCH', `inquiries/${RUN}q1`, c.token, { answer: 'x', status: '답변완료' }, ['answer', 'status']));
+await expect('관리자가 문의 내용 고치기', 'deny', req('PATCH', `inquiries/${RUN}q1`, admin.token, { body: '바꿈' }, ['body']));
+await expect('관리자가 답변', 'allow', req('PATCH', `inquiries/${RUN}q1`, admin.token, { answer: '답변', status: '답변완료', answeredBy: admin.uid }, ['answer', 'status', 'answeredBy']));
+await expect('다른 회원이 문의 삭제', 'deny', req('DELETE', `inquiries/${RUN}q1`, b.token));
+await expect('본인이 문의 삭제', 'allow', req('DELETE', `inquiries/${RUN}q1`, c.token));
+
 console.log(`\n결과: 통과 ${pass} / 실패 ${fail}`);
 process.exit(fail ? 1 : 0);
