@@ -15,7 +15,7 @@ var MENU = [
     { title: '생존수영 교육인증', href: 'activities-certify.html' }
   ]},
   { title: '자격제도', href: 'cert-instructor.html', children: [
-    { title: '착의생존수영지도사', href: 'cert-instructor.html' },
+    { title: '착의생존수영지도자', href: 'cert-instructor.html' },
     { title: '수상인명구조사', href: 'cert-lifeguard.html' },
     { title: '응급처치 이수교육', href: 'cert-firstaid.html' },
     { title: '온라인 학습', href: 'online.html' },

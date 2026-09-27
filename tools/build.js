@@ -192,7 +192,7 @@ P['activities-certify.html']=shell(T,`  <section class="page container">
     </div>
   </section>`);
 
-for(const [f,img,alt] of [['cert-instructor.html','cert-instructor.png','착의생존수영지도사 자격 안내'],['cert-lifeguard.html','cert-lifeguard.png','수상인명구조사 자격 안내'],['cert-firstaid.html','cert-firstaid.png','응급처치 이수교육 안내']])
+for(const [f,img,alt] of [['cert-instructor.html','cert-instructor.png','착의생존수영지도자 자격 안내'],['cert-lifeguard.html','cert-lifeguard.png','수상인명구조사 자격 안내'],['cert-firstaid.html','cert-firstaid.png','응급처치 이수교육 안내']])
   P[f]=shell(T,`  <section class="page container">
     <img class="page-img narrow" src="assets/img/${img}" alt="${alt}">
   </section>`);
