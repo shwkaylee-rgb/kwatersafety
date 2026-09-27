@@ -74,7 +74,7 @@ function showForm(m, kinds, myQuals = []) {
 
     '<h3 class="form-sub">신청자 정보</h3>' +
     '<div class="form-row"><label>이름<input name="name" required maxlength="30" value="' + esc(p.name || '') + '"></label>' +
-    '<label>생년월일<input type="date" name="birth" required></label></div>' +
+    '<label>생년월일<input type="date" name="birth" required value="' + esc(p.birth || '') + '"></label></div>' +
     '<div class="form-row"><label>휴대폰 번호<input type="tel" name="phone" required value="' + esc(p.phone || '') + '" placeholder="010-0000-0000"></label>' +
     '<label>이메일<input type="email" name="email" required value="' + esc(state.user.email || '') + '"></label></div>' +
 

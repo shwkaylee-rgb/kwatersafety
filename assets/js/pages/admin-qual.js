@@ -2,6 +2,7 @@
    자격 과정은 [교육·자격 과정] 탭에서 '자격 연계'(종목, 등급, 신규/갱신)를 지정해 둔 과정입니다. */
 import { db, fs, toast, errMsg, esc } from '../app.js';
 import { todayYmd } from '../membership.js';
+import { notify } from '../notify.js';
 import { QUALS, QUAL_GRADES, qualTitle, QUAL_STATUS_NAMES, qualStatus, validUntil, formatCertNo, normNo, normName, verifyId, publicView } from '../qual.js';
 
 let box, programs, comps, quals;
@@ -140,6 +141,7 @@ async function issue({ typeId, grade, uid, name, birth, issuedOn, certNo, source
     tx.set(qualRef(no), q);
   });
   await syncVerify(q);
+  await notify(q.uid, 'qual', '「' + qualTitle(q) + '」 자격이 발급되었습니다', '자격번호 ' + q.certNo + ' · 유효기간 ' + q.expiresOn + '까지', 'qual-certificate.html?no=' + encodeURIComponent(q.certNo));
   return q.certNo;
 }
 
@@ -148,6 +150,7 @@ async function renew(q, on, src) {
   const upd = { expiresOn: validUntil(on), lastRenewedOn: on, renewals: fs.arrayUnion({ on, ...src }), updatedAt: fs.serverTimestamp() };
   await fs.updateDoc(qualRef(q.certNo), upd);
   await syncVerify({ ...q, expiresOn: upd.expiresOn });
+  await notify(q.uid, 'qual', '「' + qualTitle(q) + '」 자격이 갱신되었습니다', '자격번호 ' + q.certNo + ' · 유효기간 ' + upd.expiresOn + '까지', 'qual-certificate.html?no=' + encodeURIComponent(q.certNo));
 }
 
 function detail(q) {
@@ -176,6 +179,9 @@ function detail(q) {
       else if (f.unlink && f.unlink.checked) upd.uid = '';
       await fs.updateDoc(qualRef(q.certNo), upd);
       await syncVerify({ ...q, ...upd });
+      const after = { ...q, ...upd };
+      if (upd.status !== q.status && after.uid) await notify(after.uid, 'qual', '「' + qualTitle(after) + '」 자격이 ' + ({ active: '다시 유효해졌습니다', suspended: '정지되었습니다', revoked: '취소되었습니다' })[upd.status],
+        upd.statusReason ? '사유: ' + upd.statusReason : '', 'mypage.html#qual');
       toast('저장했습니다.'); tabQual(box);
     } catch (err) { toast(err.message && !err.code ? err.message : errMsg(err)); }
   });

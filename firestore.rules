@@ -17,14 +17,34 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create, update: if isOwner(uid)
-        && request.resource.data.keys().hasOnly(['name', 'phone', 'email', 'agreePrivacy', 'over14', 'createdAt'])
-        && request.resource.data.name is string && request.resource.data.name.size() <= 30;
+        && request.resource.data.keys().hasOnly(['name', 'phone', 'email', 'birth', 'agreePrivacy', 'over14', 'createdAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 30
+        && (!('birth' in request.resource.data) || (request.resource.data.birth is string && request.resource.data.birth.size() <= 10));
       allow delete: if isOwner(uid);
 
       // 장바구니: 본인만
       match /cart/{itemId} {
         allow read, write: if isOwner(uid);
       }
+      // 알림 읽음 기록 등 본인 설정: 본인만
+      match /state/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // 알림: 관리자 처리 시 생성. 본인은 읽기, 읽음 표시, (탈퇴 시) 삭제만
+    match /notifications/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']));
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+    // 전체 공지 알림: 로그인 회원 읽기, 관리자만 쓰기
+    match /broadcasts/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
 
     // 게시판: 누구나 읽기, 관리자만 쓰기

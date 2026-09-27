@@ -64,7 +64,7 @@ var SITE = {
   // 로그인·회원가입·장바구니 링크 (로그인 상태에 따라 app.js가 내용을 바꿉니다)
   var UTIL = '<a href="login.html" data-auth="out">로그인</a>' +
     '<a href="signup.html" data-auth="out">회원가입</a>' +
-    '<a href="mypage.html" data-auth="in" hidden>마이페이지</a>' +
+    '<a href="mypage.html" data-auth="in" hidden>마이페이지<b class="notice-count" data-notice-count hidden></b></a>' +
     '<a href="admin.html" data-auth="admin" hidden>관리자</a>' +
     '<a href="#" data-auth="in" data-logout hidden>로그아웃</a>' +
     '<a href="cart.html" class="util-cart">장바구니 <b data-cart-count>0</b></a>';

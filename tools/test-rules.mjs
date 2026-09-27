@@ -137,5 +137,24 @@ await expect('자격 확인 목록 전체 조회', 'deny', req('GET', 'qualVerif
 await expect('회원이 공개 확인 문서 위조', 'deny', req('PATCH', `qualVerify/${RUN}fake`, c.token, { certNo: 'FAKE', status: 'active' }));
 await expect('회원이 자격번호 일련번호 바꾸기', 'deny', req('PATCH', 'counters/qual_clothed', c.token, { year: '2026', seq: 0 }));
 
+console.log('\n[알림 · 내 정보]');
+const nd = `notifications/${RUN}n1`;
+await expect('회원이 스스로 알림 만들기', 'deny', req('PATCH', `notifications/${RUN}nx`, c.token, { uid: c.uid, title: '가짜', read: false }));
+await expect('관리자가 알림 보내기', 'allow', req('PATCH', nd, admin.token, { uid: c.uid, type: 'qual', title: '발급', read: false }));
+await expect('본인 알림 읽기', 'allow', req('GET', nd, c.token));
+await expect('남의 알림 읽기', 'deny', req('GET', nd, b.token));
+await expect('본인이 읽음 표시', 'allow', req('PATCH', nd, c.token, { read: true }, ['read']));
+await expect('본인이 알림 내용 바꾸기', 'deny', req('PATCH', nd, c.token, { title: '바꿈' }, ['title']));
+await expect('남이 내 알림 삭제', 'deny', req('DELETE', nd, b.token));
+await expect('본인 알림 삭제(탈퇴 시)', 'allow', req('DELETE', nd, c.token));
+await expect('관리자가 전체 공지 보내기', 'allow', req('PATCH', `broadcasts/${RUN}b1`, admin.token, { target: 'all', title: '공지' }));
+await expect('회원이 전체 공지 보내기', 'deny', req('PATCH', `broadcasts/${RUN}b2`, c.token, { target: 'all', title: '가짜 공지' }));
+await expect('로그인 회원이 공지 읽기', 'allow', req('GET', `broadcasts/${RUN}b1`, c.token));
+await expect('로그인 없이 공지 읽기', 'deny', req('GET', `broadcasts/${RUN}b1`, null));
+await expect('본인 알림 읽음 기록 저장', 'allow', req('PATCH', `users/${c.uid}/state/inbox`, c.token, { broadcastReadAt: new Date() }));
+await expect('남의 알림 읽음 기록 저장', 'deny', req('PATCH', `users/${c.uid}/state/inbox`, b.token, { broadcastReadAt: new Date() }));
+await expect('내 정보에 생년월일 저장', 'allow', req('PATCH', `users/${c.uid}`, c.token, { name: 'C', phone: '010', email: 'c@x', birth: '1990-01-01' }));
+await expect('내 정보에 허용 안 된 항목 저장', 'deny', req('PATCH', `users/${c.uid}`, c.token, { name: 'C', address: '서울' }));
+
 console.log(`\n결과: 통과 ${pass} / 실패 ${fail}`);
 process.exit(fail ? 1 : 0);

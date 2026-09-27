@@ -4,6 +4,8 @@ import { TIER_NAMES, memberStatus, STATUS_NAMES, todayYmd } from '../membership.
 import { tabOnline } from './admin-online.js';
 import { tabEdu } from './admin-edu.js';
 import { tabQual } from './admin-qual.js';
+import { tabNotice } from './admin-notice.js';
+import { notify } from '../notify.js';
 import { QUALS, QUAL_GRADES } from '../qual.js';
 import { enrollmentId, newAccessPeriod, completionValid } from '../course.js';
 
@@ -27,9 +29,10 @@ async function init() {
       '<button type="button" data-tab="qual">자격증</button>' +
       '<button type="button" data-tab="online">온라인 학습</button>' +
       '<button type="button" data-tab="members">회원 목록</button>' +
+      '<button type="button" data-tab="notice">알림</button>' +
       '<button type="button" data-tab="posts">게시판</button>' +
     '</div><div id="tab"></div>';
-  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), members: tabMembers, posts: tabPosts };
+  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), members: tabMembers, notice: () => tabNotice(tab()), posts: tabPosts };
   el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
     el.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-active', x === b));
     tabs[b.getAttribute('data-tab')]();
@@ -145,6 +148,12 @@ async function saveApplication(a, status, adminMemo) {
   }
   batch.update(fs.doc(db, 'applications', a.id), upd);
   await batch.commit();
+  // 회원에게 알림 (승인·반려로 바뀔 때)
+  if (status !== a.status && (status === '승인' || status === '반려')) {
+    const names = a.items.map(i => i.title).join(', ');
+    await notify(a.uid, 'app', '교육·자격 신청이 ' + (status === '승인' ? '승인' : '반려') + '되었습니다',
+      names + (adminMemo ? '\n협회 안내: ' + adminMemo : '') + (opened ? '\n온라인 과정 수강이 열렸습니다.' : ''), 'mypage.html#apps');
+  }
   return { ...upd, opened };
 }
 

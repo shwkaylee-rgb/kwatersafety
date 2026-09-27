@@ -3,6 +3,7 @@
      name, birth, result: '이수'|'미이수', score, comment, completedOn, certNo } */
 import { db, fs, toast, errMsg, esc } from '../app.js';
 import { todayYmd } from '../membership.js';
+import { notify } from '../notify.js';
 
 let box;
 const view = () => document.getElementById('edu-view');
@@ -58,6 +59,17 @@ function rosterView(program, apps, comps) {
   document.getElementById('edu-back').addEventListener('click', () => tabEdu(box));
 
   async function save(a, result, score, comment) {
+    const before = (comps[completionId(a.id, program.id)] || {}).result;
+    await saveResult(a, result, score, comment);
+    // 결과가 새로 정해지거나 바뀌면 회원에게 알림
+    if (before !== result) {
+      const c = comps[completionId(a.id, program.id)];
+      await notify(a.uid, 'edu', '「' + program.title + '」 ' + (result === '이수' ? '이수 처리되었습니다' : '결과: 미이수'),
+        (result === '이수' ? '이수번호 ' + c.certNo + ' · 이수증을 받을 수 있습니다.' : '') + (comment ? (result === '이수' ? '\n' : '') + '평가 의견: ' + comment : ''),
+        result === '이수' ? 'edu-certificate.html?id=' + encodeURIComponent(completionId(a.id, program.id)) : 'mypage.html#edu');
+    }
+  }
+  async function saveResult(a, result, score, comment) {
     const ref = fs.doc(db, 'completions', completionId(a.id, program.id));
     const completedOn = document.getElementById('edu-date').value || todayYmd();
     await fs.runTransaction(db, async tx => {

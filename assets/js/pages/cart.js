@@ -41,7 +41,7 @@ async function init() {
         '<h3 class="form-sub">참가자 정보</h3>' +
         '<div class="form-row">' +
           '<label><span data-label-name>이름</span><input name="name" required maxlength="30" value="' + esc(p.name || '') + '"></label>' +
-          '<label>생년월일<input type="date" name="birth" required></label>' +
+          '<label>생년월일<input type="date" name="birth" required value="' + esc(p.birth || '') + '"></label>' +
         '</div>' +
         '<div class="guardian" id="guardian" hidden>' +
           '<h3 class="form-sub">보호자(법정대리인) 정보</h3>' +

@@ -124,6 +124,7 @@ if (enabled) {
       }
     }
     updateHeader();
+    refreshNoticeCount();
     listeners.forEach(cb => cb(state));
     resolveReady(state);
   });
@@ -158,6 +159,16 @@ function updateHeader() {
   const setCount = n => document.querySelectorAll('[data-cart-count]').forEach(el => { el.textContent = n; });
   if (u) cartUnsub = fs.onSnapshot(fs.collection(db, 'users', u.uid, 'cart'), snap => setCount(snap.size), () => setCount(0));
   else setCount(0);
+}
+
+// 헤더 [마이페이지] 옆에 읽지 않은 알림 수. 마이페이지에서 읽으면 refreshNoticeCount()로 다시 셈
+export async function refreshNoticeCount() {
+  const els = document.querySelectorAll('[data-notice-count]');
+  let n = 0;
+  if (state.user) {
+    try { n = (await (await import('./notify.js')).loadInbox(state.user.uid, state.membership)).unread; } catch (e) { console.warn(e); }
+  }
+  els.forEach(el => { el.textContent = n > 99 ? '99+' : n; el.hidden = !n; });
 }
 document.querySelectorAll('[data-logout]').forEach(el => el.addEventListener('click', e => { e.preventDefault(); logout(); }));
 
