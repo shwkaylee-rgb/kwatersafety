@@ -36,6 +36,18 @@ export async function callFn(name, data) {
   return res.data;
 }
 
+// 파일 저장소 (자료실 파일 올리기). 관리자 화면에서만 불러옴
+let stClient = null;
+export async function storageApi() {
+  if (!stClient) {
+    const m = await import(SDK + 'firebase-storage.js');
+    const s = m.getStorage(fbApp);
+    if (isLocal) m.connectStorageEmulator(s, '127.0.0.1', 9199);
+    stClient = { m, s };
+  }
+  return stClient;
+}
+
 /* ---------- 유틸 ---------- */
 export function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

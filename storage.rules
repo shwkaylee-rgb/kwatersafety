@@ -1,0 +1,19 @@
+rules_version = '2';
+// 파일 저장소 보안 규칙
+// 자료실 파일은 관리자만 올리고 지웁니다. 회원은 저장소에서 직접 받지 않고,
+// 서버 함수(getResourceFile)가 등급을 확인한 뒤 파일 내용을 전달합니다.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+    match /resources/{fileName} {
+      allow read: if isAdmin();
+      allow delete: if isAdmin();
+      allow create, update: if isAdmin() && request.resource.size < 20 * 1024 * 1024;
+    }
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

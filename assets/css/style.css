@@ -745,3 +745,24 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
   body.printing-sv #sv-panel, body.printing-sv #sv-panel * { visibility: visible; }
   body.printing-sv #sv-panel { position: absolute; left: 0; top: 0; width: 100%; }
 }
+
+/* ---------- 자료실 · 제휴 할인 ---------- */
+.lv-tag { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 7px; border-radius: 6px; margin-left: 6px; vertical-align: middle; background: var(--bg-soft); color: #555; }
+.lv-tag.lv-paid { background: #eaf2fe; color: #1f5fb0; }
+.lv-tag.lv-full { background: #fff1d6; color: #8a5a00; }
+.res-list { display: grid; gap: 10px; }
+.res-list li { display: flex; justify-content: space-between; align-items: center; gap: 16px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: #fff; }
+.res-list li > div { display: grid; gap: 3px; min-width: 0; }
+.res-list p { font-size: 14px; color: #555; }
+.res-list small { font-size: 12.5px; color: #999; }
+.res-cat { font-size: 12px; color: var(--primary); font-weight: 700; }
+.res-lock { flex-shrink: 0; font-size: 13px; color: var(--text-sub); }
+.partner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.partner-card { border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 6px; align-content: start; background: #fff; }
+.partner-card header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.partner-card header b { font-size: 17px; }
+.partner-benefit { font-size: 18px; font-weight: 800; color: #c2410c; }
+.partner-code { margin-top: 6px; display: grid; gap: 4px; justify-items: start; font-size: 14px; }
+.coupon { font-size: 17px; font-weight: 800; letter-spacing: .06em; padding: 6px 12px; border: 2px dashed #c2410c; border-radius: 8px; background: #fff7ed; color: #9a3412; user-select: all; }
+@media (max-width: 860px) { .res-list li { flex-direction: column; align-items: flex-start; } }
+.res-title { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }

@@ -1,13 +1,15 @@
 /* 관리자 > 알림 탭: 전체 공지 알림 보내기, 보낸 공지 목록, 1년 지난 알림 정리 */
-import { db, fs, toast, errMsg, esc, fmtDate } from '../app.js';
+import { db, fs, toast, errMsg, esc, fmtDate, callFn } from '../app.js';
 import { TARGET_NAMES, NOTICE_KEEP_DAYS } from '../notify.js';
 
 let box;
 export async function tabNotice(container) {
   box = container;
   box.innerHTML = '<p class="board-empty">불러오는 중…</p>';
-  let list;
+  let list, recent = [];
   try {
+    const rs = await fs.getDocs(fs.query(fs.collection(db, 'notifications'), fs.orderBy('createdAt', 'desc'), fs.limit(30))).catch(() => null);
+    if (rs) recent = rs.docs.map(d => d.data());
     const snap = await fs.getDocs(fs.collection(db, 'broadcasts'));
     list = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
   } catch (e) { box.innerHTML = '<p class="board-empty">' + esc(errMsg(e)) + '</p>'; return; }
@@ -26,6 +28,13 @@ export async function tabNotice(container) {
         '<td class="col-title">' + esc(b.title) + (b.body ? '<br><small class="muted">' + esc(b.body.slice(0, 80)) + '</small>' : '') + '</td>' +
         '<td><button type="button" class="link-btn" data-del="' + b.id + '">삭제</button></td></tr>').join('') : '<tr><td colspan="4">보낸 공지가 없습니다.</td></tr>') +
     '</tbody></table></div>' +
+    '<h3 class="list-title">개인 알림·메일 발송 현황 <small>(최근 30건)</small></h3>' +
+    '<p class="form-help">개인 알림이 생기면 같은 내용이 회원 이메일로도 갑니다. 매일 아침 9시에는 만료 안내(멤버십 30일·자격 90일·온라인 수강 7일 전), 사전 설문 미제출(교육 3일 전), 소식지 수신 2년 확인 안내를 자동으로 만듭니다.</p>' +
+    '<p class="btn-row left"><button type="button" class="btn btn-outline btn-sm" id="remind-now">매일 안내 지금 확인·보내기</button></p>' +
+    '<div class="table-scroll"><table class="board-table"><thead><tr><th class="col-date">만든 때</th><th>제목</th><th>메일</th></tr></thead><tbody>' +
+      (recent.length ? recent.map(n => '<tr><td class="col-date">' + fmtDate(n.createdAt, true) + '</td><td class="col-title">' + esc(n.title) + '</td><td>' +
+        (n.mailedAt ? '<span class="mstatus mstatus-ok">발송</span>' : n.mailError ? '<span class="mstatus mstatus-no">실패</span><br><small>' + esc(n.mailError) + '</small>' : '<span class="mstatus mstatus-wait">대기</span>') + '</td></tr>').join('')
+        : '<tr><td colspan="3">알림이 없습니다.</td></tr>') + '</tbody></table></div>' +
     '<div class="notice-box left"><h3>오래된 알림 정리</h3><p>알림은 1년 동안 보관합니다. 보낸 지 1년이 지난 개인 알림과 공지를 삭제합니다.</p>' +
       '<button type="button" class="btn btn-outline btn-sm" id="purge">1년 지난 알림 삭제</button></div>';
 
@@ -45,6 +54,14 @@ export async function tabNotice(container) {
     try { await fs.deleteDoc(fs.doc(db, 'broadcasts', b.getAttribute('data-del'))); toast('삭제했습니다.'); tabNotice(box); }
     catch (err) { toast(errMsg(err)); }
   }));
+  document.getElementById('remind-now').addEventListener('click', async e => {
+    e.target.disabled = true;
+    try {
+      const r = await callFn('runRemindersNow', {});
+      toast('새로 만든 안내: 멤버십 ' + r.membership + ', 자격 ' + r.qual + ', 온라인 ' + r.online + ', 사전 설문 ' + r.survey + ', 수신 확인 ' + r.consent + '건');
+      setTimeout(() => tabNotice(box), 1500);
+    } catch (err) { toast(errMsg(err)); e.target.disabled = false; }
+  });
   document.getElementById('purge').addEventListener('click', async () => {
     const limit = fs.Timestamp.fromMillis(Date.now() - NOTICE_KEEP_DAYS * 86400000);
     try {

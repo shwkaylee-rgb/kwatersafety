@@ -72,6 +72,25 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // 자료실 목록·제휴 할인 소개: 로그인 회원 읽기, 관리자만 쓰기
+    // (파일 내용과 할인 코드는 서버 함수가 등급을 확인한 뒤에만 전달)
+    match /resources/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /partners/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /partnerCodes/{id} {
+      allow read, write: if isAdmin();
+    }
+    // 매일 안내 발송 기록: 서버 함수만 씀
+    match /reminderLog/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // 게시판: 누구나 읽기, 관리자만 쓰기
     match /posts/{postId} {
       allow read: if true;

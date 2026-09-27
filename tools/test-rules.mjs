@@ -178,5 +178,15 @@ await expect('다른 회원이 수신 동의 읽기', 'deny', req('GET', `market
 await expect('본인이 수신 설정 처리 결과 알림 만들기', 'allow', req('PATCH', `notifications/${RUN}nc`, c.token, { uid: c.uid, type: 'consent', title: '수신 설정 변경', read: false }));
 await expect('본인이 다른 종류 알림 만들기', 'deny', req('PATCH', `notifications/${RUN}nd`, c.token, { uid: c.uid, type: 'qual', title: '가짜 자격', read: false }));
 
+console.log('\n[자료실 · 제휴 할인]');
+await expect('관리자가 자료 등록', 'allow', req('PATCH', `resources/${RUN}r1`, admin.token, { title: '교안', level: 'full', path: 'resources/x.pdf' }));
+await expect('회원이 자료 등록', 'deny', req('PATCH', `resources/${RUN}r2`, c.token, { title: '가짜', level: 'all' }));
+await expect('로그인 회원이 자료 목록 읽기', 'allow', req('GET', `resources/${RUN}r1`, c.token));
+await expect('로그인 없이 자료 목록 읽기', 'deny', req('GET', `resources/${RUN}r1`, null));
+await expect('관리자가 할인 코드 등록', 'allow', req('PATCH', `partnerCodes/${RUN}p1`, admin.token, { code: 'KWSA15' }));
+await expect('회원이 할인 코드 직접 읽기', 'deny', req('GET', `partnerCodes/${RUN}p1`, c.token));
+await expect('회원이 제휴 할인 등록', 'deny', req('PATCH', `partners/${RUN}p2`, c.token, { name: '가짜' }));
+await expect('회원이 안내 발송 기록 쓰기', 'deny', req('PATCH', `reminderLog/${RUN}x`, c.token, { at: new Date() }));
+
 console.log(`\n결과: 통과 ${pass} / 실패 ${fail}`);
 process.exit(fail ? 1 : 0);

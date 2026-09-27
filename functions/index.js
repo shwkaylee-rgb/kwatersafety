@@ -133,5 +133,13 @@ exports.submitExam = onCall(async req => {
     }
     tx.update(eRef, upd);
   });
+  // 수료하면 회원에게 알림 (메일도 함께 발송됨)
+  if (certNo) {
+    await db.collection('notifications').add({ uid, type: 'online', title: '「' + course.title + '」 온라인 과정을 수료했습니다',
+      body: '수료번호 ' + certNo + ' · ' + score + '점', link: 'course-certificate.html?course=' + encodeURIComponent(courseId), read: false, createdAt: FieldValue.serverTimestamp() }).catch(e => console.error(e));
+  }
   return { score, passed, passScore: course.passScore, correctCount: right, total: results.length, certNo, results };
 });
+
+// 회원 서비스 (자료실, 제휴 할인, 알림 메일, 매일 안내)
+Object.assign(exports, require('./member'));

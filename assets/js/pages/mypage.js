@@ -1,7 +1,8 @@
-import { enabled, auth, db, fa, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, qs, logout, textToHTML, refreshNoticeCount } from '../app.js';
+import { enabled, auth, db, fa, fs, state, requireLogin, disabledNotice, toast, errMsg, esc, fmtDate, won, qs, logout, textToHTML, refreshNoticeCount, callFn } from '../app.js';
 import { loadInbox, markAllRead } from '../notify.js';
 import { loadConsent, saveConsent, needsReconfirm, consentText, MKT_TEXT } from '../marketing.js';
 import { surveyId } from '../survey.js';
+import { LEVEL_NAMES, myLevel, canAccess, fileSize, downloadResource } from '../library.js';
 import { TIER_NAMES, KIND_NAMES, memberStatus, availableKinds, daysLeft, MEMBERSHIP as M } from '../membership.js';
 import { benefitsTable, statusBadge, appStatusBadge } from '../membership-ui.js';
 import { qualStatus, qualTitle, qualValid, QUAL_STATUS_NAMES } from '../qual.js';
@@ -12,7 +13,7 @@ const el = document.getElementById('mypage');
 // 왼쪽 메뉴 (휴대폰에서는 [메뉴] 버튼을 누르면 펼쳐짐). 주소 끝 #아이디 로 바로 열 수 있음 (예: mypage.html#qual)
 const SECTIONS = [
   ['dashboard', '대시보드'], ['inbox', '알림'], ['info', '내 정보'], ['ms', '멤버십'], ['qual', '자격증'],
-  ['edu', '내 교육'], ['survey', '사전 설문'], ['ol', '온라인 학습'], ['apps', '신청 내역'], ['pay', '결제·증빙']
+  ['edu', '내 교육'], ['survey', '사전 설문'], ['ol', '온라인 학습'], ['apps', '신청 내역'], ['pay', '결제·증빙'], ['library', '자료실'], ['partner', '제휴 할인']
 ];
 const TYPE_NAMES = { app: '신청', membership: '멤버십', edu: '교육', qual: '자격', online: '온라인', consent: '수신 설정' };
 let inbox = { items: [], unread: 0 }, inboxP = null;
@@ -45,6 +46,8 @@ async function init() {
         sec('ol', '온라인 학습', loading('ol')) +
         sec('apps', '교육·자격 신청 내역', loading('apps')) +
         sec('pay', '결제·증빙 내역', loading('pay-list')) +
+        sec('library', '회원 자료실', loading('lib-list')) +
+        sec('partner', '제휴 할인', loading('partner-list')) +
       '</div>' +
     '</div>';
 
@@ -81,6 +84,8 @@ async function init() {
   loadSurveys();
   loadPay();
   loadMkt();
+  loadLibrary();
+  loadPartners();
   show(location.hash.slice(1) || (qs('withdraw') ? 'info' : 'dashboard'));
 }
 
@@ -218,6 +223,52 @@ async function loadMkt() {
     });
   };
   draw();
+}
+
+/* ---------- 자료실 ---------- */
+const levelTag = lv => '<span class="lv-tag lv-' + (lv || 'all') + '">' + LEVEL_NAMES[lv || 'all'] + '</span>';
+const joinLink = lv => lv === 'full' ? '<a href="membership.html">정회원 안내</a>' : '<a href="membership-apply.html">멤버십 가입</a>';
+async function loadLibrary() {
+  const box = document.getElementById('lib-list'), have = myLevel(state.membership, state.isAdmin);
+  try {
+    const snap = await fs.getDocs(fs.collection(db, 'resources'));
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(r => r.open !== false)
+      .sort((a, b) => String(a.category).localeCompare(String(b.category), 'ko') || (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+    if (!list.length) { box.innerHTML = '<p class="board-empty">아직 올라온 자료가 없습니다.</p>'; return; }
+    box.innerHTML = '<p class="form-help">협회 교안, 진도표, 평가지, 안전 서식 등을 회원 등급에 따라 받을 수 있습니다. 받은 자료는 협회 교육 목적으로만 써 주세요.</p>' +
+      '<ul class="res-list">' + list.map(r => '<li><div><span class="res-cat">' + esc(r.category) + '</span><span class="res-title"><b>' + esc(r.title) + '</b>' + levelTag(r.level) + '</span>' +
+        (r.description ? '<p>' + esc(r.description) + '</p>' : '') + '<small>' + esc(r.fileName) + ' · ' + fileSize(r.size) + '</small></div>' +
+        (canAccess(r.level, have) ? '<button type="button" class="btn btn-outline btn-sm" data-res="' + r.id + '">받기</button>' : '<span class="res-lock">🔒 ' + joinLink(r.level) + '</span>') + '</li>').join('') + '</ul>';
+    box.querySelectorAll('[data-res]').forEach(b => b.addEventListener('click', async () => {
+      b.disabled = true; b.textContent = '받는 중…';
+      try { await downloadResource(b.dataset.res); } catch (e) { toast(errMsg(e)); }
+      b.disabled = false; b.textContent = '받기';
+    }));
+  } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">자료실을 불러오지 못했습니다.</p>'; }
+}
+
+/* ---------- 제휴 할인 ---------- */
+async function loadPartners() {
+  const box = document.getElementById('partner-list'), have = myLevel(state.membership, state.isAdmin), today = todayYmd();
+  try {
+    const snap = await fs.getDocs(fs.collection(db, 'partners'));
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(p => p.open !== false && (!p.validUntil || p.validUntil >= today)).sort((a, b) => (a.order || 0) - (b.order || 0));
+    if (!list.length) { box.innerHTML = '<p class="board-empty">준비 중인 제휴 할인이 곧 열립니다.</p>'; return; }
+    box.innerHTML = '<p class="form-help">협회 회원을 위한 제휴처 할인입니다. 할인 코드는 등급에 맞는 회원에게만 보이며, 다른 사람과 나누지 말아 주세요.</p>' +
+      '<div class="partner-grid">' + list.map(p => '<article class="partner-card"><header><b>' + esc(p.name) + '</b>' + levelTag(p.level) + '</header>' +
+        (p.category ? '<small>' + esc(p.category) + '</small>' : '') + '<p class="partner-benefit">' + esc(p.benefit) + '</p>' + (p.description ? '<p>' + esc(p.description) + '</p>' : '') +
+        '<p class="form-help">' + (p.validUntil ? p.validUntil + '까지' : '상시') + (/^https:\/\//.test(p.link || '') ? ' · <a href="' + esc(p.link) + '" target="_blank" rel="noopener">제휴처 가기</a>' : '') + '</p>' +
+        '<div class="partner-code" data-code="' + p.id + '">' + (canAccess(p.level, have) ? '<button type="button" class="btn btn-primary btn-sm" data-show="' + p.id + '">할인 코드 보기</button>' : '🔒 ' + joinLink(p.level)) + '</div></article>').join('') + '</div>';
+    let codes = null;
+    box.querySelectorAll('[data-show]').forEach(b => b.addEventListener('click', async () => {
+      b.disabled = true;
+      try {
+        codes = codes || (await callFn('getPartnerCodes', {})).codes;
+        const c = codes[b.dataset.show], slot = box.querySelector('[data-code="' + b.dataset.show + '"]');
+        slot.innerHTML = c && c.code ? '<code class="coupon">' + esc(c.code) + '</code>' + (c.howTo ? '<small>' + esc(c.howTo) + '</small>' : '') : '<small class="muted">코드 없이 회원증을 보여 주면 할인됩니다.</small>';
+      } catch (e) { toast(errMsg(e)); b.disabled = false; }
+    }));
+  } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">제휴 할인을 불러오지 못했습니다.</p>'; }
 }
 
 /* ---------- 대시보드 ---------- */
