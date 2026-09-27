@@ -132,7 +132,7 @@ P['organization.html']=shell(T,`  <section class="page container">
 P['location.html']=shell(T,`  <section class="page container">
     <div class="location-box">
       <p class="addr">서울특별시 강남구 학동로101길 11, 607호(청담동, 엘프론트 청담)</p>
-      <p class="contact">전화 010-3483-9209 <i>|</i> 팩스 0504-413-8600 <i>|</i> support@kwatersafety.com</p>
+      <p class="contact">전화 010-3483-9209 <i>|</i> 팩스 0504-413-8600 <i>|</i> info@kwasa.or.kr</p>
       <p style="margin-top:30px;font-weight:600">지도 바로가기 <span style="color:#999;font-weight:400">(버튼을 클릭해 주세요)</span></p>
       <div class="map-links">
         <a href="https://place.map.kakao.com/1122517152" target="_blank" rel="noopener"><img src="assets/img/map-kakao.png" alt="">카카오맵</a>
@@ -348,7 +348,7 @@ P['privacy.html']=shell(T,`  <section class="page container">
         <tbody>
           <tr><th>개인정보 보호책임자</th><td>사단법인 대한수상안전협회 사무국</td></tr>
           <tr><th>전화</th><td>010-3483-9209</td></tr>
-          <tr><th>이메일</th><td>support@kwatersafety.com</td></tr>
+          <tr><th>이메일</th><td>info@kwasa.or.kr</td></tr>
           <tr><th>주소</th><td>서울특별시 강남구 학동로101길 11, 607호(청담동, 엘프론트 청담)</td></tr>
         </tbody>
       </table></div>

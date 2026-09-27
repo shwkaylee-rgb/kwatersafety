@@ -35,7 +35,7 @@ var SITE = {
   name: '사단법인 대한수상안전협회',
   tel: '010-3483-9209',
   fax: '0504-413-8600',
-  email: 'support@kwatersafety.com',
+  email: 'info@kwasa.or.kr',
   ceoEmail: 'shm812@kwatersafety.com',
   address: '서울특별시 강남구 학동로101길 11, 607호(청담동, 엘프론트 청담)',
   regNo: '110121-0141219'
