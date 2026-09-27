@@ -6,6 +6,7 @@ import { todayYmd } from '../membership.js';
 import { notify } from '../notify.js';
 import { surveyId, summarize, surveyQuestions, SURVEY_KEEP_DAYS } from '../survey.js';
 import { addDays } from '../membership.js';
+import { groupFromProgram } from './admin-swim.js';
 
 let box;
 const view = () => document.getElementById('edu-view');
@@ -59,7 +60,8 @@ async function rosterView(program, apps, comps) {
     '<h3 class="list-title">' + esc(program.title) + ' · 수강생 ' + rows.length + '명</h3>' +
     '<div class="admin-toolbar"><label class="inline-field">이수일 <input type="date" id="edu-date" value="' + today + '"></label>' +
       '<div class="btn-row"><button type="button" class="btn btn-outline btn-sm" id="edu-all">결과 없는 수강생 모두 "이수"로</button>' +
-      '<button type="button" class="btn btn-outline btn-sm" id="edu-csv">CSV 내려받기</button></div></div>' +
+      '<button type="button" class="btn btn-outline btn-sm" id="edu-csv">CSV 내려받기</button>' +
+      '<button type="button" class="btn btn-outline btn-sm" id="edu-swim">생존수영 인증 수업 만들기</button></div></div>' +
     '<div class="table-scroll"><table class="board-table edu-table"><thead><tr><th>이름</th><th>생년월일</th><th>결과</th><th>점수</th><th>평가 의견</th><th>이수번호</th>' + (program.surveyOn ? '<th>문진표</th>' : '') + '<th></th></tr></thead><tbody>' +
     rows.map(({ a, c }) => '<tr data-app="' + a.id + '">' +
       '<td>' + esc(a.applicant.name) + (a.applicant.guardianName ? '<br><small>보호자 ' + esc(a.applicant.guardianName) + '</small>' : '') + '</td>' +
@@ -73,6 +75,12 @@ async function rosterView(program, apps, comps) {
     (program.surveyOn ? '<p class="btn-row left"><button type="button" class="btn btn-outline btn-sm" id="sv-all">문진표 모아보기·인쇄 (' + Object.keys(surveys).length + '/' + rows.length + '명 제출)</button></p>' : '') +
     '<div id="sv-panel"></div>';
   document.getElementById('edu-back').addEventListener('click', () => tabEdu(box));
+  document.getElementById('edu-swim').addEventListener('click', async e => {
+    if (!confirm('이 교육으로 생존수영 인증 수업을 만들고, 승인된 수강생 ' + rows.length + '명에게 학생 정보 등록 링크를 알림으로 보낼까요?')) return;
+    e.target.disabled = true;
+    try { const r = await groupFromProgram(program, rows.map(x => x.a)); toast('수업을 만들고 ' + r.notified + '명에게 등록 안내를 보냈습니다. [생존수영 인증] 탭에서 평가·발급하세요.'); }
+    catch (err) { toast(errMsg(err)); e.target.disabled = false; }
+  });
   // 문진표 보기: 한 명 또는 전체 (지도자에게 줄 인쇄용)
   const svCard = a => { const sv = surveys[surveyId(a.id, program.id)]; if (!sv) return '';
     return '<article class="sv-card"><h4>' + esc(a.applicant.name) + (a.applicant.birth ? ' <small>' + esc(a.applicant.birth) + '</small>' : '') + '</h4><dl>' +

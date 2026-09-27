@@ -1,7 +1,10 @@
-import { enabled, auth, db, fa, fs, ready, state, disabledNotice, toast, errMsg, esc } from '../app.js';
+import { enabled, auth, db, fa, fs, ready, state, disabledNotice, toast, errMsg, esc, qs } from '../app.js';
 import { saveConsent, MKT_TEXT } from '../marketing.js';
 
 const el = document.getElementById('signup');
+// 가입 후 돌아갈 페이지 (예: 생존수영 인증 등록 링크). 같은 사이트 안의 페이지만 허용
+const back = /^[\w-]+\.html(\?[^#]*)?$/.test(qs('back') || '') ? qs('back') : '';
+const after = welcome => back || ('mypage.html' + (welcome ? '?welcome=1' : ''));
 
 const agreeHTML =
   '<div class="agree">' +
@@ -34,7 +37,7 @@ async function saveProfile(user, name, phone, f) {
 async function init() {
   if (!enabled) return disabledNotice(el);
   await ready;
-  if (state.user && state.profile) { location.replace('mypage.html'); return; }
+  if (state.user && state.profile) { location.replace(after(false)); return; }
   if (state.user) return completeForm();
 
   el.innerHTML =
@@ -49,7 +52,7 @@ async function init() {
       '<button class="btn btn-primary btn-block" type="submit">가입하기</button>' +
       '<p class="divider"><span>또는</span></p>' +
       '<button class="btn btn-google btn-block" type="button" id="google"><span class="g-icon" aria-hidden="true">G</span> 구글 계정으로 가입</button>' +
-      '<p class="form-links">이미 회원이신가요? <a href="login.html">로그인</a></p>' +
+      '<p class="form-links">이미 회원이신가요? <a href="login.html' + (back ? '?back=' + encodeURIComponent(back) : '') + '">로그인</a></p>' +
     '</form>';
   const f = document.getElementById('f');
 
@@ -64,7 +67,7 @@ async function init() {
       const cred = await fa.createUserWithEmailAndPassword(auth, email, f.password.value);
       await fa.updateProfile(cred.user, { displayName: name });
       await saveProfile(cred.user, name, phone, f);
-      location.replace('mypage.html?welcome=1');
+      location.replace(after(true));
     } catch (err) { toast(errMsg(err)); btn.disabled = false; }
   });
 
@@ -75,7 +78,7 @@ async function init() {
       const cred = await fa.signInWithPopup(auth, new fa.GoogleAuthProvider());
       const exists = (await fs.getDoc(fs.doc(db, 'users', cred.user.uid))).exists();
       if (!exists) await saveProfile(cred.user, cred.user.displayName || cred.user.email.split('@')[0], f.phone.value.trim(), f);
-      location.replace('mypage.html' + (exists ? '' : '?welcome=1'));
+      location.replace(after(!exists));
     } catch (err) { toast(errMsg(err)); }
   });
 }
@@ -100,7 +103,7 @@ function completeForm() {
     const name = f.name.value.trim();
     if (!name) { toast('이름을 입력해 주세요.'); return; }
     if (!checkAgree(f)) return;
-    try { await saveProfile(u, name, f.phone.value.trim(), f); location.replace('mypage.html?welcome=1'); }
+    try { await saveProfile(u, name, f.phone.value.trim(), f); location.replace(after(true)); }
     catch (err) { toast(errMsg(err)); }
   });
   // 동의하지 않으면 방금 만들어진 로그인 계정도 지움

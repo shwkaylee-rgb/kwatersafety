@@ -29,7 +29,7 @@ export async function tabNotice(container) {
         '<td><button type="button" class="link-btn" data-del="' + b.id + '">삭제</button></td></tr>').join('') : '<tr><td colspan="4">보낸 공지가 없습니다.</td></tr>') +
     '</tbody></table></div>' +
     '<h3 class="list-title">개인 알림·메일 발송 현황 <small>(최근 30건)</small></h3>' +
-    '<p class="form-help">개인 알림이 생기면 같은 내용이 회원 이메일로도 갑니다. 매일 아침 9시에는 만료 안내(멤버십 30일·자격 90일·온라인 수강 7일 전), 사전 설문 미제출(교육 3일 전), 소식지 수신 2년 확인 안내를 자동으로 만듭니다.</p>' +
+    '<p class="form-help">개인 알림이 생기면 같은 내용이 회원 이메일로도 갑니다. 매일 아침 9시에는 만료 안내(멤버십 30일·자격 90일·온라인 수강 7일 전), 사전 설문 미제출(교육 3일 전), 소식지 수신 2년 확인, 생존수영 인증 준회원 종료(30일 전) 안내를 자동으로 만듭니다.</p>' +
     '<p class="btn-row left"><button type="button" class="btn btn-outline btn-sm" id="remind-now">매일 안내 지금 확인·보내기</button></p>' +
     '<div class="table-scroll"><table class="board-table"><thead><tr><th class="col-date">만든 때</th><th>제목</th><th>메일</th></tr></thead><tbody>' +
       (recent.length ? recent.map(n => '<tr><td class="col-date">' + fmtDate(n.createdAt, true) + '</td><td class="col-title">' + esc(n.title) + '</td><td>' +
@@ -58,7 +58,7 @@ export async function tabNotice(container) {
     e.target.disabled = true;
     try {
       const r = await callFn('runRemindersNow', {});
-      toast('새로 만든 안내: 멤버십 ' + r.membership + ', 자격 ' + r.qual + ', 온라인 ' + r.online + ', 사전 설문 ' + r.survey + ', 수신 확인 ' + r.consent + '건');
+      toast('새로 만든 안내: 멤버십 ' + r.membership + ', 자격 ' + r.qual + ', 온라인 ' + r.online + ', 사전 설문 ' + r.survey + ', 수신 확인 ' + r.consent + ', 준회원 ' + (r.swim || 0) + '건');
       setTimeout(() => tabNotice(box), 1500);
     } catch (err) { toast(errMsg(err)); e.target.disabled = false; }
   });

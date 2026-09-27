@@ -91,6 +91,50 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---------- 생존수영 능력 인증 ----------
+    function swimGroup(groupId) { return get(/databases/$(database)/documents/swimGroups/$(groupId)).data; }
+    function swimEvaluator(groupId) { return signedIn() && request.auth.uid in swimGroup(groupId).evaluatorUids; }
+
+    // 학교·기관 수업: 등록 링크로 누구나 볼 수 있음, 관리자만 만들고 고침
+    match /swimGroups/{groupId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    // 학생 등록: 보호자(또는 만 14세 이상 본인)가 등록 받는 수업에만 등록. 평가 결과·인증번호는 강사·관리자만
+    match /swimStudents/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid) || swimEvaluator(resource.data.groupId);
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'registered'
+        && request.resource.data.keys().hasOnly(['uid', 'groupId', 'name', 'birth', 'grade', 'registrant', 'consentAt', 'status', 'createdAt'])
+        && swimGroup(request.resource.data.groupId).regOpen == true
+        && swimGroup(request.resource.data.groupId).status == 'open';
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.uid == request.auth.uid && resource.data.status == 'registered'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'birth', 'grade', 'updatedAt']))
+        || (swimEvaluator(resource.data.groupId) && swimGroup(resource.data.groupId).status == 'open'
+            && resource.data.status != 'issued'
+            && request.resource.data.status in ['registered', 'evaluated']
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['results', 'evaluatedBy', 'evaluatedAt', 'status']));
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid && resource.data.status == 'registered');
+    }
+    // 보호자 연락처: 등록한 본인과 관리자만 (평가 강사는 볼 수 없음)
+    match /swimContacts/{id} {
+      allow read: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/swimStudents/$(id)).data.uid == request.auth.uid;
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+    // 평가 강사 명단: 본인 확인용 읽기, 관리자만 지정
+    match /evaluators/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if isAdmin();
+    }
+    // 설정 (새 수업의 기본 평가 항목 등)
+    match /settings/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
     // 게시판: 누구나 읽기, 관리자만 쓰기
     match /posts/{postId} {
       allow read: if true;

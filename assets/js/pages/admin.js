@@ -6,6 +6,7 @@ import { tabEdu } from './admin-edu.js';
 import { tabQual } from './admin-qual.js';
 import { tabNotice } from './admin-notice.js';
 import { tabLibrary } from './admin-library.js';
+import { tabSwim } from './admin-swim.js';
 import { notify } from '../notify.js';
 import { EXTRA_TYPES } from '../survey.js';
 import { needsReconfirm, consentText } from '../marketing.js';
@@ -30,13 +31,14 @@ async function init() {
       '<button type="button" data-tab="programs">교육·자격 과정</button>' +
       '<button type="button" data-tab="edu">교육 이수</button>' +
       '<button type="button" data-tab="qual">자격증</button>' +
+      '<button type="button" data-tab="swim">생존수영 인증</button>' +
       '<button type="button" data-tab="online">온라인 학습</button>' +
       '<button type="button" data-tab="members">회원 목록</button>' +
       '<button type="button" data-tab="notice">알림·메일</button>' +
       '<button type="button" data-tab="library">자료실·제휴</button>' +
       '<button type="button" data-tab="posts">게시판</button>' +
     '</div><div id="tab"></div>';
-  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), members: tabMembers, notice: () => tabNotice(tab()), library: () => tabLibrary(tab()), posts: tabPosts };
+  const tabs = { apps: tabApps, membership: () => tabMembership(tab()), programs: tabPrograms, online: () => tabOnline(tab()), edu: () => tabEdu(tab()), qual: () => tabQual(tab()), swim: () => tabSwim(tab()), members: tabMembers, notice: () => tabNotice(tab()), library: () => tabLibrary(tab()), posts: tabPosts };
   el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
     el.querySelectorAll('[data-tab]').forEach(x => x.classList.toggle('is-active', x === b));
     tabs[b.getAttribute('data-tab')]();

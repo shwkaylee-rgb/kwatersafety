@@ -188,5 +188,31 @@ await expect('회원이 할인 코드 직접 읽기', 'deny', req('GET', `partne
 await expect('회원이 제휴 할인 등록', 'deny', req('PATCH', `partners/${RUN}p2`, c.token, { name: '가짜' }));
 await expect('회원이 안내 발송 기록 쓰기', 'deny', req('PATCH', `reminderLog/${RUN}x`, c.token, { at: new Date() }));
 
+console.log('\n[생존수영 인증]');
+const ev = await signUp('rules-ev@test.local');
+await req('PATCH', `swimGroups/${RUN}g1`, 'owner', { school: 'OO초', regOpen: true, status: 'open', evaluatorUids: [ev.uid], items: ['물적응'] });
+await req('PATCH', `swimGroups/${RUN}g2`, 'owner', { school: 'XX초', regOpen: false, status: 'open', evaluatorUids: [] });
+const stu = (extra = {}) => ({ uid: c.uid, groupId: `${RUN}g1`, name: '아이', birth: '2016-03-03', grade: '3학년', registrant: 'guardian', consentAt: new Date(), status: 'registered', ...extra });
+await expect('로그인 없이 수업 정보 보기(등록 링크)', 'allow', req('GET', `swimGroups/${RUN}g1`, null));
+await expect('회원이 수업 만들기', 'deny', req('PATCH', `swimGroups/${RUN}g3`, c.token, { school: '가짜', regOpen: true, status: 'open' }));
+await expect('보호자가 자녀 등록', 'allow', req('PATCH', `swimStudents/${RUN}s1`, c.token, stu()));
+await expect('등록 마감된 수업에 등록', 'deny', req('PATCH', `swimStudents/${RUN}s2`, c.token, stu({ groupId: `${RUN}g2` })));
+await expect('등록하면서 결과·인증번호 넣기', 'deny', req('PATCH', `swimStudents/${RUN}s3`, c.token, stu({ certNo: 'KWSA-SC-2026-999999' })));
+await expect('보호자가 스스로 "이수" 기록', 'deny', req('PATCH', `swimStudents/${RUN}s1`, c.token, { results: { 물적응: '이수' }, status: 'evaluated' }, ['results', 'status']));
+await expect('보호자가 학년 고치기(평가 전)', 'allow', req('PATCH', `swimStudents/${RUN}s1`, c.token, { grade: '3학년 2반' }, ['grade']));
+await expect('배정된 강사가 학생 읽기', 'allow', req('GET', `swimStudents/${RUN}s1`, ev.token));
+await expect('배정 안 된 회원이 학생 읽기', 'deny', req('GET', `swimStudents/${RUN}s1`, b.token));
+await expect('배정된 강사가 평가 기록', 'allow', req('PATCH', `swimStudents/${RUN}s1`, ev.token, { results: { 물적응: '이수' }, status: 'evaluated', evaluatedBy: ev.uid }, ['results', 'status', 'evaluatedBy']));
+await expect('강사가 스스로 "발급" 처리', 'deny', req('PATCH', `swimStudents/${RUN}s1`, ev.token, { status: 'issued' }, ['status']));
+await expect('강사가 인증번호 넣기', 'deny', req('PATCH', `swimStudents/${RUN}s1`, ev.token, { certNo: 'X' }, ['certNo']));
+await expect('다른 회원이 평가 기록', 'deny', req('PATCH', `swimStudents/${RUN}s1`, b.token, { results: { 물적응: '미이수' } }, ['results']));
+await expect('평가 끝난 뒤 보호자가 이름 고치기', 'deny', req('PATCH', `swimStudents/${RUN}s1`, c.token, { name: '바꿈' }, ['name']));
+await expect('보호자 연락처 저장', 'allow', req('PATCH', `swimContacts/${RUN}s1`, c.token, { uid: c.uid, guardianName: '보호자', phone: '010' }));
+await expect('강사가 보호자 연락처 읽기', 'deny', req('GET', `swimContacts/${RUN}s1`, ev.token));
+await expect('남의 학생에 연락처 붙이기', 'deny', req('PATCH', `swimContacts/${RUN}s1`, b.token, { uid: b.uid, phone: '010' }));
+await expect('회원이 스스로 평가 강사 되기', 'deny', req('PATCH', `evaluators/${c.uid}`, c.token, { name: 'C' }));
+await expect('관리자가 평가 항목 설정', 'allow', req('PATCH', 'settings/swimItems', admin.token, { items: ['물적응'] }));
+await expect('회원이 평가 항목 바꾸기', 'deny', req('PATCH', 'settings/swimItems', c.token, { items: [] }));
+
 console.log(`\n결과: 통과 ${pass} / 실패 ${fail}`);
 process.exit(fail ? 1 : 0);

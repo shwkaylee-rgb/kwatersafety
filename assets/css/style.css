@@ -254,7 +254,7 @@ i { font-style: normal; color: #bbb; margin: 0 6px; }
 .form-card h2 { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 6px; }
 .form-card label { display: grid; gap: 6px; font-weight: 600; font-size: 15px; }
 .form-card label small { font-weight: 400; color: #999; }
-.form-card input:not([type=checkbox]), .form-card select, .form-card textarea,
+.form-card input:not([type=checkbox]):not([type=radio]), .form-card select, .form-card textarea,
 .admin-app-foot input, .admin-app-foot select, .comment-form textarea {
   width: 100%; padding: 12px 14px; border: 1px solid #d5d9de; border-radius: 10px;
   font: inherit; font-weight: 400; background: #fff; color: var(--text);
@@ -766,3 +766,39 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
 .coupon { font-size: 17px; font-weight: 800; letter-spacing: .06em; padding: 6px 12px; border: 2px dashed #c2410c; border-radius: 8px; background: #fff7ed; color: #9a3412; user-select: all; }
 @media (max-width: 860px) { .res-list li { flex-direction: column; align-items: flex-start; } }
 .res-title { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+
+/* ---------- 생존수영 능력 인증 ---------- */
+.swim-head { text-align: center; display: grid; gap: 6px; margin-bottom: 24px; }
+.swim-head .kicker { color: var(--primary); font-weight: 700; font-size: 14px; }
+.swim-head h2 { font-size: 26px; font-weight: 800; }
+.swim-mine { display: grid; gap: 8px; margin-bottom: 20px; }
+.swim-mine li { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: #fff; }
+.swim-groups { display: grid; gap: 8px; }
+.swim-groups a { display: grid; gap: 2px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; background: #fff; }
+.swim-groups a:hover { border-color: var(--primary); }
+.swim-groups small { color: var(--text-sub); }
+.reg-link code { word-break: break-all; background: var(--bg-soft); padding: 4px 8px; border-radius: 6px; }
+.file-btn { cursor: pointer; }
+.ev-list { display: grid; gap: 12px; margin-top: 14px; }
+.ev-card { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: #fff; display: grid; gap: 8px; }
+.ev-card header { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ev-card header b { font-size: 17px; }
+.ev-card header small { color: var(--text-sub); }
+.ev-st { margin-left: auto; font-size: 13px; color: var(--primary); font-weight: 700; }
+.ev-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ev-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.ev-btn { min-width: 64px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; font-size: 14px; }
+.ev-btn.on.ok { background: #1e7a45; border-color: #1e7a45; color: #fff; }
+.ev-btn.on.no { background: #b03a2e; border-color: #b03a2e; color: #fff; }
+.ev-btn:disabled { opacity: .6; }
+.ev-all { text-align: right; }
+.swim-cert { border-color: #1f7a8c; }
+.swim-cert h2 { color: #145a68; letter-spacing: .12em; font-size: 32px; }
+.swim-items { width: 100%; max-width: 420px; margin: 0 auto; border-collapse: collapse; font-size: 15px; }
+.swim-items th, .swim-items td { border: 1px solid #cfd8dc; padding: 7px 12px; text-align: center; }
+.swim-items th { background: #eef6f7; }
+.swim-items td:first-child { text-align: left; }
+.swim-items td.ok { color: #1e7a45; font-weight: 700; }
+.swim-items td.no { color: #b03a2e; font-weight: 700; }
+.cert-page { break-after: page; page-break-after: always; margin-bottom: 30px; }
+.cert-page:last-child { break-after: auto; page-break-after: auto; }

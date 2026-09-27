@@ -2,6 +2,7 @@ import { enabled, auth, db, fa, fs, state, requireLogin, disabledNotice, toast, 
 import { loadInbox, markAllRead } from '../notify.js';
 import { loadConsent, saveConsent, needsReconfirm, consentText, MKT_TEXT } from '../marketing.js';
 import { surveyId } from '../survey.js';
+import { STUDENT_STATUS, groupTitle } from '../swim.js';
 import { LEVEL_NAMES, myLevel, canAccess, fileSize, downloadResource } from '../library.js';
 import { TIER_NAMES, KIND_NAMES, memberStatus, availableKinds, daysLeft, MEMBERSHIP as M } from '../membership.js';
 import { benefitsTable, statusBadge, appStatusBadge } from '../membership-ui.js';
@@ -13,9 +14,9 @@ const el = document.getElementById('mypage');
 // 왼쪽 메뉴 (휴대폰에서는 [메뉴] 버튼을 누르면 펼쳐짐). 주소 끝 #아이디 로 바로 열 수 있음 (예: mypage.html#qual)
 const SECTIONS = [
   ['dashboard', '대시보드'], ['inbox', '알림'], ['info', '내 정보'], ['ms', '멤버십'], ['qual', '자격증'],
-  ['edu', '내 교육'], ['survey', '사전 설문'], ['ol', '온라인 학습'], ['apps', '신청 내역'], ['pay', '결제·증빙'], ['library', '자료실'], ['partner', '제휴 할인']
+  ['edu', '내 교육'], ['swim', '생존수영 인증'], ['survey', '사전 설문'], ['ol', '온라인 학습'], ['apps', '신청 내역'], ['pay', '결제·증빙'], ['library', '자료실'], ['partner', '제휴 할인']
 ];
-const TYPE_NAMES = { app: '신청', membership: '멤버십', edu: '교육', qual: '자격', online: '온라인', consent: '수신 설정' };
+const TYPE_NAMES = { app: '신청', membership: '멤버십', edu: '교육', qual: '자격', online: '온라인', consent: '수신 설정', swim: '생존수영', reminder: '안내' };
 let inbox = { items: [], unread: 0 }, inboxP = null;
 
 async function init() {
@@ -42,6 +43,7 @@ async function init() {
         sec('ms', '멤버십', loading('ms')) +
         sec('qual', '자격증', loading('qual')) +
         sec('edu', '내 교육', loading('edu')) +
+        sec('swim', '생존수영 능력 인증', loading('swim-list')) +
         sec('survey', '사전 설문 (건강 문진표)', loading('survey-list')) +
         sec('ol', '온라인 학습', loading('ol')) +
         sec('apps', '교육·자격 신청 내역', loading('apps')) +
@@ -85,6 +87,7 @@ async function init() {
   loadPay();
   loadMkt();
   loadLibrary();
+  loadSwim();
   loadPartners();
   show(location.hash.slice(1) || (qs('withdraw') ? 'info' : 'dashboard'));
 }
@@ -225,6 +228,28 @@ async function loadMkt() {
   draw();
 }
 
+/* ---------- 생존수영 인증 ---------- */
+async function loadSwim() {
+  const box = document.getElementById('swim-list');
+  try {
+    const [snap, ev] = await Promise.all([fs.getDocs(fs.query(fs.collection(db, 'swimStudents'), fs.where('uid', '==', state.user.uid))),
+      fs.getDoc(fs.doc(db, 'evaluators', state.user.uid)).catch(() => null)]);
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const groups = {};
+    await Promise.all([...new Set(list.map(s => s.groupId))].map(async id => { const g = await fs.getDoc(fs.doc(db, 'swimGroups', id)); groups[id] = g.exists() ? g.data() : {}; }));
+    const today = todayYmd();
+    box.innerHTML = (ev && ev.exists() ? '<p class="notice-box left">평가 강사로 지정되어 있습니다. <a class="btn btn-primary btn-sm" href="evaluate.html">평가하기</a></p>' : '') +
+      '<p class="form-help">학교·협회 생존수영 교육에서 평가를 받은 학생에게 인증서가 발급됩니다. 인증을 받으면 인증일로부터 5년 동안 협회 준회원으로 등록됩니다. <a href="swim.html">학생 등록하기</a></p>' +
+      (list.length ? '<div class="table-scroll"><table class="board-table"><thead><tr><th>학생</th><th>학교·수업</th><th>상태</th><th></th></tr></thead><tbody>' +
+        list.map(s => { const g = groups[s.groupId] || {}, member = s.status === 'issued' && s.memberUntil >= today;
+          return '<tr><td>' + esc(s.name) + '<br><small>' + esc(s.birth) + '</small></td><td class="col-title">' + esc(groupTitle(g)) + (s.grade ? '<br><small>' + esc(s.grade) + '</small>' : '') + '</td>' +
+            '<td><span class="mstatus mstatus-' + (s.status === 'issued' ? 'ok' : s.status === 'evaluated' ? 'wait' : 'off') + '">' + STUDENT_STATUS[s.status] + '</span>' +
+            (s.status === 'issued' ? '<br><small>' + esc(s.certNo) + '<br>' + (member ? '준회원 ' + esc(s.memberUntil) + '까지' : '준회원 기간 끝남') + '</small>' : '') + '</td>' +
+            '<td class="nowrap">' + (s.status === 'issued' ? '<a class="link-btn" href="swim-certificate.html?id=' + encodeURIComponent(s.id) + '">인증서</a>' : '<a class="link-btn" href="swim.html?g=' + encodeURIComponent(s.groupId) + '">등록 정보</a>') + '</td></tr>'; }).join('') +
+        '</tbody></table></div>' : '<p class="board-empty">등록한 학생이 없습니다. 학교에서 받은 등록 링크로 등록해 주세요.</p>');
+  } catch (e) { console.error(e); box.innerHTML = '<p class="board-empty">생존수영 인증 정보를 불러오지 못했습니다.</p>'; }
+}
+
 /* ---------- 자료실 ---------- */
 const levelTag = lv => '<span class="lv-tag lv-' + (lv || 'all') + '">' + LEVEL_NAMES[lv || 'all'] + '</span>';
 const joinLink = lv => lv === 'full' ? '<a href="membership.html">정회원 안내</a>' : '<a href="membership-apply.html">멤버십 가입</a>';
@@ -339,7 +364,8 @@ function infoForm(u, p) {
       '<ul><li>회원 정보(이름, 이메일, 휴대폰 번호, 생년월일), 장바구니, 알림, 소식지 수신 설정이 바로 삭제되고, 다시 되돌릴 수 없습니다.</li>' +
       '<li>교육·자격 신청 기록은 <a href="privacy.html" target="_blank">개인정보처리방침</a>에 따라 신청일로부터 3년간 보관한 뒤 삭제됩니다.</li>' +
       '<li>멤버십 회비 납부·증빙 기록은 세법에 따라 5년간 보관합니다. 탈퇴하면 남은 멤버십 기간은 사라집니다.</li>' +
-      '<li>작성한 댓글은 자동으로 지워지지 않습니다. 필요하면 탈퇴 전에 직접 삭제해 주세요.</li></ul>' +
+      '<li>발급된 생존수영 능력 인증 기록은 준회원 기간이 끝날 때까지 보관합니다.</li>' +
+          '<li>작성한 댓글은 자동으로 지워지지 않습니다. 필요하면 탈퇴 전에 직접 삭제해 주세요.</li></ul>' +
       '<label class="check"><input type="checkbox" id="withdraw-ok"> 위 내용을 확인했습니다.</label>' +
       '<div class="btn-row"><button type="button" class="btn btn-outline btn-sm" id="withdraw-cancel">취소</button>' +
       '<button type="button" class="btn btn-danger btn-sm" id="withdraw-go">탈퇴하기</button></div>' +

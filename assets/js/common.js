@@ -12,7 +12,8 @@ var MENU = [
   { title: '활동영역', href: 'activities-talent.html', children: [
     { title: '수상안전 인재육성', href: 'activities-talent.html' },
     { title: '생존수영 공공교육', href: 'activities-public.html' },
-    { title: '생존수영 교육인증', href: 'activities-certify.html' }
+    { title: '생존수영 교육인증', href: 'activities-certify.html' },
+    { title: '인증서 등록(보호자)', href: 'swim.html' }
   ]},
   { title: '자격제도', href: 'cert-instructor.html', children: [
     { title: '착의생존수영지도자', href: 'cert-instructor.html' },

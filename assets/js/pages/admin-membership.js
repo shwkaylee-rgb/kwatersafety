@@ -81,7 +81,18 @@ async function viewApps() {
 }
 
 // 협회 자격이면 자격 원장에서 번호·이름·유효 여부를 바로 확인해서 표시
+async function checkSwim(root) {
+  for (const sp of root.querySelectorAll('[data-swimcheck]')) {
+    const no = sp.dataset.swimcheck;
+    try {
+      const snap = no ? await fs.getDocs(fs.query(fs.collection(db, 'swimStudents'), fs.where('certNo', '==', no))) : null;
+      const s = snap && snap.docs[0] && snap.docs[0].data();
+      sp.innerHTML = s ? '<span class="mstatus mstatus-ok">인증 확인: ' + esc(s.name) + ' · ' + esc(s.issuedOn) + ' 발급 ✓</span>' : '<span class="mstatus mstatus-no">등록되지 않은 인증번호</span>';
+    } catch (e) { sp.innerHTML = '<span class="muted">확인 실패</span>'; }
+  }
+}
 async function checkQuals(root) {
+  checkSwim(root);
   for (const sp of root.querySelectorAll('[data-qcheck]')) {
     const no = sp.getAttribute('data-qcheck');
     let html;
@@ -105,7 +116,7 @@ function appCard(a) {
     '<p class="applicant"><b>' + esc(a.applicant.name) + '</b> · ' + esc(a.applicant.birth) + ' · ' + esc(a.applicant.phone) + ' · ' + esc(a.applicant.email) + '</p>' +
     (a.currentMemberNo ? '<p class="form-help">현재 ' + esc(a.currentMemberNo) + ' · 만료 ' + esc(a.currentEndDate) + '</p>' : '') +
     '<p class="pay-line">입금액 <b>' + won(a.fee) + '</b> · 입금자명 <b>' + esc(a.depositor) + '</b>' +
-      (a.alumni ? ' · <span class="guardian-line">준회원 출신 할인 (인증서 ' + esc(a.alumni.certNo) + ') 확인 필요</span>' : '') + '</p>' +
+      (a.alumni ? ' · <span class="guardian-line">준회원 출신 할인 (인증서 ' + esc(a.alumni.certNo) + ')</span> <span data-swimcheck="' + esc(String(a.alumni.certNo || '').trim().toUpperCase()) + '"></span>' : '') + '</p>' +
     (q ? '<p class="memo">자격: ' + (q.type === 'kwsa' ? '협회 자격' : '외부 자격') + ' · ' + esc(q.name) + ' · 번호 ' + esc(q.number) +
       (q.type === 'external' ? ' · ' + esc(q.issuer) : '') + (q.date ? ' · 취득 ' + esc(q.date) : '') + ' · 윤리강령 동의 ' + (a.ethicsAgreed ? '✓' : '✗') +
       (q.type === 'kwsa' ? ' <span data-qcheck="' + esc(normNo(q.number)) + '" data-qname="' + esc(a.applicant.name) + '"></span>' : '') + '</p>' : '') +

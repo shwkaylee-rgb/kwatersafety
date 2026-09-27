@@ -16,7 +16,7 @@ async function init() {
       '<label>비밀번호<input type="password" name="password" required autocomplete="current-password"></label>' +
       '<button class="btn btn-primary btn-block" type="submit">로그인</button>' +
       '<button class="btn btn-google btn-block" type="button" id="google"><span class="g-icon" aria-hidden="true">G</span> 구글 계정으로 로그인</button>' +
-      '<p class="form-links"><a href="signup.html">회원가입</a><i>|</i><button type="button" class="link-btn" id="reset">비밀번호 찾기</button></p>' +
+      '<p class="form-links"><a href="signup.html' + (qs('back') === back ? '?back=' + encodeURIComponent(back) : '') + '">회원가입</a><i>|</i><button type="button" class="link-btn" id="reset">비밀번호 찾기</button></p>' +
     '</form>';
   const f = document.getElementById('f');
 
