@@ -53,9 +53,9 @@ P['index.html']=shell(T,`  <section class="hero">
       <div class="activity-grid">
         <article class="activity-card">
           <span class="activity-num">01</span>
-          <p class="sub">생존수영 지도자 자격제 등</p>
+          <p class="sub">생존수영 지도자 양성·지원 등</p>
           <h3>생존수영 교육</h3>
-          <p>생존수영 분야 전문가를 육성하고자 직접 자격제도를 운영하여 대한민국 생존수영 발전에 이바지하고자 합니다.</p>
+          <p>생존수영 지도자와 수상안전 인력이 현장에서 안전하게 활동할 수 있도록 교육과 정보를 나누고 권익을 지켜, 대한민국 생존수영 발전에 이바지하고자 합니다.</p>
         </article>
         <article class="activity-card">
           <span class="activity-num">02</span>
@@ -80,7 +80,8 @@ P['index.html']=shell(T,`  <section class="hero">
       <h2>대한수상안전협회</h2>
       <h3>보다 안전한 세상을 만드는데 앞장서겠습니다</h3>
       <p>대한수상안전협회는 대한민국을 넘어 전세계의 수상 안전과 재난 안전의 필요성을 알리기 위해 최선을 다하고 있습니다.<br>
-        끊임없는 연구를 통해 보다 많은 사람을 생명의 위협으로부터 지킬 수 있도록 최선을 다하겠습니다.</p>
+        끊임없는 연구를 통해 보다 많은 사람을 생명의 위협으로부터 지킬 수 있도록 최선을 다하겠습니다.<br>
+        어느 기관의 자격을 가졌든, 수상안전 현장에서 일하는 지도자와 구조 인력의 권익과 안전을 함께 지키겠습니다.</p>
     </div>
   </section>
 
@@ -106,6 +107,8 @@ P['about.html']=shell(T,`  <section class="page container">
           사고 시 대응 방안을 연구, 발표하고 이를 알리기 위해 국내 유수의 전문가들이 함께하고 있습니다.</p>
         <p>이를 넘어 전 세계 수상 안전 협회와의 소통을 통해 수상 안전사고로부터
           생명을 보호하고 지킬 수 있도록 최선을 다하고 있습니다.</p>
+        <p>협회는 특정 자격을 앞세우기보다 수상안전 현장에서 일하는 지도자·구조 인력의 권익 보호와 안전한 활동 환경을 만드는 데 힘씁니다.
+          협회가 운영하는 자격과 함께, 다른 기관에서 취득한 수상안전 자격도 동등하게 존중하고 인정합니다.</p>
       </div>
     </div>
     <h2 class="page-title">주요 사업</h2>
@@ -141,16 +144,16 @@ P['location.html']=shell(T,`  <section class="page container">
 const toggleScript=`<script>document.querySelectorAll('.more-toggle').forEach(function(b){var t=document.getElementById(b.getAttribute('aria-controls'));b.addEventListener('click',function(){var o=t.hidden;t.hidden=!o;b.textContent=o?'접기':'더보기';b.setAttribute('aria-expanded',o);});});</script>`;
 
 P['activities-talent.html']=shell(T,`  <section class="page container">
-    <p class="page-lead">대한수상안전협회는 생존수영 분야 전문가를 육성하여 교육의 질적 향상을 도모하기 위해, 착의생존수영지도자 자격제도를 개설하여 운영중에 있습니다. 이 뿐만 아니라, 수상 인명 구조사 자격제도와 응급처치교육 이수교육을 운영함으로써, 대한민국 수상안전 분야를 선도하는 협회로 성장하고 있습니다.</p>
+    <p class="page-lead">대한수상안전협회는 생존수영 교육의 질을 높이고 수상안전 현장의 인력을 함께 키우기 위해 착의생존수영지도자·수상인명구조사 자격 과정과 응급처치 이수교육을 운영하고 있습니다. 협회 자격은 수상안전 활동을 위한 여러 자격 가운데 하나이며, 협회는 다른 기관에서 취득한 수상안전 자격도 동등하게 존중합니다. 어떤 자격을 가졌든 현장의 지도자와 구조 인력이 안전하게 활동할 수 있도록 돕겠습니다.</p>
     <button class="more-toggle" type="button" aria-controls="more1" aria-expanded="false">더보기</button>
     <div class="feature-list" id="more1" hidden>
-      <article><h3>착의생존수영지도자 자격제도</h3><p>착의생존수영지도자자격제도는 “맨몸 또는 기구를 이용한 생존뜨기, 구명조끼를 착용하고 체온 유지하기, 잠수하기, 이동하기, 수상 안전 수칙 등 종합적인 수상 안전 수칙을 숙지하고 생존 수영 교육 프로그램 개발, 보급, 수행, 사무, 교육 컨설팅 등의 업무를 수행할 수 있는 전문가를 양성·인증할 수 있는 자격제도입니다.</p></article>
-      <article><h3>수상 인명 구조사 자격제도</h3><p>수상 인명 구조사 자격제도는 수상 인명 구조에 필요한 지식·기술·체력 및 수상 인명 구조 장비 활용 능력을 보유한 자로서 수상 레저 이용 시설을 포함한 수상 인명 구조 활동이 필요한 모든 장소에서 그 능력을 발휘할 수 있는 자격을 인정받아 실제 인명 구조에 투입할 수 있는 전문가를 양성·인증할 수 있는 자격제도입니다.</p></article>
+      <article><h3>착의생존수영지도자 자격</h3><p>착의생존수영지도자자격제도는 “맨몸 또는 기구를 이용한 생존뜨기, 구명조끼를 착용하고 체온 유지하기, 잠수하기, 이동하기, 수상 안전 수칙 등 종합적인 수상 안전 수칙을 숙지하고 생존 수영 교육 프로그램 개발, 보급, 수행, 사무, 교육 컨설팅 등의 업무를 수행할 수 있는 전문가를 양성·인증할 수 있는 자격제도입니다.</p></article>
+      <article><h3>수상 인명 구조사 자격</h3><p>수상 인명 구조사 자격제도는 수상 인명 구조에 필요한 지식·기술·체력 및 수상 인명 구조 장비 활용 능력을 보유한 자로서 수상 레저 이용 시설을 포함한 수상 인명 구조 활동이 필요한 모든 장소에서 그 능력을 발휘할 수 있는 자격을 인정받아 실제 인명 구조에 투입할 수 있는 전문가를 양성·인증할 수 있는 자격제도입니다.</p></article>
       <article><h3>응급처치 이수교육</h3><p>응급처치 이수 교육은 우리가 활동하고 있는 모든 사회적, 물리적 공간에서 발생할 수 있는 인명 사고에 대해 누구나 대응할 수 있는 최소한의 역량을 갖추도록 하는 것으로서 심폐소생술, 응급 상황 발생 시 대응 방안 등을 실제 상황을 가정하여 행동 중심의 교육을 진행하고 있습니다.</p></article>
     </div>
     <div class="card-grid">
-      <a href="cert-instructor.html"><figure><img src="assets/img/act-cert1.png" alt=""><figcaption>착의생존수영지도자 자격제도</figcaption></figure></a>
-      <a href="cert-lifeguard.html"><figure><img src="assets/img/act-cert2.png" alt=""><figcaption>수상인명구조사 자격제도</figcaption></figure></a>
+      <a href="cert-instructor.html"><figure><img src="assets/img/act-cert1.png" alt=""><figcaption>착의생존수영지도자 자격</figcaption></figure></a>
+      <a href="cert-lifeguard.html"><figure><img src="assets/img/act-cert2.png" alt=""><figcaption>수상인명구조사 자격</figcaption></figure></a>
       <a href="cert-firstaid.html"><figure><img src="assets/img/act-cert3.png" alt=""><figcaption>응급처치 이수교육</figcaption></figure></a>
     </div>
   </section>
@@ -192,6 +195,12 @@ P['activities-certify.html']=shell(T,`  <section class="page container">
 for(const [f,img,alt] of [['cert-instructor.html','cert-instructor.png','착의생존수영지도자 자격 안내'],['cert-lifeguard.html','cert-lifeguard.png','수상인명구조사 자격 안내'],['cert-firstaid.html','cert-firstaid.png','응급처치 이수교육 안내']])
   P[f]=shell(T,`  <section class="page container">
     <img class="page-img narrow" src="assets/img/${img}" alt="${alt}">
+    <div class="notice-box left" style="max-width:900px;margin:40px auto 0">
+      <h3>다른 기관의 수상안전 자격도 동등하게 인정합니다</h3>
+      <p>협회 과정은 수상안전 활동을 위한 여러 선택지 가운데 하나입니다. 협회는 다른 기관에서 취득한 수상안전 자격도 협회 자격과 동등하게 존중하며,
+        <a href="membership.html">정회원</a> 가입 때에도 협회의 지도자 자격과 협회가 인정하는 외부 수상안전 자격을 똑같이 인정합니다.</p>
+      <p><small>외부 자격은 확인을 위해 자격증 사본을 요청드릴 수 있습니다.</small></p>
+    </div>
   </section>`);
 
 for(const b of ['notice','news','schedule','press'])
@@ -388,7 +397,7 @@ P['programs.html']=shell(T,`  <section class="page container">
 /* ---------- 멤버십 ---------- */
 const G=M.tiers.general, F=M.tiers.full;
 P['membership.html']=shell(T,`  <section class="page container">
-    <p class="page-lead">대한수상안전협회의 회원이 되어 수상안전 문화를 함께 만들어 주세요.<br>회원은 무료 준회원과 연회비를 내는 ${G.name}·${F.name}으로 나뉩니다.</p>
+    <p class="page-lead">대한수상안전협회의 회원이 되어 수상안전 문화를 함께 만들어 주세요.<br>회원은 무료 준회원과 연회비를 내는 ${G.name}·${F.name}으로 나뉩니다.<br>${F.name}은 협회 자격뿐 아니라 협회가 인정하는 다른 기관의 수상안전 자격으로도 동등하게 가입할 수 있습니다.</p>
     <div id="membership"><p class="board-empty">불러오는 중…</p></div>
   </section>`,{page:'membership-info'});
 P['membership-apply.html']=simple('apply','멤버십 신청','membership-apply');
