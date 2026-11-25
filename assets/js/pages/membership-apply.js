@@ -65,7 +65,7 @@ function showForm(m, kinds, myQuals = []) {
 
     '<fieldset class="choice" id="tier-box"><legend>등급</legend>' +
       '<label class="check"><input type="radio" name="tier" value="general" checked> ' + TIER_NAMES.general + ' (' + won(M.tiers.general.fee) + '/년)</label>' +
-      '<label class="check"><input type="radio" name="tier" value="full"> ' + TIER_NAMES.full + ' (' + won(M.tiers.full.fee) + '/년, 지도자 자격 보유자)</label>' +
+      '<label class="check"><input type="radio" name="tier" value="full"> ' + TIER_NAMES.full + ' (' + won(M.tiers.full.fee) + '/년, 협회 또는 외부 수상안전 자격 보유자)</label>' +
     '</fieldset>' +
     '<div id="alumni-box" class="guardian">' +
       '<label class="check"><input type="checkbox" name="alumni"> 생존수영 능력 인증서를 받은 준회원 출신입니다 (첫해 ' + Math.round(M.alumniDiscount * 100) + '% 할인)</label>' +

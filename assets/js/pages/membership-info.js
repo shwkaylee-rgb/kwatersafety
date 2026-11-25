@@ -15,10 +15,10 @@ async function render() {
         '<p class="tier-fee">' + won(M.tiers.general.fee) + '<small> / 년</small></p>' +
         '<ul><li>교육·자격 신청비 ' + pct(M.tiers.general.discount) + ' 할인</li><li>기본 자료실, 협력기관 할인</li><li>디지털 회원증</li></ul>' +
         '<p class="tier-note">준회원 출신은 첫해 ' + pct(M.alumniDiscount) + ' 할인</p></article>' +
-      '<article class="tier-card full"><span class="tier-tag">지도자 자격 보유자</span><h3>' + TIER_NAMES.full + '</h3>' +
+      '<article class="tier-card full"><span class="tier-tag">수상안전 자격 보유자</span><h3>' + TIER_NAMES.full + '</h3>' +
         '<p class="tier-fee">' + won(M.tiers.full.fee) + '<small> / 년</small></p>' +
         '<ul><li>교육·자격 신청비 ' + pct(M.tiers.full.discount) + ' 할인</li><li>연 1회 보수교육 무료</li><li>전체 자료실</li><li>총회 의결권</li></ul>' +
-        '<p class="tier-note">자격 확인과 심사 후 승인</p></article>' +
+        '<p class="tier-note">협회 자격 또는 협회가 인정하는 외부 수상안전 자격 확인과 심사 후 승인</p></article>' +
     '</div>' +
     '<div class="center" id="cta"></div>' +
 
@@ -27,12 +27,13 @@ async function render() {
     '<h2 class="page-title section-gap">가입 안내</h2>' +
     '<ol class="howto">' +
       '<li><b>회원가입·로그인</b><span>홈페이지 회원으로 먼저 가입합니다.</span></li>' +
-      '<li><b>멤버십 신청</b><span>등급을 고르고 신청서를 냅니다. 정회원은 보유 자격 정보를 함께 적습니다.</span></li>' +
+      '<li><b>멤버십 신청</b><span>등급을 고르고 신청서를 냅니다. 정회원은 보유 자격 정보(협회 자격 또는 다른 기관의 수상안전 자격)를 함께 적습니다.</span></li>' +
       '<li><b>연회비 입금</b><span>안내받은 계좌로 입금합니다. 현금영수증 또는 계산서를 신청할 수 있습니다.</span></li>' +
       '<li><b>확인·활성화</b><span>사무국이 입금(정회원은 자격도)을 확인하면 회원번호가 나오고 바로 혜택을 받습니다.</span></li>' +
     '</ol>' +
     '<ul class="rule-list">' +
       '<li>회원 기간은 입금 확인일부터 1년입니다. 만료 ' + M.renewWindowDays + '일 전부터 갱신할 수 있고, 만료 후 ' + M.graceDays + '일 안에 갱신하면 기간이 이어집니다.</li>' +
+      '<li>' + TIER_NAMES.full + ' 가입 요건에서 협회의 지도자 자격과 협회가 인정하는 다른 기관의 수상안전 자격은 동등하게 인정됩니다. 외부 자격은 확인을 위해 자격증 사본을 요청드릴 수 있습니다.</li>' +
       '<li>' + TIER_NAMES.general + '이 ' + TIER_NAMES.full + '으로 바꾸면 차액(' + won(M.tiers.full.fee - M.tiers.general.fee) + ')만 내고 남은 기간은 그대로 유지됩니다.</li>' +
       '<li>가입 후 ' + M.refundDays + '일 안에 혜택을 쓰지 않았다면 전액 환불해 드립니다. 자세한 내용은 <a href="terms.html">회원 약관</a>을 확인해 주세요.</li>' +
     '</ul>';

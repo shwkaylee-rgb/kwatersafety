@@ -13,9 +13,7 @@ var MENU = [
     { title: '수상안전 인재육성', href: 'activities-talent.html' },
     { title: '생존수영 공공교육', href: 'activities-public.html' },
     { title: '생존수영 교육인증', href: 'activities-certify.html' },
-    { title: '인증서 등록(보호자)', href: 'swim.html' }
-  ]},
-  { title: '자격제도', href: 'cert-instructor.html', children: [
+    { title: '인증서 등록(보호자)', href: 'swim.html' },
     { title: '착의생존수영지도자', href: 'cert-instructor.html' },
     { title: '수상인명구조사', href: 'cert-lifeguard.html' },
     { title: '응급처치 이수교육', href: 'cert-firstaid.html' },
@@ -138,7 +136,7 @@ var SITE = {
     main.parentNode.insertBefore(banner, main);
     if (cur.top.children) {
       var tabs = document.createElement('nav');
-      tabs.className = 'sub-tabs';
+      tabs.className = 'sub-tabs' + (cur.top.children.length > 6 ? ' is-many' : '');
       tabs.setAttribute('aria-label', cur.top.title + ' 하위 메뉴');
       tabs.innerHTML = '<ul class="container">' + cur.top.children.map(function (c) {
         return '<li' + (c === cur.sub ? ' class="is-active"' : '') + '><a href="' + c.href + '">' + c.title + '</a></li>';
