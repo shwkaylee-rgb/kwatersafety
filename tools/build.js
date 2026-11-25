@@ -577,7 +577,7 @@ function seoHead(f){
     `  <meta name="twitter:image" content="${OG_IMAGE}">`];
   if(f==='index.html') lines.push(
     `  <!-- 네이버 서치어드바이저 사이트 소유확인: 받은 값을 content에 넣고 주석을 풀어 주세요 -->`,
-    `  <!-- <meta name="naver-site-verification" content=""> -->`);
+    `  <meta name="naver-site-verification" content="2b9db0ec5daeb69ea449c0d22c3f2311ee9d2a19">`);
   return lines.join(NL);
 }
 for(const [f,c] of Object.entries(P)) fs.writeFileSync(path.join(OUT,f),c.replace('<!--SEO-->',()=>seoHead(f)));
