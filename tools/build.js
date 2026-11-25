@@ -167,12 +167,12 @@ P['activities-talent.html']=shell(T,`  <section class="page container">
   ${toggleScript}`);
 
 P['activities-public.html']=shell(T,`  <section class="page container">
-    <p class="page-lead">대한수상안전협회는 초등학교 의무교육과목 중 하나인 생존수영에 대한 공공 서비스 및 위탁교육을 진행하고 있습니다. 학생들을 수영장으로 인솔하여 지도하는 것이 아닌, 국내 최고 수준의 안전한 이동형 수영장과 설비를 기반으로 직접 학교에 찾아가 시설을 설치하고 교육을 실시하여, 수영 실기 교육이 어려운 학교를 대상으로 이동형 생존수영 교실을 통해 모든 학생들의 교육 복지 실현을 이뤄내는데 힘쓰고 있습니다.</p>
+    <p class="page-lead">대한수상안전협회는 초등학교 의무교육과목 중 하나인 생존수영에 대한 공공 서비스 및 위탁교육을 진행하고 있습니다. 학생들을 수영장으로 인솔하여 지도하는 것이 아닌, 이동형 수영장과 안전 설비를 갖추고 직접 학교에 찾아가 시설을 설치하고 교육을 실시하여, 수영 실기 교육이 어려운 학교를 대상으로 이동형 생존수영 교실을 통해 모든 학생들의 교육 복지 실현을 이뤄내는데 힘쓰고 있습니다.</p>
     <button class="more-toggle" type="button" aria-controls="more1" aria-expanded="false">더보기</button>
     <div class="more-text" id="more1" hidden>
-      <p>이뿐만 아니라, 전국의 특수아동을 위한 맞춤형 생존수영 교육 프로그램과 설비를 갖추어 진정한 교육 복지 실현을 이뤄내고자 국내 유일 10가지 이상의 맞춤형 교육 프로그램을 개발·도입하였고, 이를 통해 주요 협력사인 에쓰엔피씨와 한국수난학회에 생존수영 교육 프로그램을 제안하고 있습니다.</p>
+      <p>이뿐만 아니라, 전국의 특수아동을 위한 맞춤형 생존수영 교육 프로그램과 설비를 갖추어 진정한 교육 복지 실현을 이뤄내고자 10가지 이상의 맞춤형 교육 프로그램을 개발·도입하였고, 이를 통해 주요 협력사인 에쓰엔피씨와 한국수난학회에 생존수영 교육 프로그램을 제안하고 있습니다.</p>
       <p>그 밖에 생존수영의 중요성을 널리 알리기 위해, 전국 자치단체와 협력하여 생존수영캠프(교실) 등의 행사를 추진 중에 있으며, 교육 진행 시 발생할 수 있는 여러 안전사고를 사전에 예방하기 위한 매뉴얼을 연구·개발·보급하여, 안전한 교육 진행을 위해 최선을 다하고 있습니다.</p>
-      <p>외에도 물 적응에 어려움을 겪는 아이들을 위해 국내 최초로 실용신안을 획득한 생존수영 영법 보조기구 “플러미”를 제작하여 실제 교육현장에서 적극 활용함으로써, 모든 아이들이 함께할 수 있는 교육환경을 만들고 있습니다.</p>
+      <p>외에도 물 적응에 어려움을 겪는 아이들을 위해 실용신안을 등록한 생존수영 영법 보조기구 “플러미”를 제작하여 실제 교육현장에서 적극 활용함으로써, 모든 아이들이 함께할 수 있는 교육환경을 만들고 있습니다.</p>
     </div>
     <div class="card-grid">
       <figure><img src="assets/img/act-pub1.png" alt=""><figcaption>생존수영 프로그램 연구·개발</figcaption></figure>
@@ -221,7 +221,7 @@ P['post.html']=shell(T,`  <section class="page container">
   extra:`<script>document.body.setAttribute('data-board', new URLSearchParams(location.search).get('board') || 'notice');</script>\n`});
 
 P['partners.html']=shell(T,`  <section class="page container">
-    <p class="page-lead">대한수상안전협회는 국내 수상안전을 선도하고<br>생존수영 분야의 선두 기업들과 함께합니다.</p>
+    <p class="page-lead">대한수상안전협회는 수상안전과 생존수영 분야의<br>여러 기관·기업과 협력하고 있습니다.</p>
     <div class="partner-grid">
       <div class="row"><img src="assets/img/partner1.png" alt="협력기관"><img src="assets/img/partner2.png" alt="협력기관"></div>
       <div class="row"><img src="assets/img/partner3.png" alt="협력기관"><img src="assets/img/partner4.png" alt="협력기관"></div>
