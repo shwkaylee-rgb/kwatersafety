@@ -582,6 +582,9 @@ button.btn-outline { border: 1px solid #ccc; background: #fff; }
 .footer-info { padding-top: 30px; line-height: 2; }
 .footer-info i { color: #555; }
 .footer-info a:hover { color: #fff; }
+.footer-channels { display: flex; gap: 12px; margin: 8px 0 4px; }
+.footer-channels a { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: #2a3038; color: #c9ced4; }
+.footer-channels a:hover { background: #3a424c; color: #fff; }
 .copyright { margin-top: 10px; color: #6c747d; }
 
 /* ---------- 반응형 ---------- */

@@ -146,6 +146,25 @@ var SITE = {
     document.title = title + ' | ' + SITE.name;
   }
 
+  // 공식 채널 아이콘: 주소는 tools/build.js 의 OFFICIAL_CHANNELS 한 곳에서 관리하고,
+  // build가 <meta name="kwsa-channels">로 페이지에 넣어 줍니다. 주소가 없으면 아무것도 그리지 않습니다.
+  var CHANNEL_ICONS = {
+    blog: { label: '블로그', svg: '<path d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zm4 5v8h2.6v-4.3L13.4 16H16V8h-2.6v4.3L10.6 8z"/>' },
+    instagram: { label: '인스타그램', svg: '<path d="M12 7.3A4.7 4.7 0 1 0 12 16.7 4.7 4.7 0 0 0 12 7.3zm0 7.7a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm4.9-8.9a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2zM12 4.6c2.4 0 2.7 0 3.6.1 2.4.1 3.6 1.3 3.7 3.7.1.9.1 1.2.1 3.6s0 2.7-.1 3.6c-.1 2.4-1.3 3.6-3.7 3.7-.9.1-1.2.1-3.6.1s-2.7 0-3.6-.1c-2.4-.1-3.6-1.3-3.7-3.7-.1-.9-.1-1.2-.1-3.6s0-2.7.1-3.6c.1-2.4 1.3-3.6 3.7-3.7.9-.1 1.2-.1 3.6-.1zM12 3c-2.4 0-2.8 0-3.7.1-3.3.1-5 1.9-5.2 5.2C3 9.2 3 9.6 3 12s0 2.8.1 3.7c.1 3.3 1.9 5 5.2 5.2.9.1 1.3.1 3.7.1s2.8 0 3.7-.1c3.3-.1 5-1.9 5.2-5.2.1-.9.1-1.3.1-3.7s0-2.8-.1-3.7c-.1-3.3-1.9-5-5.2-5.2C14.8 3 14.4 3 12 3z"/>' },
+    youtube: { label: '유튜브', svg: '<path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8c1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5.2 3z"/>' }
+  };
+  function channelsHTML() {
+    var meta = document.querySelector('meta[name="kwsa-channels"]'), ch;
+    if (!meta) return '';
+    try { ch = JSON.parse(meta.getAttribute('content')); } catch (e) { return ''; }
+    var html = Object.keys(CHANNEL_ICONS).filter(function (k) { return /^https?:\/\//.test(ch[k] || ''); }).map(function (k) {
+      var url = String(ch[k]).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      return '<a href="' + url + '" target="_blank" rel="noopener" aria-label="' + SITE.name + ' ' + CHANNEL_ICONS[k].label + '" title="' + CHANNEL_ICONS[k].label + '">' +
+        '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">' + CHANNEL_ICONS[k].svg + '</svg></a>';
+    }).join('');
+    return html ? '<p class="footer-channels">' + html + '</p>' : '';
+  }
+
   // 푸터
   var footer = document.createElement('footer');
   footer.className = 'site-footer';
@@ -166,6 +185,7 @@ var SITE = {
         ' <i>|</i> 이메일 : <a href="mailto:' + SITE.email + '">' + SITE.email + '</a></p>' +
         '<p>주소 : ' + SITE.address + ' <i>|</i> 등록번호 : ' + SITE.regNo + '</p>' +
         '<p>대표자 이메일 : ' + SITE.ceoEmail + '</p>' +
+        channelsHTML() +
         '<p class="copyright">Copyright ⓒ ' + new Date().getFullYear() + ' ' + SITE.name + ' All rights reserved.</p>' +
       '</div>' +
     '</div>';

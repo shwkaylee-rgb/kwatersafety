@@ -7,6 +7,13 @@ const OUT=path.join(__dirname,'..');
 const {MEMBERSHIP:M}=await import(pathToFileURL(path.join(OUT,'assets/js/membership-config.js')).href);
 // 온라인 학습 반영 개인정보처리방침 시행일 (공개 7일 전 공지 후 확정)
 const ONLINE_POLICY_DATE='2026년 10월 11일';
+/* 협회 공식 채널 주소 (한 곳에서 관리)
+   주소를 넣은 채널만 첫 화면 검색엔진 정보(JSON-LD sameAs)와 모든 페이지 푸터의 채널 아이콘에 나옵니다.
+   비어 있으면 아무것도 나오지 않습니다. 넣은 뒤 `node tools/build.js`를 실행하세요.
+   예) blog:'https://blog.naver.com/아이디', instagram:'https://www.instagram.com/아이디', youtube:'https://www.youtube.com/@아이디' */
+const OFFICIAL_CHANNELS={ blog:'', instagram:'', youtube:'' };
+// 구글 서치 콘솔 소유확인(HTML 태그 방식) content 값. 비어 있으면 출력하지 않습니다. index.html에만 들어갑니다.
+const GOOGLE_SITE_VERIFICATION='';
 const krw=n=>n.toLocaleString('ko-KR')+'원', pct=r=>Math.round(r*100)+'%';
 const shell=(title,content,{home=false,page='',posts=false,pageTitle='',extra=''}={})=>`<!DOCTYPE html>
 <html lang="ko">
@@ -555,6 +562,26 @@ const SEO={
 };
 const ea=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const NL='\n';
+const RSS_LINK=`  <link rel="alternate" type="application/rss+xml" title="${T} 소식" href="${SITE_URL}rss.xml">`;
+// 주소를 넣은 공식 채널만
+const CHANNELS=Object.fromEntries(Object.entries(OFFICIAL_CHANNELS).map(([k,v])=>[k,String(v||'').trim()]).filter(([,v])=>/^https?:\/\//.test(v)));
+// 첫 화면 단체 정보 (검색엔진용 JSON-LD). 주소는 오시는길·푸터의 주소와 같습니다.
+const ORG_JSONLD={
+  '@context':'https://schema.org',
+  '@type':'Organization',
+  name:T,
+  url:SITE_URL,
+  logo:SITE_URL+'assets/img/logo-color.png',
+  email:'info@kwasa.or.kr',
+  address:{
+    '@type':'PostalAddress',
+    streetAddress:'학동로101길 11, 607호(청담동, 엘프론트 청담)',
+    addressLocality:'강남구',
+    addressRegion:'서울특별시',
+    addressCountry:'KR'
+  },
+  sameAs:Object.values(CHANNELS)
+};
 function seoHead(f){
   const m=SEO[f];
   // post.html은 ?board=&id= 로 글마다 내용이 바뀌므로 고정 canonical 없이 검색 허용 (사이트맵 제외)
@@ -564,7 +591,8 @@ function seoHead(f){
     `  <meta property="og:type" content="article">`,
     `  <meta property="og:site_name" content="${T}">`,
     `  <meta property="og:image" content="${OG_IMAGE}">`,
-    `  <meta name="twitter:card" content="summary_large_image">`].join(NL);
+    `  <meta name="twitter:card" content="summary_large_image">`,
+    RSS_LINK].join(NL);
   if(!m) return [`  <title>${T}</title>`,`  <meta name="robots" content="noindex, nofollow">`].join(NL);
   const url=SITE_URL+(f==='index.html'?'':f), title=f==='index.html'?m.title:m.title+' | '+T, desc=ea(m.desc||DEFAULT_DESC);
   const lines=[
@@ -583,13 +611,20 @@ function seoHead(f){
     `  <meta name="twitter:card" content="summary_large_image">`,
     `  <meta name="twitter:title" content="${ea(title)}">`,
     `  <meta name="twitter:description" content="${desc}">`,
-    `  <meta name="twitter:image" content="${OG_IMAGE}">`];
+    `  <meta name="twitter:image" content="${OG_IMAGE}">`,
+    RSS_LINK];
   if(f==='index.html') lines.push(
     `  <!-- 네이버 서치어드바이저 사이트 소유확인: 받은 값을 content에 넣고 주석을 풀어 주세요 -->`,
     `  <meta name="naver-site-verification" content="2b9db0ec5daeb69ea449c0d22c3f2311ee9d2a19">`);
+  if(f==='index.html'&&GOOGLE_SITE_VERIFICATION) lines.push(
+    `  <meta name="google-site-verification" content="${ea(GOOGLE_SITE_VERIFICATION)}">`);
+  if(f==='index.html') lines.push(
+    `  <script type="application/ld+json">${JSON.stringify(ORG_JSONLD).replace(/</g,'\\u003c')}</script>`);
   return lines.join(NL);
 }
-for(const [f,c] of Object.entries(P)) fs.writeFileSync(path.join(OUT,f),c.replace('<!--SEO-->',()=>seoHead(f)));
+// 푸터 채널 아이콘: assets/js/common.js가 이 메타를 읽어 그립니다 (채널이 하나도 없으면 메타도 출력하지 않음)
+const channelMeta=Object.keys(CHANNELS).length?NL+`  <meta name="kwsa-channels" content="${ea(JSON.stringify(CHANNELS))}">`:'';
+for(const [f,c] of Object.entries(P)) fs.writeFileSync(path.join(OUT,f),c.replace('<!--SEO-->',()=>seoHead(f)+channelMeta));
 
 /* ---------- sitemap.xml (SEO 표의 공개 페이지) ---------- */
 const lastmod=new Date().toISOString().slice(0,10);
