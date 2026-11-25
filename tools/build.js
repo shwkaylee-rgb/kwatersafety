@@ -13,10 +13,7 @@ const shell=(title,content,{home=false,page='',posts=false,pageTitle='',extra=''
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>${title}</title>
-  <meta name="description" content="사단법인 대한수상안전협회 - 생명보다 더 소중한 가치는 없습니다. 생존수영 교육, 자격제도, 수상안전 문화 확산">
-  <meta property="og:title" content="사단법인 대한수상안전협회">
-  <meta property="og:image" content="assets/img/og-image.png">
+<!--SEO-->
   <link rel="icon" href="assets/img/logo-mobile.png">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -516,6 +513,87 @@ P['terms.html']=shell(T,`  <section class="page container">
     </article>
   </section>`,{pageTitle:'회원 약관'});
 
-for(const [f,c] of Object.entries(P)) fs.writeFileSync(path.join(OUT,f),c);
+/* ---------- 검색엔진·공유 메타 (<head>) ----------
+   SEO 표에 있는 페이지만 공개 페이지로 보고 제목·설명·canonical·공유 메타를 넣고 sitemap.xml에 싣습니다.
+   표에 없는 페이지(로그인·마이페이지·증명서 등 개인용)는 noindex로 검색에서 빠집니다.
+   공개 페이지를 새로 만들면 이 표에 추가하고, 비공개 페이지면 robots.txt에도 추가하세요. */
+const SITE_URL='https://kwasa.or.kr/';
+const OG_IMAGE=SITE_URL+'assets/img/og-image.png';
+const DEFAULT_DESC='사단법인 대한수상안전협회는 수상안전 사고 예방과 생존수영 교육, 수상안전 문화 확산을 위해 활동하는 비영리 단체입니다.';
+const SEO={
+  'index.html':{title:T+' | 수상안전·생존수영',desc:'사단법인 대한수상안전협회는 수상안전 사고 예방, 생존수영 교육과 인증, 수상안전 종사자의 권익 보호와 안전 문화 확산을 위해 함께하는 비영리 단체입니다.',pri:'1.0'},
+  'about.html':{title:'대한수상안전협회 소개',desc:'수상안전 사고 예방과 대응 방안을 연구·공유하고, 수영시설 안전 기반 구축과 수상안전 교육·문화 확산에 힘쓰는 대한수상안전협회를 소개합니다.'},
+  'greeting.html':{title:'이사장 인사말',desc:'사단법인 대한수상안전협회 이사장 인사말입니다.'},
+  'organization.html':{title:'조직도',desc:'사단법인 대한수상안전협회의 조직 구성을 안내합니다.'},
+  'location.html':{title:'오시는길',desc:'사단법인 대한수상안전협회 사무국 주소와 연락처, 지도 바로가기를 안내합니다.'},
+  'membership.html':{title:'회원 안내',desc:'대한수상안전협회 준회원·일반회원·정회원 구분과 회비, 회원 혜택, 가입 방법을 안내합니다.'},
+  'activities-talent.html':{title:'수상안전 인재육성',desc:'생존수영 지도, 수상 인명 구조, 응급처치 등 수상안전 분야 교육과 자격제도 운영을 안내합니다.'},
+  'activities-public.html':{title:'생존수영 공공교육',desc:'학교로 찾아가는 이동형 생존수영 교실, 특수아동 맞춤형 프로그램, 생존수영캠프 등 공공 생존수영 교육 활동을 소개합니다.'},
+  'activities-certify.html':{title:'생존수영 교육인증',desc:'생존수영 교육을 이수한 학생에게 발급하는 생존수영 능력 인증서와 준회원 제도를 안내합니다.'},
+  'cert-instructor.html':{title:'착의생존수영지도자',desc:'대한수상안전협회가 운영하는 착의생존수영지도자 자격의 내용과 취득 과정을 안내합니다.'},
+  'cert-lifeguard.html':{title:'수상인명구조사',desc:'대한수상안전협회가 운영하는 수상인명구조사 자격의 내용과 취득 과정을 안내합니다.'},
+  'cert-firstaid.html':{title:'응급처치 이수교육',desc:'심폐소생술과 응급 상황 대응을 익히는 응급처치 이수교육을 안내합니다.'},
+  'online.html':{title:'온라인 학습',desc:'자격 교육 전에 영상과 글로 먼저 공부하는 대한수상안전협회 온라인 학습 과정을 안내합니다.'},
+  'verify.html':{title:'자격 확인',desc:'대한수상안전협회가 발급한 자격의 진위와 유효 여부를 자격번호와 성명으로 확인할 수 있습니다.'},
+  'programs.html':{title:'교육·자격 신청',desc:'대한수상안전협회에서 운영하는 교육과 자격시험 일정을 확인하고 신청할 수 있습니다.'},
+  'notice.html':{title:'협회 공지사항',desc:'사단법인 대한수상안전협회의 공지사항입니다.',freq:'weekly'},
+  'news.html':{title:'협회 소식',desc:'사단법인 대한수상안전협회의 활동과 소식을 전합니다.',freq:'weekly'},
+  'schedule.html':{title:'교육일정 공지',desc:'대한수상안전협회 교육·자격 과정의 일정을 안내합니다.',freq:'weekly'},
+  'press.html':{title:'대외 보도자료',desc:'사단법인 대한수상안전협회 관련 보도자료를 모았습니다.',freq:'weekly'},
+  'partners.html':{title:'협력기관',desc:'대한수상안전협회와 함께 수상안전 활동을 펼치는 협력기관을 소개합니다.'},
+  'privacy.html':{title:'개인정보처리방침',desc:'사단법인 대한수상안전협회 홈페이지의 개인정보처리방침입니다.',pri:'0.3'},
+  'terms.html':{title:'회원 약관',desc:'사단법인 대한수상안전협회 회원 제도와 회원의 권리·의무를 정한 약관입니다.',pri:'0.3'}
+};
+const ea=s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const NL='\n';
+function seoHead(f){
+  const m=SEO[f];
+  // post.html은 ?board=&id= 로 글마다 내용이 바뀌므로 고정 canonical 없이 검색 허용 (사이트맵 제외)
+  if(f==='post.html') return [
+    `  <title>${T}</title>`,
+    `  <meta name="description" content="${ea(DEFAULT_DESC)}">`,
+    `  <meta property="og:type" content="article">`,
+    `  <meta property="og:site_name" content="${T}">`,
+    `  <meta property="og:image" content="${OG_IMAGE}">`,
+    `  <meta name="twitter:card" content="summary_large_image">`].join(NL);
+  if(!m) return [`  <title>${T}</title>`,`  <meta name="robots" content="noindex, nofollow">`].join(NL);
+  const url=SITE_URL+(f==='index.html'?'':f), title=f==='index.html'?m.title:m.title+' | '+T, desc=ea(m.desc||DEFAULT_DESC);
+  const lines=[
+    `  <title>${title}</title>`,
+    `  <meta name="description" content="${desc}">`,
+    `  <link rel="canonical" href="${url}">`,
+    `  <meta property="og:type" content="website">`,
+    `  <meta property="og:site_name" content="${T}">`,
+    `  <meta property="og:locale" content="ko_KR">`,
+    `  <meta property="og:title" content="${ea(title)}">`,
+    `  <meta property="og:description" content="${desc}">`,
+    `  <meta property="og:url" content="${url}">`,
+    `  <meta property="og:image" content="${OG_IMAGE}">`,
+    `  <meta property="og:image:width" content="1200">`,
+    `  <meta property="og:image:height" content="630">`,
+    `  <meta name="twitter:card" content="summary_large_image">`,
+    `  <meta name="twitter:title" content="${ea(title)}">`,
+    `  <meta name="twitter:description" content="${desc}">`,
+    `  <meta name="twitter:image" content="${OG_IMAGE}">`];
+  if(f==='index.html') lines.push(
+    `  <!-- 네이버 서치어드바이저 사이트 소유확인: 받은 값을 content에 넣고 주석을 풀어 주세요 -->`,
+    `  <!-- <meta name="naver-site-verification" content=""> -->`);
+  return lines.join(NL);
+}
+for(const [f,c] of Object.entries(P)) fs.writeFileSync(path.join(OUT,f),c.replace('<!--SEO-->',()=>seoHead(f)));
+
+/* ---------- sitemap.xml (SEO 표의 공개 페이지) ---------- */
+const lastmod=new Date().toISOString().slice(0,10);
+fs.writeFileSync(path.join(OUT,'sitemap.xml'),[
+  '<?xml version="1.0" encoding="UTF-8"?>',
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+  ...Object.entries(SEO).map(([f,m])=>[
+    '  <url>',
+    `    <loc>${SITE_URL+(f==='index.html'?'':f)}</loc>`,
+    `    <lastmod>${lastmod}</lastmod>`,
+    `    <changefreq>${m.freq||'monthly'}</changefreq>`,
+    `    <priority>${m.pri||(m.freq?'0.7':'0.8')}</priority>`,
+    '  </url>'].join(NL)),
+  '</urlset>',''].join(NL));
 console.log(Object.keys(P).length+'개 페이지 생성');
 })();

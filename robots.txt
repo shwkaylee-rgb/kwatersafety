@@ -1,0 +1,29 @@
+# 사단법인 대한수상안전협회 (kwasa.or.kr)
+User-agent: *
+Allow: /
+
+# 회원·관리자·개인용 페이지
+Disallow: /admin.html
+Disallow: /mypage.html
+Disallow: /write.html
+Disallow: /login.html
+Disallow: /signup.html
+Disallow: /cart.html
+Disallow: /oauth.html
+Disallow: /evaluate.html
+Disallow: /survey.html
+Disallow: /learn.html
+Disallow: /membership-apply.html
+Disallow: /swim.html
+
+# 증명서·회원증·납부확인서
+Disallow: /course-certificate.html
+Disallow: /edu-certificate.html
+Disallow: /qual-certificate.html
+Disallow: /swim-certificate.html
+Disallow: /payment-receipt.html
+Disallow: /membership-card.html
+
+Disallow: /404.html
+
+Sitemap: https://kwasa.or.kr/sitemap.xml
