@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice">
+  <!-- 첫 화면·서브 배너 물결 그림 (배경색은 style.css의 그라데이션) -->
+  <defs>
+    <radialGradient id="glow" cx="78%" cy="18%" r="55%">
+      <stop offset="0" stop-color="#5aa9ff" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#5aa9ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#glow)"/>
+  <g fill="none" stroke="#ffffff" stroke-linecap="round">
+    <path d="M0 300 C200 260 340 340 540 300 S900 250 1100 300 S1440 350 1600 300" stroke-opacity=".06" stroke-width="2"/>
+    <path d="M0 380 C220 340 360 420 560 380 S920 330 1120 380 S1460 430 1600 380" stroke-opacity=".08" stroke-width="2"/>
+    <path d="M0 460 C200 420 360 500 560 460 S900 410 1110 460 S1450 510 1600 460" stroke-opacity=".06" stroke-width="2"/>
+  </g>
+  <path d="M0 640 C180 600 340 680 540 640 S900 580 1100 640 S1440 700 1600 650 V900 H0Z" fill="#ffffff" fill-opacity=".05"/>
+  <path d="M0 710 C220 670 380 750 600 710 S960 650 1160 710 S1470 760 1600 720 V900 H0Z" fill="#ffffff" fill-opacity=".07"/>
+  <path d="M0 790 C200 755 360 825 580 790 S940 740 1140 790 S1460 835 1600 800 V900 H0Z" fill="#ffffff" fill-opacity=".09"/>
+</svg>
