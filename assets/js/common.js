@@ -16,7 +16,7 @@ var MENU = [
   ]},
   { title: '교육과정', href: 'cert-instructor.html', children: [
     { title: '착의생존수영지도자', href: 'cert-instructor.html' },
-    { title: '수상인명구조사', href: 'cert-lifeguard.html' }, // 자격 폐지 확정되면 이 줄만 지우면 됩니다
+    { title: '영유아수상교육전문지도자', href: 'cert-infant.html' },
     { title: '응급처치 이수교육', href: 'cert-firstaid.html' },
     { title: '온라인 학습', href: 'online.html' },
     { title: '교육 신청', href: 'programs.html' }
@@ -29,13 +29,14 @@ var MENU = [
     { title: '공지사항', href: 'notice.html' },
     { title: '협회 소식', href: 'news.html' },
     { title: '교육일정', href: 'schedule.html' },
-    { title: '보도자료', href: 'press.html' }
+    { title: '보도자료', href: 'press.html' },
+    { title: '자료실', href: 'resources.html' }
   ]}
 ];
 // Home 메뉴는 따로 두지 않고 왼쪽 위 로고가 첫 화면으로 가는 역할을 합니다.
 // 메뉴 밖 바로가기: 상단 오른쪽 작은 링크와 푸터에 함께 나옵니다.
+// (생존수영 인증서 등록은 대표님 결정으로 첫 화면 카드와 주요사업 메뉴에만 둡니다.)
 var QUICK = {
-  swim: { title: '인증서 등록(보호자)', href: 'swim.html' },
   verify: { title: '자격 확인', href: 'verify.html' }
 };
 
@@ -69,8 +70,7 @@ var SITE = {
   var cur = findCurrent();
 
   // 로그인·회원가입·장바구니 링크 (로그인 상태에 따라 app.js가 내용을 바꿉니다)
-  var UTIL = '<a href="' + QUICK.swim.href + '" class="util-swim">' + QUICK.swim.title + '</a>' +
-    '<a href="' + QUICK.verify.href + '">' + QUICK.verify.title + '</a>' +
+  var UTIL = '<a href="' + QUICK.verify.href + '">' + QUICK.verify.title + '</a>' +
     '<a href="login.html" data-auth="out">로그인</a>' +
     '<a href="signup.html" data-auth="out">회원가입</a>' +
     '<a href="mypage.html" data-auth="in" hidden>마이페이지<b class="notice-count" data-notice-count hidden></b></a>' +
@@ -193,7 +193,7 @@ var SITE = {
         }).join('') + '</ul>' +
       '</div>' +
       '<div class="footer-info">' +
-        '<p class="footer-links"><a href="privacy.html"><b>개인정보처리방침</b></a><i>|</i><a href="terms.html">회원 약관</a><i>|</i><a href="membership.html">회원 안내</a><i>|</i><a href="' + QUICK.swim.href + '">생존수영 인증서 등록(보호자)</a><i>|</i><a href="' + QUICK.verify.href + '">' + QUICK.verify.title + '</a></p>' +
+        '<p class="footer-links"><a href="privacy.html"><b>개인정보처리방침</b></a><i>|</i><a href="terms.html">회원 약관</a><i>|</i><a href="membership.html">회원 안내</a><i>|</i><a href="' + QUICK.verify.href + '">' + QUICK.verify.title + '</a></p>' +
         '<p>' + SITE.name + ' <i>|</i> 전화 : <a href="tel:' + SITE.tel + '">' + SITE.tel + '</a> <i>|</i> 팩스 : ' + SITE.fax +
         ' <i>|</i> 이메일 : <a href="mailto:' + SITE.email + '">' + SITE.email + '</a></p>' +
         '<p>주소 : ' + SITE.address + ' <i>|</i> 등록번호 : ' + SITE.regNo + '</p>' +

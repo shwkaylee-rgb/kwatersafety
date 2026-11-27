@@ -122,9 +122,6 @@ i { font-style: normal; color: #bbb; margin: 0 6px; }
 .hero-swim-actions .btn .ic { width: 18px; height: 18px; }
 .hero-swim-sub { font-size: 14px; color: var(--text-sub); text-decoration: underline; text-underline-offset: 3px; }
 .hero-swim-sub:hover { color: var(--primary); }
-.util .util-swim { padding: 5px 11px; border-radius: 16px; background: var(--primary); color: #fff; font-weight: 700; }
-.util .util-swim:hover { background: var(--primary-dark); color: #fff; }
-.mobile-util .util-swim { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
 @media (max-width: 860px) {
   .hero { min-height: 100svh; padding: calc(var(--header-h) + 16px) 0 70px; }
   .hero-eyebrow { font-size: 15px; }
@@ -1142,3 +1139,7 @@ a.icon-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); b
 .swim-find .form-card { margin: 0; max-width: none; }
 .swim-done { max-width: 760px; padding: 26px 24px; }
 .swim-done .btn-row { justify-content: center; margin: 10px 0; }
+.rf-callout a.btn { text-decoration: none; }
+.rf-callout a.btn-primary { color: #fff; }
+.rf-callout a.btn-outline { color: var(--text); background: #fff; }
+.rf-callout .btn-row { margin-top: 14px; }

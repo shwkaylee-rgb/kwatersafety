@@ -249,7 +249,7 @@ P['location.html']=shell(T,`  <section class="page container">
   </section>`);
 
 P['activities-talent.html']=shell(T,`  <section class="page container">
-    <p class="page-lead">대한수상안전협회는 생존수영 교육의 질을 높이고 수상안전 현장의 인력을 함께 키우기 위해 착의생존수영지도자·수상인명구조사 자격 과정과 응급처치 이수교육을 운영하고 있습니다. 협회 자격은 수상안전 활동을 위한 여러 자격 가운데 하나이며, 협회는 다른 기관에서 취득한 수상안전 자격도 동등하게 존중합니다. 어떤 자격을 가졌든 현장의 지도자와 구조 인력이 안전하게 활동할 수 있도록 돕겠습니다.</p>
+    <p class="page-lead">대한수상안전협회는 생존수영 교육의 질을 높이고 수상안전 현장의 인력을 함께 키우기 위해 착의생존수영지도자·영유아수상교육전문지도자 자격 과정과 응급처치 이수교육을 운영하고 있습니다. 협회 자격은 수상안전 활동을 위한 여러 자격 가운데 하나이며, 협회는 다른 기관에서 취득한 수상안전 자격도 동등하게 존중합니다. 어떤 자격을 가졌든 현장의 지도자와 구조 인력이 안전하게 활동할 수 있도록 돕겠습니다.</p>
     <div class="program-grid">
       <a class="program-card" href="cert-instructor.html">
         <div class="program-art a1">${ic('waves')}</div>
@@ -260,12 +260,12 @@ P['activities-talent.html']=shell(T,`  <section class="page container">
           <span class="more">자세히 보기 ${ic('arrow')}</span>
         </div>
       </a>
-      <a class="program-card" href="cert-lifeguard.html">
-        <div class="program-art a2">${ic('lifebuoy')}</div>
+      <a class="program-card" href="cert-infant.html">
+        <div class="program-art a2">${ic('users')}</div>
         <div class="program-body">
           <div class="tags"><span>자격</span><span>1급 · 2급</span></div>
-          <h3>수상인명구조사</h3>
-          <p>수상 인명 구조에 필요한 지식·기술·체력과 구조 장비 활용 능력을 갖추고, 수상레저 이용 시설을 비롯해 구조 활동이 필요한 곳에서 일할 구조 인력을 양성·인증합니다.</p>
+          <h3>영유아수상교육전문지도자</h3>
+          <p>영유아 수상교육을 지도하는 사람을 위한 협회 자격입니다. 1급과 2급 두 등급이 있으며, 교육·검정의 세부 기준은 공지사항과 교육일정에서 안내합니다.</p>
           <span class="more">자세히 보기 ${ic('arrow')}</span>
         </div>
       </a>
@@ -315,7 +315,7 @@ P['activities-public.html']=shell(T,`  <section class="page container">
         <div class="icon-card"><span class="ic-badge">${ic('users')}</span><h3>특수아동 맞춤형 생존수영 프로그램</h3><p>전국의 특수아동을 위한 맞춤형 교육 프로그램과 설비를 갖추고, 10가지 이상의 맞춤형 교육 프로그램을 개발·도입했습니다. 이 프로그램을 주요 협력사인 에쓰엔피씨와 한국수난학회에 제안하고 있습니다.</p></div>
         <div class="icon-card"><span class="ic-badge">${ic('tent')}</span><h3>생존수영캠프(교실)</h3><p>생존수영의 중요성을 널리 알리기 위해 전국 자치단체와 협력하여 생존수영캠프(교실) 등의 행사를 추진하고 있습니다.</p></div>
         <div class="icon-card"><span class="ic-badge">${ic('file')}</span><h3>안전사고 예방 매뉴얼</h3><p>교육 중에 일어날 수 있는 여러 안전사고를 미리 막기 위한 매뉴얼을 연구·개발·보급하여 안전한 교육 진행에 힘쓰고 있습니다.</p></div>
-        <div class="icon-card"><span class="ic-badge">${ic('tool')}</span><h3>생존수영 영법 보조기구 ‘플러미’</h3><p>물 적응을 어려워하는 아이들을 위해 실용신안을 등록한 보조기구 ‘플러미’를 만들어 교육 현장에서 활용하고 있습니다.</p></div>
+        <div class="icon-card"><span class="ic-badge">${ic('tool')}</span><h3>누워뜨기 연습기구</h3><p>물 적응을 어려워하는 아이들을 위해 실용신안을 등록한 누워뜨기 연습기구를 만들어 교육 현장에서 활용하고 있습니다.</p></div>
       </div>
     </div>
 
@@ -324,7 +324,7 @@ P['activities-public.html']=shell(T,`  <section class="page container">
       <div class="photo-grid">
         <figure class="photo-slot"><div class="ph">${ic('image')}협회 사진 넣을 자리<br>(이동형 수영장 설치·교육 현장)</div><figcaption>이동형 생존수영 교실</figcaption></figure>
         <figure class="photo-slot"><div class="ph">${ic('image')}협회 사진 넣을 자리<br>(캠프·교실 행사 현장)</div><figcaption>생존수영캠프(교실) 운영</figcaption></figure>
-        <figure class="photo-slot"><div class="ph">${ic('image')}협회 사진 넣을 자리<br>(플러미 사용 모습)</div><figcaption>보조기구 ‘플러미’ 개발·보급</figcaption></figure>
+        <figure class="photo-slot"><div class="ph">${ic('image')}협회 사진 넣을 자리<br>(누워뜨기 연습기구 사용 모습)</div><figcaption>누워뜨기 연습기구 개발·보급</figcaption></figure>
       </div>
     </div>
   </section>`);
@@ -410,39 +410,63 @@ P['cert-instructor.html']=shell(T,`  <section class="page container">
     ${equalNotice}
   </section>`);
 
+/* 옛 주소 안내: 수상인명구조사 자격은 운영하지 않습니다(2026-11-27 대표님 결정).
+   옛 주소로 들어온 분을 교육과정 안내로 보냅니다. SEO 표에 없으므로 noindex·사이트맵 제외. */
 P['cert-lifeguard.html']=shell(T,`  <section class="page container">
+    <div class="notice-box">
+      <h3>이 페이지는 더 이상 운영하지 않습니다</h3>
+      <p>협회의 수상인명구조사 자격 과정은 현재 운영하지 않습니다.<br>잠시 후 교육과정 안내로 이동합니다.</p>
+      <p class="btn-row"><a class="btn btn-primary" href="cert-instructor.html">교육과정 안내 보기</a><a class="btn btn-outline" href="activities-talent.html">수상안전 인재육성</a></p>
+    </div>
+  </section>
+  <script>setTimeout(function(){ location.replace('cert-instructor.html'); }, 4000);</script>`,{pageTitle:'교육과정 안내'});
+
+/* 영유아수상교육전문지도자: 저장소에 있는 사실(qual-config.js infant=IW, 1·2급, 유효기간 2년)만 씁니다.
+   검정 과목·기준 등은 확정되면 이 자리에 채워 주세요. */
+P['cert-infant.html']=shell(T,`  <section class="page container">
     <div class="rf-intro">
       <p class="eyebrow">QUALIFICATION</p>
-      <h2>수상인명구조사</h2>
-      <p>수상인명구조사 자격은 수상에서 일어날 수 있는 안전사고를 예방하고, 위급한 상황에서 신속하고 정확하게 구조 활동을 할 수 있도록 교육과 평가를 거쳐 부여하는 협회 자격입니다.</p>
-      <p>해양·수상 스포츠, 수영장, 워터파크 등 여러 현장에서 안전관리를 맡을 구조 요원을 기르는 것을 목표로 합니다.</p>
-      <div class="chips"><span>해양·수상 스포츠</span><span>수영장</span><span>워터파크</span><span>수상레저시설</span></div>
+      <h2>영유아수상교육전문지도자</h2>
+      <p>영유아수상교육전문지도자 자격은 영유아 수상교육을 지도하는 사람을 위한 협회 자격입니다.
+        1급과 2급 두 등급이 있으며, 교육 내용과 검정 기준 같은 세부 사항은 공지사항과 교육일정에서 안내합니다.</p>
+      <div class="stat-row two">
+        <div><b>2개 등급</b><span>1급 · 2급</span></div>
+        <div><b>유효기간 2년</b><span>갱신교육 이수 시 연장</span></div>
+      </div>
     </div>
 
-    <div class="rf-sec">
-      <div class="rf-head"><p class="eyebrow">WHAT YOU LEARN</p><h2>무엇을 갖추나요</h2></div>
-      <ul class="check-list two">
-        <li>수상 인명 구조에 필요한 지식과 기술</li>
-        <li>구조 활동을 위한 체력</li>
-        <li>수상 인명 구조 장비 활용 능력</li>
-        <li>응급처치와 심폐소생술(BLS, CPR)</li>
-      </ul>
-    </div>
-
-    ${certSteps('자격 취득 전에 확인하세요','등급별 직무·검정 기준 확인',['응시, 결과 발표','일정에 맞춰 응시하면 결과를 발표합니다.'])}
+    ${certSteps('자격 취득 전에 확인하세요','등급별 세부 기준 확인',['응시, 결과 발표','일정에 맞춰 응시하면 결과를 발표합니다.'])}
 
     <div class="rf-sec">
-      <div class="rf-head"><p class="eyebrow">GRADES</p><h2>등급별 직무 내용과 검정 기준</h2></div>
-      ${gradeCards([
-        [1,'고난도 구조 · 구조 활동 총괄',
-          '고난도 수중·수상 구조 활동을 할 수 있는 역량을 갖추고, 해수욕장·대형 수영장·수상레저시설·해양 구조 현장 등에서 구조 활동과 응급처치를 수행합니다. 심폐소생술(BLS, CPR)에 대한 전문 지식을 갖추고, 상황에 따라 구조 활동을 총괄하거나 2급 수상인명구조사와 초급 구조원 교육을 지도할 수 있습니다.',
-          '전문가 수준의 수상인명구조 능력을 갖추고, 수상인명구조 전문 강사로서 필요한 능력을 갖춘 수준'],
-        [2,'사고 예방 · 기본 구조 활동',
-          '수상안전사고 예방과 기본적인 구조 활동을 할 수 있는 역량을 갖추고, 수영장·실내외 워터파크·일반 해변 등에서 안전관리 업무를 수행합니다. 1급 수상인명구조사의 지휘 아래 구조 활동을 보조합니다.',
-          '준전문가 수준의 수상인명구조 기초 능력을 갖추고, 수상인명구조 강사로서 필요한 능력을 갖춘 수준']])}
+      <div class="rf-head"><p class="eyebrow">GRADES</p><h2>등급 안내</h2></div>
+      <div class="notice-box left">
+        <h3>1급 · 2급 세부 기준은 공지사항·교육일정에서 안내합니다</h3>
+        <p>등급별 직무 내용, 교육 과목, 검정 기준은 확정되는 대로 <a href="notice.html">공지사항</a>과 <a href="schedule.html">교육일정</a>에 올려 드립니다.
+          발급된 자격은 자격번호(KWSA-IW-연도-일련번호)와 성명으로 <a href="verify.html">자격 확인</a>에서 조회할 수 있습니다.</p>
+      </div>
     </div>
     ${certCta}
     ${equalNotice}
+  </section>`);
+
+/* 자료실(공개 안내). 실제 파일은 회원 전용 자료실(마이페이지 > 회원 자료실, assets/js/library.js)에서 받습니다. */
+P['resources.html']=shell(T,`  <section class="page container">
+    <p class="page-lead">협회가 펴내는 안내서와 교육 자료를 모아 두는 곳입니다.</p>
+    <div class="rf-callout rf-sec">
+      <span class="ic-badge">${ic('book')}</span>
+      <div>
+        <h3>가이드북 1호 발간 준비 중 (2027년 2월 예정)</h3>
+        <p>협회의 첫 가이드북을 준비하고 있습니다. 발간되면 이 자료실과 <a href="notice.html">공지사항</a>에서 알려 드립니다.</p>
+      </div>
+    </div>
+    <div class="rf-callout rf-sec">
+      <span class="ic-badge">${ic('file')}</span>
+      <div>
+        <h3>회원 자료실</h3>
+        <p>교안, 진도표, 평가지, 안전 서식, 규정·지침 같은 교육 자료는 회원 자료실에서 받을 수 있습니다. 로그인한 뒤 마이페이지의 「회원 자료실」에서 회원 등급에 맞는 자료를 볼 수 있습니다.</p>
+        <p class="btn-row left"><a class="btn btn-primary" href="mypage.html#library">회원 자료실 바로가기</a><a class="btn btn-outline" href="membership.html">회원 안내</a></p>
+      </div>
+    </div>
   </section>`);
 
 P['cert-firstaid.html']=shell(T,`  <section class="page container">
@@ -823,11 +847,11 @@ const SEO={
   'organization.html':{title:'조직도',desc:'사단법인 대한수상안전협회의 조직 구성을 안내합니다.'},
   'location.html':{title:'오시는길',desc:'사단법인 대한수상안전협회 사무국 주소와 연락처, 지도 바로가기를 안내합니다.'},
   'membership.html':{title:'회원 안내',desc:'대한수상안전협회 준회원·일반회원·정회원 구분과 회비, 회원 혜택, 가입 방법을 안내합니다.'},
-  'activities-talent.html':{title:'수상안전 인재육성',desc:'생존수영 지도, 수상 인명 구조, 응급처치 등 수상안전 분야 교육과 자격제도 운영을 안내합니다.'},
+  'activities-talent.html':{title:'수상안전 인재육성',desc:'생존수영 지도, 영유아 수상교육, 응급처치 등 수상안전 분야 교육과 자격제도 운영을 안내합니다.'},
   'activities-public.html':{title:'생존수영 공공교육',desc:'학교로 찾아가는 이동형 생존수영 교실, 특수아동 맞춤형 프로그램, 생존수영캠프 등 공공 생존수영 교육 활동을 소개합니다.'},
   'activities-certify.html':{title:'생존수영 교육인증',desc:'생존수영 교육을 이수한 학생에게 발급하는 생존수영 능력 인증서와 준회원 제도를 안내합니다.'},
   'cert-instructor.html':{title:'착의생존수영지도자',desc:'대한수상안전협회가 운영하는 착의생존수영지도자 자격의 내용과 취득 과정을 안내합니다.'},
-  'cert-lifeguard.html':{title:'수상인명구조사',desc:'대한수상안전협회가 운영하는 수상인명구조사 자격의 내용과 취득 과정을 안내합니다.'},
+  'cert-infant.html':{title:'영유아수상교육전문지도자',desc:'대한수상안전협회가 운영하는 영유아수상교육전문지도자 자격(1급·2급)을 안내합니다.'},
   'cert-firstaid.html':{title:'응급처치 이수교육',desc:'심폐소생술과 응급 상황 대응을 익히는 응급처치 이수교육을 안내합니다.'},
   'online.html':{title:'온라인 학습',desc:'자격 교육 전에 영상과 글로 먼저 공부하는 대한수상안전협회 온라인 학습 과정을 안내합니다.'},
   'verify.html':{title:'자격 확인',desc:'대한수상안전협회가 발급한 자격의 진위와 유효 여부를 자격번호와 성명으로 확인할 수 있습니다.'},
@@ -836,6 +860,7 @@ const SEO={
   'news.html':{title:'협회 소식',desc:'사단법인 대한수상안전협회의 활동과 소식을 전합니다.',freq:'weekly'},
   'schedule.html':{title:'교육일정 공지',desc:'대한수상안전협회 교육·자격 과정의 일정을 안내합니다.',freq:'weekly'},
   'press.html':{title:'대외 보도자료',desc:'사단법인 대한수상안전협회 관련 보도자료를 모았습니다.',freq:'weekly'},
+  'resources.html':{title:'자료실',desc:'대한수상안전협회가 펴내는 가이드북과 교육 자료를 안내합니다.',freq:'monthly'},
   'partners.html':{title:'협력기관',desc:'대한수상안전협회와 함께 수상안전 활동을 펼치는 협력기관을 소개합니다.'},
   'privacy.html':{title:'개인정보처리방침',desc:'사단법인 대한수상안전협회 홈페이지의 개인정보처리방침입니다.',pri:'0.3'},
   'terms.html':{title:'회원 약관',desc:'사단법인 대한수상안전협회 회원 제도와 회원의 권리·의무를 정한 약관입니다.',pri:'0.3'}
