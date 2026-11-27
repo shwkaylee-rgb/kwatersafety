@@ -35,7 +35,6 @@ var SITE = {
   tel: '010-3483-9209',
   fax: '0504-413-8600',
   email: 'info@kwasa.or.kr',
-  ceoEmail: 'shm812@kwatersafety.com',
   address: '서울특별시 강남구 학동로101길 11, 607호(청담동, 엘프론트 청담)',
   regNo: '110121-0141219'
 };
@@ -184,7 +183,6 @@ var SITE = {
         '<p>' + SITE.name + ' <i>|</i> 전화 : <a href="tel:' + SITE.tel + '">' + SITE.tel + '</a> <i>|</i> 팩스 : ' + SITE.fax +
         ' <i>|</i> 이메일 : <a href="mailto:' + SITE.email + '">' + SITE.email + '</a></p>' +
         '<p>주소 : ' + SITE.address + ' <i>|</i> 등록번호 : ' + SITE.regNo + '</p>' +
-        '<p>대표자 이메일 : ' + SITE.ceoEmail + '</p>' +
         channelsHTML() +
         '<p class="copyright">Copyright ⓒ ' + new Date().getFullYear() + ' ' + SITE.name + ' All rights reserved.</p>' +
       '</div>' +
