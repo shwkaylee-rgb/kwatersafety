@@ -36,6 +36,39 @@ ${content}
 const T='사단법인 대한수상안전협회';
 const P={};
 
+/* ---------- 인라인 SVG 아이콘 (디자인 리프레시) ----------
+   ic('이름') 으로 넣습니다. 선 굵기·색은 style.css의 .ic 가 정합니다. */
+const ICONS={
+  waves:'<path d="M2 9c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/><path d="M2 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/>',
+  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+  lifebuoy:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/>',
+  heart:'<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z"/><path d="M7.5 12h2.2l1.3-2 2 4 1.3-2h2.2"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>',
+  clipboard:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 13l2 2 4-4"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  award:'<circle cx="12" cy="9" r="6"/><path d="M8.5 14l-1.5 7 5-3 5 3-1.5-7"/>',
+  school:'<path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M10 21v-5h4v5"/><path d="M12 9.5v.01"/>',
+  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/>',
+  tent:'<path d="M12 4L3 20h18z"/><path d="M12 4v16M9 20l3-6 3 6"/>',
+  tool:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+  file:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h6"/>',
+  scale:'<path d="M12 3v18M6 21h12M4 7h16"/><path d="M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z"/>',
+  flask:'<path d="M9 3h6M10 3v6L4.5 19A1.5 1.5 0 0 0 6 21h12a1.5 1.5 0 0 0 1.5-2L14 9V3"/><path d="M7 15h10"/>',
+  megaphone:'<path d="M3 11v2a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/>',
+  monitor:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5M8 11l2 2 4-4"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  pen:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+  briefcase:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/>',
+  building:'<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-3h4v3"/>',
+  map:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  sitemap:'<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>',
+  quote:'<path d="M9 7H6a2 2 0 0 0-2 2v3h5v5H4M20 7h-3a2 2 0 0 0-2 2v3h5v5h-5"/>'
+};
+const ic=(n,cls='')=>`<svg class="ic${cls?' '+cls:''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
+
 P['index.html']=shell(T,`  <section class="hero">
     <div class="container">
       <p class="hero-eyebrow">생명보다 더 소중한 가치는 없습니다</p>
@@ -44,6 +77,17 @@ P['index.html']=shell(T,`  <section class="hero">
         수상안전과 재난안전의 필요성을 알리기 위해 최선을 다하고 있습니다.<br>
         끊임없는 연구를 통해 보다 많은 사람을<br>
         생명의 위협으로부터 지킬 수 있도록 최선을 다하겠습니다.</p>
+      <div class="hero-swim">
+        <div class="hero-swim-text">
+          <p class="hero-swim-kicker">학부모님께</p>
+          <h2>생존수영 인증서 등록(보호자)</h2>
+          <p>학교에서 생존수영 수업을 받은 자녀의 이수증은 <b>보호자가 로그인해 동의해 주셔야</b> 발급됩니다.</p>
+        </div>
+        <div class="hero-swim-actions">
+          <a class="btn btn-primary" href="swim.html">인증서 등록하기${ic('arrow')}</a>
+          <a class="hero-swim-sub" href="mypage.html#swim">이미 등록했어요 · 이수증 보기</a>
+        </div>
+      </div>
     </div>
     <a class="scroll-down" href="#activities" aria-label="아래로 스크롤"></a>
   </section>
@@ -52,7 +96,7 @@ P['index.html']=shell(T,`  <section class="hero">
     <div class="container">
       <div class="section-head">
         <p class="eyebrow">ACTIVITIES</p>
-        <h2>활동영역</h2>
+        <h2>주요사업</h2>
         <p class="keywords"><span>생존수영 교육</span><span>능력 인증제</span><span>교구개발 및 시범사업운영 등</span></p>
         <p>아래의 다양한 활동을 통해 '대한수상안전협회'는 생존수영 교육부터 인증제를 통한 저변 확대를 기대하며<br>
           이에 필요한 교구 개발, 판매 및 시범사업운영 등을 하고 있습니다.</p>
@@ -105,38 +149,6 @@ P['index.html']=shell(T,`  <section class="hero">
     </div>
   </section>`,{home:true,page:'home',posts:true});
 
-/* ---------- 인라인 SVG 아이콘 (디자인 리프레시) ----------
-   ic('이름') 으로 넣습니다. 선 굵기·색은 style.css의 .ic 가 정합니다. */
-const ICONS={
-  waves:'<path d="M2 9c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/><path d="M2 15c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/>',
-  shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
-  lifebuoy:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/>',
-  heart:'<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7a4.3 4.3 0 0 1 7.5 2.8C19.5 15.4 12 20 12 20z"/><path d="M7.5 12h2.2l1.3-2 2 4 1.3-2h2.2"/>',
-  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>',
-  clipboard:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9 13l2 2 4-4"/>',
-  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
-  award:'<circle cx="12" cy="9" r="6"/><path d="M8.5 14l-1.5 7 5-3 5 3-1.5-7"/>',
-  school:'<path d="M3 21h18"/><path d="M5 21V10l7-5 7 5v11"/><path d="M10 21v-5h4v5"/><path d="M12 9.5v.01"/>',
-  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/>',
-  tent:'<path d="M12 4L3 20h18z"/><path d="M12 4v16M9 20l3-6 3 6"/>',
-  tool:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
-  file:'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6M9 13h8M9 17h6"/>',
-  scale:'<path d="M12 3v18M6 21h12M4 7h16"/><path d="M7 7l-3 7a3 3 0 0 0 6 0zM17 7l-3 7a3 3 0 0 0 6 0z"/>',
-  flask:'<path d="M9 3h6M10 3v6L4.5 19A1.5 1.5 0 0 0 6 21h12a1.5 1.5 0 0 0 1.5-2L14 9V3"/><path d="M7 15h10"/>',
-  megaphone:'<path d="M3 11v2a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/>',
-  monitor:'<rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
-  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5M8 11l2 2 4-4"/>',
-  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
-  pen:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
-  image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/>',
-  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
-  briefcase:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 13h18"/>',
-  building:'<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-3h4v3"/>',
-  map:'<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
-  sitemap:'<rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/>',
-  quote:'<path d="M9 7H6a2 2 0 0 0-2 2v3h5v5H4M20 7h-3a2 2 0 0 0-2 2v3h5v5h-5"/>'
-};
-const ic=(n,cls='')=>`<svg class="ic${cls?' '+cls:''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
 // 다른 기관 자격 동등 인정 안내 (자격 안내 3개 페이지 공통)
 const equalNotice=`<div class="rf-callout rf-sec">
       <span class="ic-badge">${ic('scale')}</span>
@@ -353,8 +365,9 @@ const gradeCards=(rows)=>`<div class="grade-grid">${rows.map(([lv,sum,duty,std])
         </article>`).join('')}
       </div>`;
 const certCta=`<div class="cta-row">
-      <a class="btn btn-primary" href="programs.html">${ic('pen')}교육·자격 신청</a>
-      <a class="btn btn-outline" href="schedule.html">${ic('calendar')}교육일정 공지</a>
+      <a class="btn btn-primary" href="programs.html">${ic('pen')}교육 신청</a>
+      <a class="btn btn-outline" href="schedule.html">${ic('calendar')}교육일정</a>
+      <a class="btn btn-outline" href="verify.html">${ic('search')}자격 확인</a>
     </div>`;
 
 P['cert-instructor.html']=shell(T,`  <section class="page container">
@@ -700,7 +713,7 @@ P['verify.html']=shell(T,`  <section class="page container">
       <p class="form-help">개인정보 보호를 위해 자격번호와 성명이 모두 일치할 때만 결과를 보여 드리며, 성명은 일부를 가려서 표시합니다.</p>
     </form>
     <div id="verify-result" aria-live="polite"></div>
-  </section>`,{page:'verify'});
+  </section>`,{page:'verify',pageTitle:'자격 확인'});
 P['membership-card.html']=simple('card','회원증','membership-card');
 
 P['terms.html']=shell(T,`  <section class="page container">

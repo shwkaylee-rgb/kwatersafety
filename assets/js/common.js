@@ -1,34 +1,43 @@
 /* 공통 레이아웃: 헤더, 푸터, 서브 배너, 서브 탭 메뉴
    메뉴를 수정하려면 MENU 배열만 고치면 모든 페이지에 반영됩니다. */
 var MENU = [
-  { title: 'Home', href: 'index.html' },
   { title: '협회소개', href: 'about.html', children: [
-    { title: '대한수상안전협회 소개', href: 'about.html' },
+    { title: '협회 소개', href: 'about.html' },
     { title: '이사장 인사말', href: 'greeting.html' },
     { title: '조직도', href: 'organization.html' },
-    { title: '오시는길', href: 'location.html' },
-    { title: '회원 안내', href: 'membership.html' }
+    { title: '협력기관', href: 'partners.html' },
+    { title: '오시는 길', href: 'location.html' }
   ]},
-  { title: '활동영역', href: 'activities-talent.html', children: [
+  { title: '주요사업', href: 'activities-talent.html', children: [
     { title: '수상안전 인재육성', href: 'activities-talent.html' },
     { title: '생존수영 공공교육', href: 'activities-public.html' },
     { title: '생존수영 교육인증', href: 'activities-certify.html' },
-    { title: '인증서 등록(보호자)', href: 'swim.html' },
+    { title: '생존수영 인증서 등록(보호자)', href: 'swim.html' }
+  ]},
+  { title: '교육과정', href: 'cert-instructor.html', children: [
     { title: '착의생존수영지도자', href: 'cert-instructor.html' },
-    { title: '수상인명구조사', href: 'cert-lifeguard.html' },
+    { title: '수상인명구조사', href: 'cert-lifeguard.html' }, // 자격 폐지 확정되면 이 줄만 지우면 됩니다
     { title: '응급처치 이수교육', href: 'cert-firstaid.html' },
     { title: '온라인 학습', href: 'online.html' },
-    { title: '자격 확인', href: 'verify.html' },
-    { title: '교육·자격 신청', href: 'programs.html' }
+    { title: '교육 신청', href: 'programs.html' }
   ]},
-  { title: '공지사항', href: 'notice.html', children: [
-    { title: '협회 공지사항', href: 'notice.html' },
+  { title: '회원', href: 'membership.html', children: [
+    { title: '회원 안내', href: 'membership.html' },
+    { title: '멤버십 신청', href: 'membership-apply.html' }
+  ]},
+  { title: '알림마당', href: 'notice.html', children: [
+    { title: '공지사항', href: 'notice.html' },
     { title: '협회 소식', href: 'news.html' },
-    { title: '교육일정 공지', href: 'schedule.html' },
-    { title: '대외 보도자료', href: 'press.html' }
-  ]},
-  { title: '협력기관', href: 'partners.html' }
+    { title: '교육일정', href: 'schedule.html' },
+    { title: '보도자료', href: 'press.html' }
+  ]}
 ];
+// Home 메뉴는 따로 두지 않고 왼쪽 위 로고가 첫 화면으로 가는 역할을 합니다.
+// 메뉴 밖 바로가기: 상단 오른쪽 작은 링크와 푸터에 함께 나옵니다.
+var QUICK = {
+  swim: { title: '인증서 등록(보호자)', href: 'swim.html' },
+  verify: { title: '자격 확인', href: 'verify.html' }
+};
 
 var SITE = {
   name: '사단법인 대한수상안전협회',
@@ -60,7 +69,9 @@ var SITE = {
   var cur = findCurrent();
 
   // 로그인·회원가입·장바구니 링크 (로그인 상태에 따라 app.js가 내용을 바꿉니다)
-  var UTIL = '<a href="login.html" data-auth="out">로그인</a>' +
+  var UTIL = '<a href="' + QUICK.swim.href + '" class="util-swim">' + QUICK.swim.title + '</a>' +
+    '<a href="' + QUICK.verify.href + '">' + QUICK.verify.title + '</a>' +
+    '<a href="login.html" data-auth="out">로그인</a>' +
     '<a href="signup.html" data-auth="out">회원가입</a>' +
     '<a href="mypage.html" data-auth="in" hidden>마이페이지<b class="notice-count" data-notice-count hidden></b></a>' +
     '<a href="admin.html" data-auth="admin" hidden>관리자</a>' +
@@ -141,6 +152,9 @@ var SITE = {
         return '<li' + (c === cur.sub ? ' class="is-active"' : '') + '><a href="' + c.href + '">' + c.title + '</a></li>';
       }).join('') + '</ul>';
       main.parentNode.insertBefore(tabs, main);
+      // 휴대폰처럼 탭이 옆으로 넘칠 때 지금 보고 있는 탭이 보이도록
+      var act = tabs.querySelector('.is-active'), tul = tabs.querySelector('ul');
+      if (act && tul.scrollWidth > tul.clientWidth) tul.scrollLeft = act.offsetLeft - (tul.clientWidth - act.offsetWidth) / 2;
     }
     document.title = title + ' | ' + SITE.name;
   }
@@ -171,7 +185,7 @@ var SITE = {
     '<div class="container">' +
       '<div class="footer-top">' +
         '<img class="footer-logo" src="assets/img/logo-footer.png" alt="' + SITE.name + '">' +
-        '<ul class="footer-sitemap">' + MENU.slice(1).map(function (m) {
+        '<ul class="footer-sitemap">' + MENU.map(function (m) {
           var sub = m.children ? '<ul>' + m.children.map(function (c) {
             return '<li><a href="' + c.href + '">' + c.title + '</a></li>';
           }).join('') + '</ul>' : '';
@@ -179,7 +193,7 @@ var SITE = {
         }).join('') + '</ul>' +
       '</div>' +
       '<div class="footer-info">' +
-        '<p class="footer-links"><a href="privacy.html"><b>개인정보처리방침</b></a><i>|</i><a href="terms.html">회원 약관</a><i>|</i><a href="membership.html">회원 안내</a></p>' +
+        '<p class="footer-links"><a href="privacy.html"><b>개인정보처리방침</b></a><i>|</i><a href="terms.html">회원 약관</a><i>|</i><a href="membership.html">회원 안내</a><i>|</i><a href="' + QUICK.swim.href + '">생존수영 인증서 등록(보호자)</a><i>|</i><a href="' + QUICK.verify.href + '">' + QUICK.verify.title + '</a></p>' +
         '<p>' + SITE.name + ' <i>|</i> 전화 : <a href="tel:' + SITE.tel + '">' + SITE.tel + '</a> <i>|</i> 팩스 : ' + SITE.fax +
         ' <i>|</i> 이메일 : <a href="mailto:' + SITE.email + '">' + SITE.email + '</a></p>' +
         '<p>주소 : ' + SITE.address + ' <i>|</i> 등록번호 : ' + SITE.regNo + '</p>' +

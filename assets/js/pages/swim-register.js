@@ -105,16 +105,50 @@ function bindCancel() {
   }));
 }
 
-// 링크 없이 들어온 경우: 등록 받는 수업 목록에서 학교 이름으로 찾기
+// 받은 등록 링크(또는 그 안의 수업 코드)에서 수업 ID만 꺼내기
+function groupIdFrom(text) {
+  const t = String(text || '').trim();
+  if (!t) return '';
+  const m = t.match(/[?&]g=([^&#\s]+)/);
+  if (m) { try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; } }
+  return /^[A-Za-z0-9_-]{4,64}$/.test(t) ? t : '';
+}
+
+// 링크 없이 들어온 경우(메뉴·첫 화면): 보호자 안내 + 링크 붙여넣기 + 학교 이름으로 찾기
 async function pickGroup() {
   let groups = [];
   try {
     const snap = await fs.getDocs(fs.query(fs.collection(db, 'swimGroups'), fs.where('regOpen', '==', true)));
     groups = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(regOpen).sort((a, b) => groupTitle(a).localeCompare(groupTitle(b), 'ko'));
   } catch (e) { console.error(e); }
-  el.innerHTML = '<div class="swim-head"><p class="kicker">생존수영 능력 인증 등록</p><h2>학교(수업) 고르기</h2>' +
-    '<p>학교에서 받은 등록 링크가 있으면 그 링크로 들어오시면 됩니다. 없으면 아래에서 학교 이름으로 찾아 주세요.</p></div>' +
-    '<div class="form-card wide"><label>학교·기관 이름<input id="q" placeholder="예: 서울OO초등학교" autocomplete="off"></label><ul class="swim-groups" id="gl"></ul></div>';
+  const TEL = (window.SITE && window.SITE.tel) || '010-3483-9209';
+  const step = (n, t, d) => '<li><span class="sg-num">' + n + '</span><div><b>' + t + '</b><p>' + d + '</p></div></li>';
+  el.innerHTML = '<div class="swim-head"><p class="kicker">학부모님께</p><h2>생존수영 인증서 등록(보호자)</h2>' +
+    '<p>학교에서 생존수영 수업을 받은 자녀에게 협회가 <b>생존수영 이수증(인증서)</b>을 드립니다.<br>' +
+    '<b>보호자가 직접 로그인하고 개인정보 동의를 해 주신 학생에게만</b> 발급되니, 아래 순서대로 등록해 주세요.</p></div>' +
+    '<ol class="swim-guide">' +
+      step(1, '학교에서 받은 QR·링크 열기', '가정통신문이나 학급 단체 채팅방으로 받은 QR을 휴대폰 카메라로 비추거나 링크를 누르세요. 우리 학교 수업 등록 화면이 바로 열립니다.') +
+      step(2, '로그인 (처음이면 회원가입)', '보호자 이름으로 가입해 주세요. 만 14세 이상 학생은 본인이 직접 가입해 등록할 수도 있습니다.') +
+      step(3, '자녀 정보 입력', '자녀 이름, 생년월일, 학년·반과 보호자 연락처를 적습니다.') +
+      step(4, '법정대리인(보호자) 동의', '개인정보 수집·이용과 법정대리인 동의에 체크하고 [등록하기]를 누르면 끝입니다.') +
+      step(5, '이수증 받기', '수업이 끝나고 평가가 마무리되면 알려 드립니다. <a href="mypage.html#swim">마이페이지 &gt; 생존수영 인증</a>에서 이수증을 보고 출력할 수 있습니다.') +
+    '</ol>' +
+    '<div class="swim-find">' +
+      '<form class="form-card wide" id="code-form"><h3 class="form-sub">QR을 찍을 수 없나요? 받은 링크 붙여넣기</h3>' +
+        '<label>학교에서 받은 등록 링크(또는 링크 끝의 수업 코드)<input id="code" placeholder="예: https://kwasa.or.kr/swim.html?g=…" autocomplete="off" inputmode="url"></label>' +
+        '<button class="btn btn-primary btn-block" type="submit">우리 학교 등록 화면 열기</button></form>' +
+      '<div class="form-card wide"><h3 class="form-sub">링크가 없으면 학교 이름으로 찾기</h3>' +
+        '<label>학교·기관 이름<input id="q" placeholder="예: 서울OO초등학교" autocomplete="off"></label><ul class="swim-groups" id="gl"></ul></div>' +
+    '</div>' +
+    '<div class="notice-box swim-done"><p><b>이미 등록하셨나요?</b> 등록한 학생과 발급된 이수증은 마이페이지에서 볼 수 있습니다.</p>' +
+      '<p class="btn-row"><a class="btn btn-outline" href="mypage.html#swim">마이페이지에서 이수증 보기</a></p>' +
+      '<p class="form-help">학교 이름이 보이지 않거나 링크가 열리지 않으면 담임 선생님 또는 협회(<a href="tel:' + TEL + '">' + TEL + '</a>)로 문의해 주세요.</p></div>';
+  document.getElementById('code-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const id = groupIdFrom(document.getElementById('code').value);
+    if (!id) { toast('받은 링크를 그대로 붙여넣어 주세요. 링크에 “?g=”가 들어 있어야 합니다.'); return; }
+    location.href = 'swim.html?g=' + encodeURIComponent(id);
+  });
   const draw = () => {
     const q = document.getElementById('q').value.replace(/\s/g, '');
     const list = groups.filter(g => !q || groupTitle(g).replace(/\s/g, '').includes(q));
