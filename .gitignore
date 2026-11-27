@@ -5,3 +5,4 @@ private/
 .secret.local
 functions/.secret.local
 functions-mail/.secret.local
+reports/
