@@ -1,6 +1,7 @@
 /* 사이트 HTML 페이지 생성 스크립트
    페이지 내용(본문)을 고칠 때는 이 파일을 수정한 뒤 저장소 루트에서 `node tools/build.js`를 실행하세요.
-   공통 헤더·푸터·메뉴는 assets/js/common.js, 회비·할인율은 assets/js/membership-config.js 에 있습니다. */
+   공통 헤더·푸터·메뉴는 assets/js/common.js, 회비·할인율은 assets/js/membership-config.js 에 있습니다.
+   CSS·JS를 고친 뒤에도 `node tools/build.js`를 실행하세요. 페이지의 CSS·JS 주소에 붙는 캐시 버전(?v=)이 자동으로 새로 붙습니다(아래 '캐시 버전' 참고). */
 const fs=require('fs'),path=require('path'),{pathToFileURL}=require('url');
 const OUT=path.join(__dirname,'..');
 (async()=>{
@@ -929,7 +930,34 @@ function seoHead(f){
 }
 // 푸터 채널 아이콘: assets/js/common.js가 이 메타를 읽어 그립니다 (채널이 하나도 없으면 메타도 출력하지 않음)
 const channelMeta=Object.keys(CHANNELS).length?NL+`  <meta name="kwsa-channels" content="${ea(JSON.stringify(CHANNELS))}">`:'';
-for(const [f,c] of Object.entries(P)) fs.writeFileSync(path.join(OUT,f),c.replace('<!--SEO-->',()=>seoHead(f)+channelMeta));
+/* ---------- 캐시 버전 (?v=파일 내용 해시) ----------
+   배포 직후 브라우저가 옛 CSS·JS를 기억해 화면이 깨지는 것을 막으려고, assets/css·assets/js 아래 우리 파일 주소에
+   파일 내용 해시(SHA-256 앞 8자리, 줄바꿈 차이 무시)를 ?v= 로 붙입니다(내용이 같으면 주소도 그대로라 캐시는 그대로 삽니다). 손으로 고칠 필요 없이 build만 돌리면 됩니다.
+   JS 모듈 안의 import('../app.js' 등)는 각 페이지 <head>의 importmap이 같은 ?v= 주소로 바꿔 줍니다
+   (페이지의 <script src>와 import 주소가 똑같아야 app.js가 두 번 실행되지 않습니다). 외부 CDN 주소는 건드리지 않습니다.
+   build.js가 만들지 않는 HTML 중 우리 CSS·JS를 쓰는 파일은 STATIC_HTML에 적어 두면 같이 고쳐집니다. */
+const crypto=require('crypto');
+const ASSET_VER={};
+function scanAssets(dir){
+  for(const e of fs.readdirSync(path.join(OUT,dir),{withFileTypes:true})){
+    const rel=dir+'/'+e.name;
+    if(e.isDirectory()) scanAssets(rel);
+    else if(/\.(css|js)$/.test(e.name)) ASSET_VER[rel]=crypto.createHash('sha256').update(fs.readFileSync(path.join(OUT,rel),'utf8').replace(/\r\n/g,'\n')).digest('hex').slice(0,8);
+  }
+}
+scanAssets('assets/css'); scanAssets('assets/js');
+const IMPORT_MAP='  <script type="importmap">'+JSON.stringify({imports:Object.fromEntries(Object.keys(ASSET_VER).filter(k=>k.startsWith('assets/js/')).sort().map(k=>['./'+k,'./'+k+'?v='+ASSET_VER[k]]))})+'</script>';
+function bust(html){
+  html=html.replace(/\n?[ \t]*<script type="importmap">[^<]*<\/script>/g,'');
+  html=html.replace(/(href|src)="(\/?)(assets\/(?:css|js)\/[^"?#]+)(?:\?v=[^"]*)?"/g,(m,a,slash,p)=>ASSET_VER[p]?`${a}="${slash}${p}?v=${ASSET_VER[p]}"`:m);
+  if(/<script type="module"/.test(html)) html=html.replace('</head>',IMPORT_MAP+'\n</head>');
+  return html;
+}
+for(const [f,c] of Object.entries(P)) fs.writeFileSync(path.join(OUT,f),bust(c.replace('<!--SEO-->',()=>seoHead(f)+channelMeta)));
+// build.js가 만들지 않지만 우리 CSS·JS를 쓰는 HTML (게시판 옛 주소 페이지). 있는 파일을 읽어 ?v=만 새로 고칩니다.
+const STATIC_HTML=['news.html','notice.html','press.html','schedule.html'];
+for(const f of STATIC_HTML){ const p=path.join(OUT,f); if(!fs.existsSync(p)) continue; const o=fs.readFileSync(p,'utf8').replace(/\r\n/g,'\n'), n=bust(o); if(n!==o) fs.writeFileSync(p,n); }
+
 
 /* ---------- sitemap.xml (SEO 표의 공개 페이지) ---------- */
 const lastmod=new Date().toISOString().slice(0,10);
