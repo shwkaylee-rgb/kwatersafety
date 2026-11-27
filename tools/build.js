@@ -312,7 +312,7 @@ P['activities-public.html']=shell(T,`  <section class="page container">
     <div class="rf-sec">
       <div class="rf-head center"><p class="eyebrow">PROGRAMS</p><h2>모든 아이가 함께하는 교육을 위해</h2></div>
       <div class="icon-grid" style="--n:2">
-        <div class="icon-card"><span class="ic-badge">${ic('users')}</span><h3>특수아동 맞춤형 생존수영 프로그램</h3><p>전국의 특수아동을 위한 맞춤형 교육 프로그램과 설비를 갖추고, 10가지 이상의 맞춤형 교육 프로그램을 개발·도입했습니다. 이 프로그램을 주요 협력사인 에쓰엔피씨와 한국수난학회에 제안하고 있습니다.</p></div>
+        <div class="icon-card"><span class="ic-badge">${ic('users')}</span><h3>특수아동 맞춤형 생존수영 프로그램</h3><p>전국의 특수아동을 위한 맞춤형 교육 프로그램과 설비를 갖추고, 10가지 이상의 맞춤형 교육 프로그램을 개발·도입했습니다. 이 프로그램을 여러 협력 기관에 제안하고 있습니다.</p></div>
         <div class="icon-card"><span class="ic-badge">${ic('tent')}</span><h3>생존수영캠프(교실)</h3><p>생존수영의 중요성을 널리 알리기 위해 전국 자치단체와 협력하여 생존수영캠프(교실) 등의 행사를 추진하고 있습니다.</p></div>
         <div class="icon-card"><span class="ic-badge">${ic('file')}</span><h3>안전사고 예방 매뉴얼</h3><p>교육 중에 일어날 수 있는 여러 안전사고를 미리 막기 위한 매뉴얼을 연구·개발·보급하여 안전한 교육 진행에 힘쓰고 있습니다.</p></div>
         <div class="icon-card"><span class="ic-badge">${ic('tool')}</span><h3>누워뜨기 연습기구</h3><p>물 적응을 어려워하는 아이들을 위해 실용신안을 등록한 누워뜨기 연습기구를 만들어 교육 현장에서 활용하고 있습니다.</p></div>
