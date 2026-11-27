@@ -137,8 +137,6 @@ const ICONS={
   quote:'<path d="M9 7H6a2 2 0 0 0-2 2v3h5v5H4M20 7h-3a2 2 0 0 0-2 2v3h5v5h-5"/>'
 };
 const ic=(n,cls='')=>`<svg class="ic${cls?' '+cls:''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
-// 확인이 필요한 부분 표시 (시안 단계에서만 화면에 노출. 확정되면 지웁니다)
-const TBC='<span class="tbc">확인 필요</span>';
 // 다른 기관 자격 동등 인정 안내 (자격 안내 3개 페이지 공통)
 const equalNotice=`<div class="rf-callout rf-sec">
       <span class="ic-badge">${ic('scale')}</span>
@@ -156,7 +154,6 @@ P['about.html']=shell(T,`  <section class="page container">
         <p class="eyebrow">ABOUT US</p>
         <h2>수상안전 사고 예방을 위해<br>우리는 함께합니다</h2>
         <p>대한수상안전협회는 끊임없이 일어나는 국내 수상 사고를 예방하고, 사고가 났을 때의 대응 방안을 연구·발표하며 이를 널리 알리기 위해 여러 분야의 전문가들이 함께하는 비영리 단체입니다.</p>
-        <p>해외 수상안전 단체와도 소통하며${TBC} 수상안전 사고로부터 생명을 보호하고 지킬 수 있도록 힘쓰고 있습니다.</p>
         <p>협회는 특정 자격을 앞세우기보다 수상안전 현장에서 일하는 지도자·구조 인력의 권익 보호와 안전한 활동 환경을 만드는 데 힘씁니다.
           협회가 운영하는 자격과 함께, 다른 기관에서 취득한 수상안전 자격도 동등하게 존중하고 인정합니다.</p>
       </div>
@@ -322,22 +319,7 @@ P['activities-public.html']=shell(T,`  <section class="page container">
 
 P['activities-certify.html']=shell(T,`  <section class="page container">
     <div class="certify">
-      <figure class="cert-sample">
-        <div class="sheet" aria-label="생존수영 능력 인증서 견본 (가상의 이름)">
-          <span class="wm" aria-hidden="true">견본</span>
-          <p class="no">인증번호 KWSA-SC-0000-000000</p>
-          <h3>생존수영 능력 인증서</h3>
-          <dl><dt>성명</dt><dd>홍길동</dd><dt>생년월일</dt><dd>20○○-○○-○○</dd><dt>소속</dt><dd>○○초등학교 3학년</dd><dt>교육 기간</dt><dd>20○○-○○-○○ ~ 20○○-○○-○○</dd></dl>
-          <table><thead><tr><th>평가 항목</th><th>결과</th></tr></thead><tbody>
-            ${['물적응','생존뜨기','낙수','응용뜨기 및 생존영법','구조사슬'].map(i=>`<tr><td>${i}</td><td class="ok">이수</td></tr>`).join('')}
-          </tbody></table>
-          <p class="txt">위 사람은 사단법인 대한수상안전협회의 생존수영 교육에 참여하여 위와 같이 생존수영 능력을 평가받았음을 인증합니다.</p>
-          <p class="txt">20○○년 ○월 ○일</p>
-          <p class="issuer">사단법인 대한수상안전협회장<img class="seal" src="assets/img/seal-sample.svg" alt=""></p>
-          <p class="foot">이 인증서를 받은 학생은 20○○-○○-○○까지 대한수상안전협회 준회원으로 등록됩니다.</p>
-        </div>
-        <figcaption>인증서 견본 · 이름과 학교는 가상으로 넣었습니다</figcaption>
-      </figure>
+      <img src="assets/img/act-certify.png" alt="생존수영 능력 인증서">
       <div>
         <p>대한수상안전협회는 생존수영 교육 참여 학생의 적극적인 참여를 유도하고 동기부여를 고취시키기 위해
           <strong>우수한 성적으로 교육을 이수한 학생을 대상으로 생존수영 능력 인증서를 발급</strong>하고 있습니다.</p>
@@ -378,13 +360,12 @@ const certCta=`<div class="cta-row">
 P['cert-instructor.html']=shell(T,`  <section class="page container">
     <div class="rf-intro">
       <p class="eyebrow">QUALIFICATION</p>
-      <h2>착의생존수영지도자${TBC}</h2>
+      <h2>착의생존수영지도자</h2>
       <p>착의생존수영지도자 자격은 생존수영 교육에 필요한 지식과 지도 능력을 갖춘 사람임을 확인하는 협회 자격입니다.
-        수영·생존수영 실기 능력뿐 아니라 상황별 대처 능력과 교육 프로그램에 대한 이해가 함께 필요하며, 이론과 실기 영역을 고르게 갖추어야 합니다.</p>
-      <div class="stat-row">
+        수영·생존수영 실기 능력뿐 아니라 상황별 대처 능력과 교육 프로그램에 대한 이해가 함께 필요하며, 이론과 실기 영역을 고르게 갖추어 최소 4과목 이상을 우수한 성적으로 이수해야 합니다.</p>
+      <div class="stat-row two">
         <div><b>2개 등급</b><span>1급 · 2급</span></div>
         <div><b>이론 + 실기</b><span>두 영역 평가</span></div>
-        <div><b>4과목 이상</b><span>우수한 성적으로 이수</span></div>
       </div>
     </div>
 

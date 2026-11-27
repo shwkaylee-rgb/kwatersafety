@@ -852,22 +852,11 @@ button.dash-card { font: inherit; color: inherit; text-align: left; cursor: poin
   --shadow-md: 0 10px 30px rgba(15, 40, 80, .09);
 }
 
-/* 첫 화면·서브 배너 배경: 바다 사진 대신 남색→파랑 그라데이션과 물결 그림 */
-.hero, .mission, .sub-banner {
-  background: url(../img/hero-bg.svg) center bottom / cover no-repeat, linear-gradient(160deg, #0a2342 0%, #0f3d73 55%, #1765c4 100%);
-}
-.hero::before { background: linear-gradient(180deg, rgba(5,20,40,.25), rgba(5,20,40,0) 50%, rgba(5,20,40,.25)); }
-.mission::before { background: rgba(6, 24, 50, .35); }
-.sub-banner::before { background: rgba(6, 24, 50, .25); }
-
 /* 아이콘 */
 .ic { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .ic-badge { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 14px; background: var(--sky); color: var(--primary); flex: none; }
 .ic-badge .ic { width: 26px; height: 26px; }
 .ic-badge.navy { background: var(--navy); color: #fff; }
-
-/* 확인 필요 표시 (시안 단계에서만 보임. 확정되면 지웁니다) */
-.tbc { display: inline-block; margin-left: 4px; padding: 0 6px; border-radius: 4px; background: #fff3c4; color: #8a5a00; font-size: 12px; font-weight: 700; vertical-align: middle; line-height: 1.7; }
 
 /* 섹션 머리 (서브페이지 안) */
 .rf-sec { margin-top: 90px; }
@@ -885,8 +874,8 @@ button.dash-card { font: inherit; color: inherit; text-align: left; cursor: poin
   background: linear-gradient(135deg, #0d2a4a 0%, #144a86 60%, #1f6fd1 100%); color: #fff;
 }
 .rf-intro::after {
-  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 160px; opacity: .55;
-  background: url(../img/hero-bg.svg) center bottom / cover no-repeat;
+  content: ""; position: absolute; right: -80px; top: -120px; width: 380px; height: 380px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(120,180,255,.28), rgba(120,180,255,0) 70%);
 }
 .rf-intro > * { position: relative; z-index: 1; }
 .rf-intro .eyebrow { font-size: 14px; font-weight: 700; letter-spacing: .14em; color: #9cc6ff; }
@@ -900,6 +889,7 @@ button.dash-card { font: inherit; color: inherit; text-align: left; cursor: poin
 /* 숫자 강조 */
 .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; max-width: 760px; }
 .stat-row div { padding: 18px 20px; border-radius: 14px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(2px); }
+.stat-row.two { grid-template-columns: repeat(2, 1fr); max-width: 520px; }
 .stat-row b { display: block; font-size: 28px; font-weight: 800; line-height: 1.2; }
 .stat-row span { font-size: 14px; color: rgba(255,255,255,.82); }
 
@@ -977,7 +967,7 @@ a.icon-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); b
 .program-card { display: flex; flex-direction: column; border-radius: 22px; overflow: hidden; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-md); transition: transform .25s, box-shadow .25s; }
 .program-card:hover { transform: translateY(-5px); box-shadow: 0 18px 44px rgba(15,40,80,.14); }
 .program-art { position: relative; height: 150px; display: flex; align-items: center; justify-content: center; color: #fff; overflow: hidden; }
-.program-art::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 80px; background: url(../img/hero-bg.svg) center bottom / cover no-repeat; opacity: .7; }
+.program-art::after { content: ""; position: absolute; left: -10%; right: -10%; bottom: -40px; height: 80px; border-radius: 50%; background: rgba(255,255,255,.12); }
 .program-art .ic { width: 58px; height: 58px; stroke-width: 1.5; position: relative; z-index: 1; }
 .program-art.a1 { background: linear-gradient(135deg, #0d2a4a, #1f6fd1); }
 .program-art.a2 { background: linear-gradient(135deg, #0b3a4f, #0f9fb0); }
@@ -1072,33 +1062,6 @@ a.icon-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); b
 .org-dept li:last-child { border-bottom: 0; }
 .org-dept li b { display: block; font-size: 13px; color: var(--primary); font-weight: 700; }
 
-/* 생존수영 능력 인증서 견본 (실제 발급 양식과 같은 구성, 가상의 이름) */
-.certify .cert-sample { margin: 0; }
-.certify .cert-sample p { font-size: 12.5px; line-height: 1.6; margin-bottom: 0; color: #222; }
-.certify .cert-sample p.no { font-size: 11px; color: #666; }
-.certify .cert-sample p.issuer { font-size: 14px; white-space: nowrap; }
-.certify .cert-sample p.foot { font-size: 10.5px; color: #888; }
-.cert-sample .sheet {
-  position: relative; overflow: hidden; background: #fff; border: 8px double #1f7a8c; border-radius: 6px; padding: 24px 22px 18px; text-align: center;
-  box-shadow: 0 14px 40px rgba(15,40,80,.14); font-size: 12.5px; line-height: 1.6;
-}
-.cert-sample .no { text-align: left; color: #666; font-size: 11px; }
-.cert-sample h3 { color: #145a68; font-size: 22px; font-weight: 800; letter-spacing: .1em; margin: 10px 0 14px; }
-.cert-sample dl { display: grid; grid-template-columns: 64px 1fr; gap: 3px 10px; text-align: left; max-width: 250px; margin: 0 auto 12px; }
-.cert-sample dt { color: #777; }
-.cert-sample dd { font-weight: 700; }
-.cert-sample table { width: 100%; max-width: 260px; margin: 0 auto; border-collapse: collapse; font-size: 11.5px; }
-.cert-sample th, .cert-sample td { border: 1px solid #cfd8dc; padding: 3px 8px; }
-.cert-sample th { background: #eef6f7; }
-.cert-sample td:first-child { text-align: left; }
-.cert-sample td.ok { color: #1e7a45; font-weight: 700; }
-.cert-sample .txt { margin: 12px 0 6px; }
-.cert-sample .issuer { display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 800; font-size: 14px; margin-top: 4px; }
-.cert-sample .issuer img { height: 24px; width: auto; border-radius: 0; box-shadow: none; }
-.cert-sample .issuer img.seal { height: 44px; margin-left: -14px; opacity: .9; }
-.cert-sample .foot { font-size: 10.5px; color: #888; margin-top: 6px; }
-.cert-sample .wm { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%) rotate(-24deg); font-size: 60px; font-weight: 900; color: rgba(200, 16, 46, .12); letter-spacing: .25em; pointer-events: none; white-space: nowrap; }
-.cert-sample figcaption { margin-top: 12px; text-align: center; font-size: 13.5px; color: var(--text-sub); }
 
 @media (max-width: 1100px) {
   .vision4 { grid-template-columns: repeat(2, 1fr); }
@@ -1136,5 +1099,4 @@ a.icon-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); b
   .org-row { gap: 10px; }
   .org-row::before { width: 64%; }
   .org-depts { grid-template-columns: 1fr; }
-  .certify .cert-sample { max-width: 340px; margin: 0 auto; text-align: center; }
 }
